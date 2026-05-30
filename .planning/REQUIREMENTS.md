@@ -102,8 +102,47 @@ Golf-style scoring (lowest wins). Canonical entity set = **50 states** (no D.C.)
 
 ## Traceability
 
-<!-- Filled by the roadmapper: maps each REQ-ID to its phase. -->
-
-| REQ-ID | Phase |
-|--------|-------|
-| _(pending roadmap)_ | — |
+| REQ-ID | Phase | Status |
+|--------|-------|--------|
+| DATA-01 | Phase 1 | Pending |
+| DATA-02 | Phase 1 | Pending |
+| COMP-01 | Phase 1 | Pending |
+| COMP-02 | Phase 1 | Pending |
+| COMP-03 | Phase 1 | Pending |
+| COMP-04 | Phase 1 | Pending |
+| SESS-05 | Phase 1 | Pending |
+| SCORE-01 | Phase 2 | Pending |
+| SCORE-02 | Phase 2 | Pending |
+| SCORE-05 | Phase 2 | Pending |
+| SESS-01 | Phase 2 | Pending |
+| SESS-02 | Phase 2 | Pending |
+| SESS-03 | Phase 2 | Pending |
+| WEL-04 | Phase 2 | Pending |
+| MAP-01 | Phase 3 | Pending |
+| MAP-02 | Phase 3 | Pending |
+| MAP-03 | Phase 3 | Pending |
+| MAP-04 | Phase 3 | Pending |
+| DRAG-01 | Phase 4 | Pending |
+| DRAG-02 | Phase 4 | Pending |
+| DRAG-03 | Phase 4 | Pending |
+| DRAG-04 | Phase 4 | Pending |
+| DRAG-05 | Phase 4 | Pending |
+| MODE-01 | Phase 4 | Pending |
+| MODE-02 | Phase 4 | Pending |
+| MODE-03 | Phase 4 | Pending |
+| MODE-04 | Phase 4 | Pending |
+| SCORE-03 | Phase 4 | Pending |
+| SCORE-04 | Phase 4 | Pending |
+| SCORE-06 | Phase 4 | Pending |
+| SCORE-07 | Phase 4 | Pending |
+| HOME-01 | Phase 4 | Pending |
+| HOME-02 | Phase 4 | Pending |
+| WEL-01 | Phase 5 | Pending |
+| WEL-02 | Phase 5 | Pending |
+| WEL-03 | Phase 5 | Pending |
+| HINT-01 | Phase 5 | Pending |
+| HINT-02 | Phase 5 | Pending |
+| SESS-04 | Phase 5 | Pending |
+| HOME-03 | Phase 5 | Pending |
+| A11Y-01 | Phase 5 | Pending |
+| A11Y-02 | Phase 5 | Pending |
