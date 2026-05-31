@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: in_progress
-stopped_at: Phase 3 Plan 01 complete — Wave 1 Plan 1/1 done
-last_updated: "2026-05-31T19:32:57Z"
+status: executing
+stopped_at: Phase 3 Plan 02 complete — UsaMapPainter full implementation + smoke tests
+last_updated: "2026-05-31T16:45:21Z"
 last_activity: 2026-05-31
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 13
-  completed_plans: 9
-  percent: 44
+  completed_plans: 10
+  percent: 40
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-05-30)
 ## Current Position
 
 Phase: 3
-Plan: 01 complete (1 of 5)
-Status: In progress — Wave 1 done; Wave 2 ready (plans 02, 03)
+Plan: 02 complete (2 of 5)
+Status: In progress — Wave 2 running (plan 02 done; plans 03, 04 ready)
 Last activity: 2026-05-31
 
-Progress: [██░░░░░░░░] 20%
+Progress: [████████░░] 77%
 
 ## Performance Metrics
 
@@ -46,7 +46,7 @@ Progress: [██░░░░░░░░] 20%
 |-------|-------|-------|----------|
 | 01 | 4 | - | - |
 | 02 | 4 | - | - |
-| 03 | 1/5 | ~15min | ~15min |
+| 03 | 2/5 | ~35min | ~17min |
 
 **Recent Trend:**
 
@@ -68,6 +68,9 @@ Recent decisions affecting current work:
 - Roadmap: Ad layer (Phase 6 in research) is v2 scope only; v1 stubs it entirely and no mediation SDKs enter pubspec until v2.
 - 03-01: Drop max() from hit_detection.dart imports — only used in removed isDegenerate branch
 - 03-01: MapData wraps stateDataProvider; insetFrameRects order guaranteed by JSON Map.values insertion order
+- 03-02: tester.runAsync() required when testWidgets awaits compute()-backed FutureProvider — FakeAsync blocks isolate completion
+- 03-02: findsAtLeastNWidgets(1) for CustomPaint assertions — MaterialApp adds its own CustomPaint to the tree
+- 03-02: UsaMapPainter showLabels/mode declared for Phase 4 but draw nothing in Phase 3 — single TODO comment marks extension point
 
 ### Pending Todos
 
@@ -90,6 +93,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-05-31T19:32:57Z
-Stopped at: Phase 3 Plan 01 complete — MapData + stateHitTest contracts delivered
-Resume file: .planning/phases/03-map-render-coordinate-transform-spike/03-02-PLAN.md
+Last session: 2026-05-31T16:45:21Z
+Stopped at: Phase 3 Plan 02 complete — UsaMapPainter full implementation + smoke tests
+Resume file: .planning/phases/03-map-render-coordinate-transform-spike/03-03-PLAN.md

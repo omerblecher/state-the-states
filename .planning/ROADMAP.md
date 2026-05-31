@@ -97,7 +97,7 @@ Plans:
 
 **Wave 2** *(blocked on 03-01 completion)*
 
-- [ ] 03-02-PLAN.md — UsaMapPainter full implementation (fill + border + inset frame passes) + painter smoke tests
+- [x] 03-02-PLAN.md — UsaMapPainter full implementation (fill + border + inset frame passes) + painter smoke tests
 - [ ] 03-03-PLAN.md — hit_detection_test.dart: 10 centroid assertions (RI, DE, CT, NJ, MD × scale 1.0 and 4.0) — Criterion 2 hard gate
 
 **Wave 3** *(blocked on 03-02 + 03-03 completion)*
@@ -151,6 +151,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. Foundation | 4/4 | Complete   | 2026-05-31 |
 | 2. State Machine & Repositories | 4/4 | Complete   | 2026-05-31 |
-| 3. Map Render + Coordinate Transform Spike | 1/5 | In progress | - |
+| 3. Map Render + Coordinate Transform Spike | 2/5 | In Progress|  |
 | 4. Full Play Loop | 0/TBD | Not started | - |
 | 5. Polish, Welcome & Accessibility | 0/TBD | Not started | - |
