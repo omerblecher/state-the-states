@@ -89,7 +89,25 @@ Plans:
   3. All 50 state paths render as filled polygons with borders; Alaska renders in the bottom-left inset frame and Hawaii in the bottom-center frame; inset frame rectangles are drawn around each group.
   4. Zoom-in and zoom-out buttons (outside the `InteractiveViewer`) change the scale by the expected factor; after a programmatic zoom, `controller.value.getMaxScaleOnAxis()` matches the visual scale (Matrix4 entry (2,2) is kept in sync).
 
-**Plans**: TBD
+**Plans**: 5 plans
+Plans:
+**Wave 1**
+
+- [ ] 03-01-PLAN.md — StateDataService → MapData wrapper (states + insetFrameRects from JSON) + hit_detection.dart (stateHitTest pure-Dart port)
+
+**Wave 2** *(blocked on 03-01 completion)*
+
+- [ ] 03-02-PLAN.md — UsaMapPainter full implementation (fill + border + inset frame passes) + painter smoke tests
+- [ ] 03-03-PLAN.md — hit_detection_test.dart: 10 centroid assertions (RI, DE, CT, NJ, MD × scale 1.0 and 4.0) — Criterion 2 hard gate
+
+**Wave 3** *(blocked on 03-02 + 03-03 completion)*
+
+- [ ] 03-04-PLAN.md — MapScreen full ConsumerStatefulWidget (InteractiveViewer + AnimatedBuilder + zoom controls) + map_screen_test.dart
+
+**Wave 4** *(blocked on 03-04 completion)*
+
+- [ ] 03-05-PLAN.md — SpikeMapScreen (6-region dev-only spike) + app.dart /spike route + spike_map_screen_test.dart — Criterion 1 hard gate
+
 **UI hint**: yes
 
 ### Phase 4: Full Play Loop
@@ -133,6 +151,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. Foundation | 4/4 | Complete   | 2026-05-31 |
 | 2. State Machine & Repositories | 4/4 | Complete   | 2026-05-31 |
-| 3. Map Render + Coordinate Transform Spike | 0/TBD | Not started | - |
+| 3. Map Render + Coordinate Transform Spike | 0/5 | Not started | - |
 | 4. Full Play Loop | 0/TBD | Not started | - |
 | 5. Polish, Welcome & Accessibility | 0/TBD | Not started | - |
