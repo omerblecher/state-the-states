@@ -82,6 +82,14 @@ class RealAudioService implements AudioService {
 
   @override
   Future<void> dispose() async {
+    // Safe to dispose unconditionally: _correctPlayer, _errorPlayer, and
+    // _anthemPlayer are assigned at the top of init() BEFORE the asset-loading
+    // try block, so they always exist even when _initialized is false (i.e.
+    // init() failed after assignment). AudioPlayer.dispose() is idempotent on
+    // partially-initialized instances and will not throw.
+    //
+    // Do NOT add an `if (_initialized)` guard here — that would strand the three
+    // AudioPlayers as resource leaks whenever init() fails (Pitfall 8).
     await _correctPlayer.dispose();
     await _errorPlayer.dispose();
     await _anthemPlayer.dispose();
