@@ -5,7 +5,8 @@ plugins {
 }
 
 android {
-    namespace = "com.otis.brooke.state_states"
+    // COMP-04: App ID must be exactly com.otis.brooke.state.the.state
+    namespace = "com.otis.brooke.state.the.state"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -15,11 +16,10 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.otis.brooke.state_states"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        // COMP-04: Exact App ID — com.otis.brooke.state.the.state
+        applicationId = "com.otis.brooke.state.the.state"
+        // minSdk 21: required by just_audio (Flags baseline)
+        minSdk = 21
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
