@@ -1,4 +1,4 @@
-package com.otis.brooke.state_states
+package com.otis.brooke.state.the.state
 
 import io.flutter.embedding.android.FlutterActivity
 
