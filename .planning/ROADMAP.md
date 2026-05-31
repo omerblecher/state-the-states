@@ -102,7 +102,7 @@ Plans:
 
 **Wave 3** *(blocked on 03-02 + 03-03 completion)*
 
-- [ ] 03-04-PLAN.md — MapScreen full ConsumerStatefulWidget (InteractiveViewer + AnimatedBuilder + zoom controls) + map_screen_test.dart
+- [x] 03-04-PLAN.md — MapScreen full ConsumerStatefulWidget (InteractiveViewer + AnimatedBuilder + zoom controls) + map_screen_test.dart
 
 **Wave 4** *(blocked on 03-04 completion)*
 
@@ -151,6 +151,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. Foundation | 4/4 | Complete   | 2026-05-31 |
 | 2. State Machine & Repositories | 4/4 | Complete   | 2026-05-31 |
-| 3. Map Render + Coordinate Transform Spike | 3/5 | In Progress|  |
+| 3. Map Render + Coordinate Transform Spike | 4/5 | In Progress|  |
 | 4. Full Play Loop | 0/TBD | Not started | - |
 | 5. Polish, Welcome & Accessibility | 0/TBD | Not started | - |

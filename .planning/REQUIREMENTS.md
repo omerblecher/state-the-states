@@ -27,8 +27,8 @@ Golf-style scoring (lowest wins). Canonical entity set = **50 states** (no D.C.)
 
 - [x] **MAP-01**: The map renders a vector representation of all 50 U.S. states via CustomPainter from bundled pre-processed JSON (not runtime SVG parsing).
 - [x] **MAP-02**: Alaska and Hawaii render inside dedicated inset frames, with inset transforms baked into canvas coordinate space by the build-time pipeline.
-- [ ] **MAP-03**: The map supports high-performance pan and zoom via `InteractiveViewer`, with the token tray outside the viewer and DragTargets inside it.
-- [ ] **MAP-04**: Explicit zoom in / zoom out buttons are available outside the `InteractiveViewer`.
+- [x] **MAP-03**: The map supports high-performance pan and zoom via `InteractiveViewer`, with the token tray outside the viewer and DragTargets inside it.
+- [x] **MAP-04**: Explicit zoom in / zoom out buttons are available outside the `InteractiveViewer`.
 - [ ] **DATA-01**: A build-time Python pipeline converts Natural Earth admin-1 (public domain) data into a bundled `usa_states_paths.json` containing path data, per-state centroids, and Alaska/Hawaii inset transforms.
 - [ ] **DATA-02**: The pipeline splits Alaska's Aleutian antimeridian geometry so Alaska renders correctly (no horizontal smear) and passes shapely validity.
 
@@ -120,8 +120,8 @@ Golf-style scoring (lowest wins). Canonical entity set = **50 states** (no D.C.)
 | WEL-04 | Phase 2 | Pending |
 | MAP-01 | Phase 3 | Complete |
 | MAP-02 | Phase 3 | Complete |
-| MAP-03 | Phase 3 | Pending |
-| MAP-04 | Phase 3 | Pending |
+| MAP-03 | Phase 3 | Complete |
+| MAP-04 | Phase 3 | Complete |
 | DRAG-01 | Phase 4 | Pending |
 | DRAG-02 | Phase 4 | Pending |
 | DRAG-03 | Phase 4 | Pending |
