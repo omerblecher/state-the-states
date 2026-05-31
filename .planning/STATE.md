@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
-stopped_at: Phase 3 planned — ready to execute
-last_updated: "2026-05-31T20:00:00.000Z"
+status: in_progress
+stopped_at: Phase 3 Plan 01 complete — Wave 1 Plan 1/1 done
+last_updated: "2026-05-31T19:32:57Z"
 last_activity: 2026-05-31
 progress:
   total_phases: 5
   completed_phases: 2
-  total_plans: 8
-  completed_plans: 8
-  percent: 40
+  total_plans: 13
+  completed_plans: 9
+  percent: 44
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-05-30)
 ## Current Position
 
 Phase: 3
-Plan: Not started
-Status: Ready to execute (5 plans, 4 waves)
+Plan: 01 complete (1 of 5)
+Status: In progress — Wave 1 done; Wave 2 ready (plans 02, 03)
 Last activity: 2026-05-31
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [██░░░░░░░░] 20%
 
 ## Performance Metrics
 
@@ -46,6 +46,7 @@ Progress: [░░░░░░░░░░] 0%
 |-------|-------|-------|----------|
 | 01 | 4 | - | - |
 | 02 | 4 | - | - |
+| 03 | 1/5 | ~15min | ~15min |
 
 **Recent Trend:**
 
@@ -65,6 +66,8 @@ Recent decisions affecting current work:
 - Roadmap: Coordinate-transform spike in Phase 3 is a hard gate — Phase 4 must not begin until spike passes at 1×/2×/4× zoom including AK/HI inset regions.
 - Roadmap: COPPA baseline (COMP-01/02/03/04) placed in Phase 1 — AD_ID blocked and StubAdService wired from first commit.
 - Roadmap: Ad layer (Phase 6 in research) is v2 scope only; v1 stubs it entirely and no mediation SDKs enter pubspec until v2.
+- 03-01: Drop max() from hit_detection.dart imports — only used in removed isDegenerate branch
+- 03-01: MapData wraps stateDataProvider; insetFrameRects order guaranteed by JSON Map.values insertion order
 
 ### Pending Todos
 
@@ -87,6 +90,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-05-31T15:45:41.065Z
-Stopped at: Phase 3 context gathered
-Resume file: .planning/phases/03-map-render-coordinate-transform-spike/03-CONTEXT.md
+Last session: 2026-05-31T19:32:57Z
+Stopped at: Phase 3 Plan 01 complete — MapData + stateHitTest contracts delivered
+Resume file: .planning/phases/03-map-render-coordinate-transform-spike/03-02-PLAN.md

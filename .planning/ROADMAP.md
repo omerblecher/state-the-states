@@ -93,7 +93,7 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 03-01-PLAN.md — StateDataService → MapData wrapper (states + insetFrameRects from JSON) + hit_detection.dart (stateHitTest pure-Dart port)
+- [x] 03-01-PLAN.md — StateDataService → MapData wrapper (states + insetFrameRects from JSON) + hit_detection.dart (stateHitTest pure-Dart port)
 
 **Wave 2** *(blocked on 03-01 completion)*
 
@@ -151,6 +151,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. Foundation | 4/4 | Complete   | 2026-05-31 |
 | 2. State Machine & Repositories | 4/4 | Complete   | 2026-05-31 |
-| 3. Map Render + Coordinate Transform Spike | 0/5 | Not started | - |
+| 3. Map Render + Coordinate Transform Spike | 1/5 | In progress | - |
 | 4. Full Play Loop | 0/TBD | Not started | - |
 | 5. Polish, Welcome & Accessibility | 0/TBD | Not started | - |
