@@ -1,0 +1,49 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-05-31T18:30:00Z",
+  "phase": "03",
+  "phase_name": "map-render-coordinate-transform-spike",
+  "phase_dir": ".planning/phases/03-map-render-coordinate-transform-spike",
+  "plan": 5,
+  "task": null,
+  "total_tasks": null,
+  "status": "paused",
+  "completed_tasks": [
+    {"id": "03-01", "name": "MapData wrapper + stateHitTest() port", "status": "done", "commit": "0c5a95b"},
+    {"id": "03-02", "name": "Full UsaMapPainter implementation", "status": "done", "commit": "8041974"},
+    {"id": "03-03", "name": "hit_detection_test.dart — Criterion 2 gate CLEARED", "status": "done", "commit": "d53a99d"},
+    {"id": "03-04", "name": "MapScreen with InteractiveViewer + zoom", "status": "done", "commit": "bcc8777"},
+    {"id": "03-05", "name": "SpikeMapScreen + /spike router", "status": "done", "commit": "d512b75"},
+    {"id": "review-fixes", "name": "Code review fixes WR-01–04, WR-07", "status": "done", "commit": "ec1da0d"},
+    {"id": "android-fix", "name": "MainActivity moved to correct package path", "status": "done", "commit": "b30e4b0"}
+  ],
+  "remaining_tasks": [
+    {
+      "id": "criterion-1-manual",
+      "name": "Criterion 1 manual validation on /spike screen",
+      "status": "not_started",
+      "description": "Run flutter run in debug mode, navigate to /spike route, drag TX/CA/FL/NY/AK/HI chips onto their regions at 1x/2x/4x zoom. Zero misidentifications = Criterion 1 passes. Phase 4 must not begin until this passes."
+    }
+  ],
+  "blockers": [],
+  "human_actions_pending": [
+    {
+      "action": "Navigate to /spike and drag each of the 6 state chips (TX, CA, FL, NY, AK, HI) onto their colored regions at 1x, 2x, and 4x zoom",
+      "context": "Criterion 1 hard gate — Phase 4 must not begin until zero misidentifications confirmed across 18 drops",
+      "blocking": true
+    },
+    {
+      "action": "Add a debug button on HomeScreen pointing to context.go('/spike') for easy navigation, OR use DevTools Route Navigator",
+      "context": "The /spike route is registered but there's no UI link to it on the home screen",
+      "blocking": false
+    }
+  ],
+  "decisions": [
+    {"decision": "Sequential-on-main execution (no worktrees)", "rationale": "Prior Phase 2 incident where parallel worktrees corrupted main checkout on Windows", "phase": "03"},
+    {"decision": "drop max() from hit_detection.dart imports", "rationale": "max() was only used in removed isDegenerate branch", "phase": "03"},
+    {"decision": "insetFrameRects accessed by explicit key (not insertion order)", "rationale": "WR-04 code review finding — insertion order is fragile", "phase": "03"}
+  ],
+  "uncommitted_files": [".planning/STATE.md"],
+  "next_action": "Run flutter run in debug mode, navigate to /spike, perform Criterion 1 manual validation. Then run /gsd:execute-phase 4.",
+  "context_notes": "Phase 3 is fully executed. All 5 plans complete, 94 tests pass, code reviewed and fixed, pushed to GitHub. The Android MainActivity package mismatch was fixed (state_states -> state.the.state). App runs on emulator with 3s initial load. Only remaining gate is Criterion 1 manual test on /spike screen before Phase 4 begins."
+}
