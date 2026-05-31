@@ -24,7 +24,11 @@ class MapScreen extends ConsumerWidget {
         error: (error, _) =>
             Center(child: Text('Could not load map data: $error')),
         data: (mapData) => CustomPaint(
-          painter: UsaMapPainter(states: mapData.states),
+          painter: UsaMapPainter(
+            states: mapData.states,
+            matchedPostals: const {},
+            insetFrameRects: mapData.insetFrameRects,
+          ),
           child: const SizedBox.expand(),
         ),
       ),
