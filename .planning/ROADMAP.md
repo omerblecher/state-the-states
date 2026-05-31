@@ -30,7 +30,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. The Flutter app builds and runs with `google_mobile_ads` declared but `StubAdService` wired; `GameSessionNotifier` has zero ad imports; `aapt dump badging` shows the `AD_ID` permission is absent.
   4. No `firebase_*` package appears in `pubspec.yaml` or `pubspec.lock`; the LICENSES file documents anthem provenance with explicit source, rendering tool, and soundfont.
   5. `StateDataService` loads and parses `usa_states_paths.json` in a compute isolate; the Flutter debug app renders a blank `CustomPaint` canvas without error, confirming the data pipeline is end-to-end wired.
-**Plans**: TBD
+**Plans**: 4 plans
+Plans:
+- [ ] 01-01-PLAN.md — COPPA Flutter scaffold: locked pubspec (no Firebase), AndroidManifest AD_ID block, App ID + G/PG, audio assets, LICENSES anthem provenance
+- [ ] 01-02-PLAN.md — Python pipeline: three-CRS Albers + antimeridian split + inset baking → usa_states_paths.json (50 placeable + DC), with pipeline tests
+- [ ] 01-03-PLAN.md — Dart data layer: StateData model, StateDataService compute-isolate loader + provider, blank CustomPaint MapScreen proof, Dart tests
+- [ ] 01-04-PLAN.md — Ads/audio walled garden + main/app/home wiring; COPPA build verification (no AD_ID, zero reachable ad imports)
 
 ### Phase 2: State Machine & Repositories
 **Goal**: All game logic — scoring, timer, state machine transitions, and local persistence — is implemented in pure Dart and unit-tested before any widget depends on it.
@@ -89,7 +94,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/TBD | Not started | - |
+| 1. Foundation | 0/4 | Not started | - |
 | 2. State Machine & Repositories | 0/TBD | Not started | - |
 | 3. Map Render + Coordinate Transform Spike | 0/TBD | Not started | - |
 | 4. Full Play Loop | 0/TBD | Not started | - |
