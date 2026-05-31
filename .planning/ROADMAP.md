@@ -132,7 +132,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 4/4 | Complete   | 2026-05-31 |
-| 2. State Machine & Repositories | 0/4 | Not started | - |
+| 2. State Machine & Repositories | 0/4 | Planned    |  |
 | 3. Map Render + Coordinate Transform Spike | 0/TBD | Not started | - |
 | 4. Full Play Loop | 0/TBD | Not started | - |
 | 5. Polish, Welcome & Accessibility | 0/TBD | Not started | - |
