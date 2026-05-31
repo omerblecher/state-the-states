@@ -13,7 +13,7 @@ State States is built in five phases driven by two hard dependencies: the Python
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Foundation** - Python pipeline + data models + service stubs + COPPA baseline
+- [x] **Phase 1: Foundation** - Python pipeline + data models + service stubs + COPPA baseline (completed 2026-05-31)
 - [ ] **Phase 2: State Machine & Repositories** - Pure-Dart game logic, scoring, lifecycle, and persistence
 - [ ] **Phase 3: Map Render + Coordinate Transform Spike** - CustomPainter map + mandatory toScene() spike gate
 - [ ] **Phase 4: Full Play Loop** - Four game modes end-to-end: tray, drag-drop, HUD, completion, home screen
@@ -47,7 +47,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 01-04-PLAN.md — Ads/audio walled garden + main/app/home wiring; COPPA build verification (no AD_ID, zero reachable ad imports)
+- [x] 01-04-PLAN.md — Ads/audio walled garden + main/app/home wiring; COPPA build verification (no AD_ID, zero reachable ad imports)
 
 ### Phase 2: State Machine & Repositories
 
@@ -118,7 +118,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 3/4 | In Progress|  |
+| 1. Foundation | 4/4 | Complete   | 2026-05-31 |
 | 2. State Machine & Repositories | 0/TBD | Not started | - |
 | 3. Map Render + Coordinate Transform Spike | 0/TBD | Not started | - |
 | 4. Full Play Loop | 0/TBD | Not started | - |
