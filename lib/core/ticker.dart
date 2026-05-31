@@ -12,6 +12,7 @@ class RealTicker implements Ticker {
 
   @override
   void start(void Function() onTick) {
+    _timer?.cancel(); // cancel any live timer before overwriting (CR-03)
     _onTick = onTick;
     _timer = Timer.periodic(const Duration(seconds: 1), (_) => _onTick!());
   }
