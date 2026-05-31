@@ -1,0 +1,69 @@
+================================================================================
+STATE STATES — BUNDLED ASSET LICENSES
+================================================================================
+
+--------------------------------------------------------------------------------
+Star-Spangled Banner Instrumental
+--------------------------------------------------------------------------------
+  Composition:    Public domain (Francis Scott Key, 1814; music traditional,
+                  attributed to John Stafford Smith)
+  Rendering tool: MuseScore [version TBD in Phase 5]
+  SoundFont:      MS Basic.sf3 (MuseScore General / MuseScore Basic), MIT License
+                    Copyright (c) Frank Wen, Michael Cowgill,
+                               S. Christian Collins
+                    See full MIT license text below (Section: MS Basic.sf3)
+  Render date:    [Phase 5 — deferred; placeholder asset ships in Phase 1]
+  Output file:    assets/audio/anthem.wav
+                  (Phase 1: assets/audio/anthem_placeholder.wav — silent WAV,
+                   not the final render)
+  Notes:          Self-rendered from the public-domain composition using
+                  MuseScore and the MS Basic.sf3 soundfont.
+                  No third-party recording is used. The WAV file is an
+                  original work produced by this project's build pipeline.
+
+                  The public-domain composition (the musical work) does NOT
+                  make any arbitrary recording of it free to redistribute.
+                  This project therefore renders its own WAV from the score,
+                  using a soundfont with a clear redistribution license (MIT).
+                  MS Basic.sf3 carries an MIT license with no commercial-use
+                  or openness restrictions.
+
+--------------------------------------------------------------------------------
+MS Basic.sf3 (MuseScore General) — MIT License
+--------------------------------------------------------------------------------
+
+  Source: https://github.com/musescore/MuseScore/blob/master/share/sound/MS%20Basic_License.md
+
+  MIT License
+
+  Copyright (c) Frank Wen
+  Copyright (c) Michael Cowgill
+  Copyright (c) S. Christian Collins
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in all
+  copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  SOFTWARE.
+
+--------------------------------------------------------------------------------
+Sound Effects (correct.wav, error.wav)
+--------------------------------------------------------------------------------
+  Source:   Ported from Flags Around the World (sibling project by same author).
+  License:  Original work by project author; no third-party license required.
+
+================================================================================
+END OF LICENSES
+================================================================================
