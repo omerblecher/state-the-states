@@ -63,6 +63,11 @@ class StateData {
 
   static InsetGroup? _parseInsetGroup(String? value) {
     if (value == null) return null;
-    return InsetGroup.values.firstWhere((e) => e.name == value);
+    // Tolerate unexpected values (treat as mainland) rather than throwing and
+    // killing the whole stateDataProvider on one malformed record.
+    for (final group in InsetGroup.values) {
+      if (group.name == value) return group;
+    }
+    return null;
   }
 }
