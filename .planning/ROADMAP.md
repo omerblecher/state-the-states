@@ -38,8 +38,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 Plans:
 **Wave 1**
 
-- [ ] 01-01-PLAN.md — COPPA Flutter scaffold: locked pubspec (no Firebase), AndroidManifest AD_ID block, App ID + G/PG, audio assets, LICENSES anthem provenance
-- [ ] 01-02-PLAN.md — Python pipeline: three-CRS Albers + antimeridian split + inset baking → usa_states_paths.json (50 placeable + DC), with pipeline tests
+- [x] 01-01-PLAN.md — COPPA Flutter scaffold: locked pubspec (no Firebase), AndroidManifest AD_ID block, App ID + G/PG, audio assets, LICENSES anthem provenance
+- [x] 01-02-PLAN.md — Python pipeline: three-CRS Albers + antimeridian split + inset baking → usa_states_paths.json (50 placeable + DC), with pipeline tests
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -118,7 +118,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/4 | Not started | - |
+| 1. Foundation | 2/4 | In Progress|  |
 | 2. State Machine & Repositories | 0/TBD | Not started | - |
 | 3. Map Render + Coordinate Transform Spike | 0/TBD | Not started | - |
 | 4. Full Play Loop | 0/TBD | Not started | - |
