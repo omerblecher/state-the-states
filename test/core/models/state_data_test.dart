@@ -19,7 +19,7 @@ Map<String, dynamic> _record({
   'paths': [_kPath],
   'boundingBox': {'x': 10.0, 'y': 20.0, 'w': 30.0, 'h': 40.0},
   'centroid': {'x': 25.0, 'y': 40.0},
-  if (isPlaceable != null) 'isPlaceable': isPlaceable,
+  'isPlaceable': ?isPlaceable,
   'insetGroup': insetGroup,
 };
 
