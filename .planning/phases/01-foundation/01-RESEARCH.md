@@ -791,7 +791,9 @@ static InsetGroup? _parseInsetGroup(String? value) {
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
+
+> All three resolved in-plan: constants derived computationally (01-02), field-name case self-checked at pipeline runtime (01-02), territories excluded by the `postal in ALL_RECORDS` filter (01-02). None block execution.
 
 1. **Exact AK/HI inset scale/translate constants**
    - What we know: D-08 mandates ~0.45× for Alaska; lower-left ocean area
