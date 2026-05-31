@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 3 Plan 02 complete — UsaMapPainter full implementation + smoke tests
-last_updated: "2026-05-31T17:20:43.718Z"
+stopped_at: Completed 03-05-PLAN.md — SpikeMapScreen + /spike route, Phase 3 complete
+last_updated: "2026-05-31T17:28:49.812Z"
 last_activity: 2026-05-31
 progress:
   total_phases: 5
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 13
-  completed_plans: 12
-  percent: 40
+  completed_plans: 13
+  percent: 60
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-05-30)
 ## Current Position
 
 Phase: 3
-Plan: 4 complete (2 of 5)
+Plan: 5 complete (2 of 5)
 Status: Ready to execute
 Last activity: 2026-05-31
 
-Progress: [█████████░] 92%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -56,6 +56,7 @@ Progress: [█████████░] 92%
 *Updated after each plan completion*
 | Phase 03 P03 | 5min | 1 tasks | 1 files |
 | Phase 03 P04 | 25min | 2 tasks | 2 files |
+| Phase 03 P05 | 15min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -75,6 +76,8 @@ Recent decisions affecting current work:
 - 03-02: UsaMapPainter showLabels/mode declared for Phase 4 but draw nothing in Phase 3 — single TODO comment marks extension point
 - [Phase ?]: Required for dart:ui Path creation even without widget tests
 - [Phase ?]: 03-04-SUMMARY.md
+- [Phase ?]: 03-05: if (kDebugMode) GoRoute single-element collection-if (no spread) avoids List<GoRoute> type error in routes list
+- [Phase ?]: 03-05: Fixture-backed spike tests need no tester.runAsync() — overrideWith(async => fixture) resolves synchronously unlike compute()-backed provider
 
 ### Pending Todos
 
@@ -97,6 +100,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-05-31T17:20:43.710Z
-Stopped at: Phase 3 Plan 02 complete — UsaMapPainter full implementation + smoke tests
+Last session: 2026-05-31T17:28:49.802Z
+Stopped at: Completed 03-05-PLAN.md — SpikeMapScreen + /spike route, Phase 3 complete
 Resume file: None

@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation** - Python pipeline + data models + service stubs + COPPA baseline (completed 2026-05-31)
 - [x] **Phase 2: State Machine & Repositories** - Pure-Dart game logic, scoring, lifecycle, and persistence (completed 2026-05-31)
-- [ ] **Phase 3: Map Render + Coordinate Transform Spike** - CustomPainter map + mandatory toScene() spike gate
+- [x] **Phase 3: Map Render + Coordinate Transform Spike** - CustomPainter map + mandatory toScene() spike gate (completed 2026-05-31)
 - [ ] **Phase 4: Full Play Loop** - Four game modes end-to-end: tray, drag-drop, HUD, completion, home screen
 - [ ] **Phase 5: Polish, Welcome & Accessibility** - Welcome screen, anthem, hints, tutorial, session restore, a11y audit
 
@@ -106,7 +106,7 @@ Plans:
 
 **Wave 4** *(blocked on 03-04 completion)*
 
-- [ ] 03-05-PLAN.md — SpikeMapScreen (6-region dev-only spike) + app.dart /spike route + spike_map_screen_test.dart — Criterion 1 hard gate
+- [x] 03-05-PLAN.md — SpikeMapScreen (6-region dev-only spike) + app.dart /spike route + spike_map_screen_test.dart — Criterion 1 hard gate
 
 **UI hint**: yes
 
@@ -151,6 +151,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. Foundation | 4/4 | Complete   | 2026-05-31 |
 | 2. State Machine & Repositories | 4/4 | Complete   | 2026-05-31 |
-| 3. Map Render + Coordinate Transform Spike | 4/5 | In Progress|  |
+| 3. Map Render + Coordinate Transform Spike | 5/5 | Complete   | 2026-05-31 |
 | 4. Full Play Loop | 0/TBD | Not started | - |
 | 5. Polish, Welcome & Accessibility | 0/TBD | Not started | - |
