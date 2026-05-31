@@ -66,12 +66,12 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 02-01-PLAN.md — Core pure-Dart contracts: GamePhase/GameMode enums, GameSession value object (postal renames), Ticker seam + GameSession tests
-- [ ] 02-04-PLAN.md — WEL-04 audio hardening: document unconditional dispose + leak-free init/play/dispose & StubAudioService interface-parity tests
+- [x] 02-01-PLAN.md — Core pure-Dart contracts: GamePhase/GameMode enums, GameSession value object (postal renames), Ticker seam + GameSession tests
+- [x] 02-04-PLAN.md — WEL-04 audio hardening: document unconditional dispose + leak-free init/play/dispose & StubAudioService interface-parity tests
 
 **Wave 2** *(blocked on 02-01 completion)*
 
-- [ ] 02-02-PLAN.md — Repositories: GameStateRepository (explicit hintPenalty, silent-discard), HighScoreRepository (lower-wins, statesMaster key), UserPrefsRepository (mute) + tests
+- [x] 02-02-PLAN.md — Repositories: GameStateRepository (explicit hintPenalty, silent-discard), HighScoreRepository (lower-wins, statesMaster key), UserPrefsRepository (mute) + tests
 
 **Wave 3** *(blocked on 02-01 + 02-02 completion)*
 
@@ -132,7 +132,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 4/4 | Complete   | 2026-05-31 |
-| 2. State Machine & Repositories | 0/4 | Planned    |  |
+| 2. State Machine & Repositories | 3/4 | In Progress|  |
 | 3. Map Render + Coordinate Transform Spike | 0/TBD | Not started | - |
 | 4. Full Play Loop | 0/TBD | Not started | - |
 | 5. Polish, Welcome & Accessibility | 0/TBD | Not started | - |
