@@ -43,7 +43,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 01-03-PLAN.md — Dart data layer: StateData model, StateDataService compute-isolate loader + provider, blank CustomPaint MapScreen proof, Dart tests
+- [x] 01-03-PLAN.md — Dart data layer: StateData model, StateDataService compute-isolate loader + provider, blank CustomPaint MapScreen proof, Dart tests
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -118,7 +118,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 2/4 | In Progress|  |
+| 1. Foundation | 3/4 | In Progress|  |
 | 2. State Machine & Repositories | 0/TBD | Not started | - |
 | 3. Map Render + Coordinate Transform Spike | 0/TBD | Not started | - |
 | 4. Full Play Loop | 0/TBD | Not started | - |
