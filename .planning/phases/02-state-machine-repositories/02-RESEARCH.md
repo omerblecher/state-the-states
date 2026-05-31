@@ -680,7 +680,7 @@ This is a greenfield phase (no rename of existing data). No runtime state exists
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Stopwatch injection for tests**
    - What we know: `FakeTicker` controls when ticks fire; the real `Stopwatch` inside the notifier accumulates wall-clock time during tests
