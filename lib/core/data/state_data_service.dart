@@ -4,36 +4,71 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/state_data.dart';
 
+/// Wraps the parsed map asset: the 51 state records and the two inset-frame
+/// rectangles (Alaska, Hawaii) in scene-coordinate space.
+///
+/// Consumers read `.states` for drag-drop logic and `.insetFrameRects` to
+/// draw the AK/HI inset frame borders on the canvas.
+class MapData {
+  final List<StateData> states;
+
+  /// Index 0 = Alaska frame (x≈0, y≈462), index 1 = Hawaii frame (x≈255, y≈533).
+  final List<Rect> insetFrameRects;
+
+  const MapData({
+    required this.states,
+    required this.insetFrameRects,
+  });
+}
+
 class StateDataService {
-  Future<List<StateData>> loadMapData() async {
+  Future<MapData> loadMapData() async {
     final jsonString =
         await rootBundle.loadString('assets/map/usa_states_paths.json');
 
     // Decode JSON in a background isolate — the bundled path data is large and
     // decoding on the main thread blocks the loading indicator from rendering.
-    final rawEntries = await compute(_decodeJson, jsonString);
+    final rawData = await compute(_decodeJson, jsonString);
 
     // dart:ui Path objects must be created on the main thread.
     // Yield every 30 states so the loading spinner can animate.
     final result = <StateData>[];
-    for (int i = 0; i < rawEntries.length; i++) {
-      result.add(StateData.fromJson(rawEntries[i]));
+    for (int i = 0; i < rawData.states.length; i++) {
+      result.add(StateData.fromJson(rawData.states[i]));
       if (i % 30 == 29) await Future.delayed(Duration.zero);
     }
-    return result;
+
+    // Parse inset frame rects in order: alaska first, hawaii second.
+    final rects = rawData.frames
+        .map((f) => Rect.fromLTWH(
+              (f['x'] as num).toDouble(),
+              (f['y'] as num).toDouble(),
+              (f['w'] as num).toDouble(),
+              (f['h'] as num).toDouble(),
+            ))
+        .toList();
+
+    return MapData(states: result, insetFrameRects: rects);
   }
 
   // Reads the 'states' key (NOT 'countries' — Pitfall 7: the schema was renamed
   // from the Flags world map; reading the wrong key yields an empty data set).
-  static List<Map<String, dynamic>> _decodeJson(String jsonString) {
+  // Also reads 'insetFrames' to return alaska + hawaii frame rects.
+  static ({List<Map<String, dynamic>> states, List<Map<String, dynamic>> frames})
+      _decodeJson(String jsonString) {
     final data = jsonDecode(jsonString) as Map<String, dynamic>;
-    return (data['states'] as List).cast<Map<String, dynamic>>();
+    final states = (data['states'] as List).cast<Map<String, dynamic>>();
+    // insetFrames: {"alaska": {x,y,w,h}, "hawaii": {x,y,w,h}}
+    // Return values in insertion order: alaska first (x≈0), hawaii second (x≈255).
+    final insetFrames = data['insetFrames'] as Map<String, dynamic>;
+    final frames = insetFrames.values.cast<Map<String, dynamic>>().toList();
+    return (states: states, frames: frames);
   }
 }
 
 // Top-level provider — no codegen per project convention.
 // Declared here (not in map_screen.dart) so other widgets can import it without
 // depending on the full MapScreen widget.
-final stateDataProvider = FutureProvider<List<StateData>>(
+final stateDataProvider = FutureProvider<MapData>(
   (ref) => StateDataService().loadMapData(),
 );

@@ -23,8 +23,8 @@ class MapScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) =>
             Center(child: Text('Could not load map data: $error')),
-        data: (states) => CustomPaint(
-          painter: UsaMapPainter(states: states),
+        data: (mapData) => CustomPaint(
+          painter: UsaMapPainter(states: mapData.states),
           child: const SizedBox.expand(),
         ),
       ),

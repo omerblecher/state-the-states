@@ -10,19 +10,32 @@ void main() {
     final container = ProviderContainer();
     addTearDown(container.dispose);
 
-    final states = await container.read(stateDataProvider.future);
+    final mapData = await container.read(stateDataProvider.future);
 
-    expect(states.length, 51);
-    expect(states.where((s) => s.isPlaceable).length, 50);
+    expect(mapData.states.length, 51);
+    expect(mapData.states.where((s) => s.isPlaceable).length, 50);
   });
 
   test('DC item is non-placeable', () async {
     final container = ProviderContainer();
     addTearDown(container.dispose);
 
-    final states = await container.read(stateDataProvider.future);
-    final dc = states.firstWhere((s) => s.postal == 'DC');
+    final mapData = await container.read(stateDataProvider.future);
+    final dc = mapData.states.firstWhere((s) => s.postal == 'DC');
 
     expect(dc.isPlaceable, isFalse);
+  });
+
+  test('stateDataProvider resolves 2 inset frame rects (alaska, hawaii)', () async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    final mapData = await container.read(stateDataProvider.future);
+
+    expect(mapData.insetFrameRects.length, 2);
+    // Alaska frame: x≈0
+    expect(mapData.insetFrameRects[0].left, closeTo(0.0, 1.0));
+    // Hawaii frame: x≈255
+    expect(mapData.insetFrameRects[1].left, closeTo(255.0, 1.0));
   });
 }
