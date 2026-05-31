@@ -59,9 +59,12 @@ class StateDataService {
     final data = jsonDecode(jsonString) as Map<String, dynamic>;
     final states = (data['states'] as List).cast<Map<String, dynamic>>();
     // insetFrames: {"alaska": {x,y,w,h}, "hawaii": {x,y,w,h}}
-    // Return values in insertion order: alaska first (x≈0), hawaii second (x≈255).
+    // Access by explicit key — do not rely on insertion order (WR-04).
     final insetFrames = data['insetFrames'] as Map<String, dynamic>;
-    final frames = insetFrames.values.cast<Map<String, dynamic>>().toList();
+    final frames = [
+      insetFrames['alaska'] as Map<String, dynamic>,
+      insetFrames['hawaii'] as Map<String, dynamic>,
+    ];
     return (states: states, frames: frames);
   }
 }

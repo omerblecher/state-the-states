@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/data/state_data_service.dart';
+import '../../core/models/state_data.dart';
 import '../../features/game/game_mode.dart';
 import 'usa_map_painter.dart';
 
@@ -44,7 +45,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   double _currentScale = 1.0;
   double _minScale = 0.08;
   double _maxScale = 4.0;
-  bool _mapPaintReady = false;
 
   @override
   void initState() {
@@ -160,17 +160,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   }
 
   Widget _buildMapStack(
-    List<dynamic> states,
+    List<StateData> states,
     List<Rect> insetFrameRects,
   ) {
-    // Reveal the map after the first frame is painted — before that the canvas
-    // is at 1:1 scale and _fitMapToScreen hasn't run yet.
-    if (!_mapPaintReady) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) setState(() => _mapPaintReady = true);
-      });
-    }
-
     return ColoredBox(
       color: const Color(0xFFA8D5E8), // ocean colour fills letterbox area
       child: Stack(
@@ -196,7 +188,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   isComplex: true,
                   size: const Size(1000, 628),
                   painter: UsaMapPainter(
-                    states: states.cast(),
+                    states: states,
                     matchedPostals: widget.matchedPostals,
                     insetFrameRects: insetFrameRects,
                     showLabels: widget.showLabels,

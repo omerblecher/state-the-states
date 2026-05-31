@@ -145,7 +145,10 @@ class _SpikeMapScreenState extends ConsumerState<SpikeMapScreen> {
         data: (mapData) {
           // Derive the 6 region states from real JSON bounding boxes.
           final regions = _regionPostals
-              .map((p) => mapData.states.firstWhere((s) => s.postal == p))
+              .map((p) => mapData.states.firstWhere(
+                    (s) => s.postal == p,
+                    orElse: () => throw StateError('[SpikeMapScreen] postal $p missing from map data'),
+                  ))
               .toList();
 
           return Column(
