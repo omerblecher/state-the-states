@@ -14,7 +14,7 @@ State States is built in five phases driven by two hard dependencies: the Python
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation** - Python pipeline + data models + service stubs + COPPA baseline (completed 2026-05-31)
-- [ ] **Phase 2: State Machine & Repositories** - Pure-Dart game logic, scoring, lifecycle, and persistence
+- [x] **Phase 2: State Machine & Repositories** - Pure-Dart game logic, scoring, lifecycle, and persistence (completed 2026-05-31)
 - [ ] **Phase 3: Map Render + Coordinate Transform Spike** - CustomPainter map + mandatory toScene() spike gate
 - [ ] **Phase 4: Full Play Loop** - Four game modes end-to-end: tray, drag-drop, HUD, completion, home screen
 - [ ] **Phase 5: Polish, Welcome & Accessibility** - Welcome screen, anthem, hints, tutorial, session restore, a11y audit
@@ -75,7 +75,7 @@ Plans:
 
 **Wave 3** *(blocked on 02-01 + 02-02 completion)*
 
-- [ ] 02-03-PLAN.md — GameSessionNotifier (Stopwatch-as-truth, explicit hintPenalty, restore-to-paused) + GameLifecycleObserver (.paused/.hidden only) + tests
+- [x] 02-03-PLAN.md — GameSessionNotifier (Stopwatch-as-truth, explicit hintPenalty, restore-to-paused) + GameLifecycleObserver (.paused/.hidden only) + tests
 
 ### Phase 3: Map Render + Coordinate Transform Spike
 
@@ -132,7 +132,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 4/4 | Complete   | 2026-05-31 |
-| 2. State Machine & Repositories | 3/4 | In Progress|  |
+| 2. State Machine & Repositories | 4/4 | Complete   | 2026-05-31 |
 | 3. Map Render + Coordinate Transform Spike | 0/TBD | Not started | - |
 | 4. Full Play Loop | 0/TBD | Not started | - |
 | 5. Polish, Welcome & Accessibility | 0/TBD | Not started | - |
