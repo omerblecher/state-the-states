@@ -71,7 +71,7 @@ void main() {
 
   /// Helper: build the provider, start a game, tick through the countdown
   /// (5 ticks), which leaves the session in [GamePhase.playing].
-  Future<GameSessionNotifier> _startIntoPlaying() async {
+  Future<GameSessionNotifier> startIntoPlaying() async {
     final notifier = container.read(gameSessionProvider.notifier);
     await container.read(gameSessionProvider.future);
     notifier.startGame(GameMode.learn);
@@ -98,7 +98,7 @@ void main() {
     });
 
     test('phase becomes playing after 5 countdown ticks', () async {
-      await _startIntoPlaying();
+      await startIntoPlaying();
       final session = container.read(gameSessionProvider).value!;
       expect(session.phase, GamePhase.playing);
     });
@@ -120,7 +120,7 @@ void main() {
     test(
       'score = (elapsedSecs ~/ 10) + (errorCount * 5) + hintPenalty',
       () async {
-        final notifier = await _startIntoPlaying();
+        final notifier = await startIntoPlaying();
 
         // Add 2 wrong drops → errorCount = 2, score contribution = 10
         notifier.recordDrop('TX', isCorrect: false);
@@ -146,7 +146,7 @@ void main() {
     test(
       'each recordDrop(isCorrect: false) increments errorCount and score',
       () async {
-        final notifier = await _startIntoPlaying();
+        final notifier = await startIntoPlaying();
 
         notifier.recordDrop('TX', isCorrect: false);
         final after1 = container.read(gameSessionProvider).value!;
@@ -161,7 +161,7 @@ void main() {
     );
 
     test('recordDrop(isCorrect: true) appends postal to matchedPostals', () async {
-      final notifier = await _startIntoPlaying();
+      final notifier = await startIntoPlaying();
 
       notifier.recordDrop('TX', isCorrect: true);
       final session = container.read(gameSessionProvider).value!;
@@ -169,7 +169,7 @@ void main() {
     });
 
     test('recordDrop(isCorrect: true) flushes saveSession', () async {
-      final notifier = await _startIntoPlaying();
+      final notifier = await startIntoPlaying();
 
       notifier.recordDrop('TX', isCorrect: true);
       verify(
@@ -184,7 +184,7 @@ void main() {
   group('useHint()', () {
     test('useHint() returns true, adds 5 to score, decrements hintsRemaining',
         () async {
-      final notifier = await _startIntoPlaying();
+      final notifier = await startIntoPlaying();
 
       final result = notifier.useHint();
       expect(result, isTrue);
@@ -195,7 +195,7 @@ void main() {
     });
 
     test('useHint() returns false when hintsRemaining == 0', () async {
-      final notifier = await _startIntoPlaying();
+      final notifier = await startIntoPlaying();
       notifier.useHint(); // 2 → 1
       notifier.useHint(); // 1 → 0
 
@@ -217,14 +217,14 @@ void main() {
 
   group('pauseGame() — SESS-01 / D-02 / D-12', () {
     test('pauseGame() sets phase to paused', () async {
-      final notifier = await _startIntoPlaying();
+      final notifier = await startIntoPlaying();
       notifier.pauseGame();
       final session = container.read(gameSessionProvider).value!;
       expect(session.phase, GamePhase.paused);
     });
 
     test('pauseGame() flushes saveSession', () async {
-      final notifier = await _startIntoPlaying();
+      final notifier = await startIntoPlaying();
       notifier.pauseGame();
       verify(
         () => mockGameRepo.saveSession(
@@ -240,7 +240,7 @@ void main() {
       // stopped), so elapsed is frozen. Verify phase is paused and that a
       // resumeGame() → immediate tick gives a score consistent with no
       // background time having accrued.
-      final notifier = await _startIntoPlaying();
+      final notifier = await startIntoPlaying();
       notifier.pauseGame();
 
       final pausedSession = container.read(gameSessionProvider).value!;
@@ -259,7 +259,7 @@ void main() {
 
   group('resumeGame()', () {
     test('resumeGame() sets phase to playing', () async {
-      final notifier = await _startIntoPlaying();
+      final notifier = await startIntoPlaying();
       notifier.pauseGame();
       notifier.resumeGame();
       final session = container.read(gameSessionProvider).value!;
@@ -353,14 +353,14 @@ void main() {
 
   group('completeGame()', () {
     test('completeGame() sets phase to completed', () async {
-      final notifier = await _startIntoPlaying();
+      final notifier = await startIntoPlaying();
       await notifier.completeGame();
       final session = container.read(gameSessionProvider).value!;
       expect(session.phase, GamePhase.completed);
     });
 
     test('completeGame() calls saveBestScore and clearSession', () async {
-      final notifier = await _startIntoPlaying();
+      final notifier = await startIntoPlaying();
       await notifier.completeGame();
       verify(() => mockHighScoreRepo.saveBestScore(any(), any())).called(1);
       verify(() => mockGameRepo.clearSession()).called(1);
