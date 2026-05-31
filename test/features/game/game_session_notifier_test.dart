@@ -215,12 +215,64 @@ void main() {
     });
   });
 
-  group('pauseGame() — SESS-01 / D-02 / D-12', () {
+  group('pauseGame() — SESS-01 / D-02 / D-12 / CR-01 / CR-02', () {
     test('pauseGame() sets phase to paused', () async {
       final notifier = await startIntoPlaying();
       notifier.pauseGame();
       final session = container.read(gameSessionProvider).value!;
       expect(session.phase, GamePhase.paused);
+    });
+
+    // CR-01: null-state guard
+    test('pauseGame() does not throw when state.value is null (CR-01)', () async {
+      // Access notifier before the provider finishes loading (state is AsyncLoading).
+      // We do NOT await gameSessionProvider.future here, so state.value may be null.
+      final notifier = container.read(gameSessionProvider.notifier);
+      // Must not throw even if state.value is null.
+      expect(() => notifier.pauseGame(), returnsNormally);
+    });
+
+    // CR-02: phase guard — idle
+    test('pauseGame() in idle phase does not change phase (CR-02)', () async {
+      container.read(gameSessionProvider.notifier);
+      await container.read(gameSessionProvider.future);
+      // Phase is idle — call pauseGame().
+      container.read(gameSessionProvider.notifier).pauseGame();
+      final session = container.read(gameSessionProvider).value!;
+      expect(session.phase, GamePhase.idle);
+    });
+
+    // CR-02: phase guard — idle does not write snapshot
+    test('pauseGame() in idle phase does not write a snapshot (CR-02)', () async {
+      container.read(gameSessionProvider.notifier);
+      await container.read(gameSessionProvider.future);
+      container.read(gameSessionProvider.notifier).pauseGame();
+      verifyNever(
+        () => mockGameRepo.saveSession(
+          any(),
+          hintPenalty: any(named: 'hintPenalty'),
+        ),
+      );
+    });
+
+    // CR-02: phase guard — completed does not write snapshot
+    test('pauseGame() in completed phase does not write a snapshot (CR-02)', () async {
+      final notifier = await startIntoPlaying();
+      await notifier.completeGame();
+      // Phase is now completed.
+      final beforePause = container.read(gameSessionProvider).value!;
+      expect(beforePause.phase, GamePhase.completed);
+      // Clear invocations recorded during completeGame() to isolate pauseGame().
+      clearInteractions(mockGameRepo);
+      notifier.pauseGame();
+      final afterPause = container.read(gameSessionProvider).value!;
+      expect(afterPause.phase, GamePhase.completed); // unchanged
+      verifyNever(
+        () => mockGameRepo.saveSession(
+          any(),
+          hintPenalty: any(named: 'hintPenalty'),
+        ),
+      );
     });
 
     test('pauseGame() flushes saveSession', () async {
@@ -264,6 +316,35 @@ void main() {
       notifier.resumeGame();
       final session = container.read(gameSessionProvider).value!;
       expect(session.phase, GamePhase.playing);
+    });
+
+    // CR-01: null-state guard
+    test('resumeGame() does not throw when state.value is null (CR-01)', () async {
+      final notifier = container.read(gameSessionProvider.notifier);
+      // Do NOT await future — state.value may be null.
+      expect(() => notifier.resumeGame(), returnsNormally);
+    });
+  });
+
+  group('recordDrop() null guard — CR-01', () {
+    test('recordDrop() does not throw when state.value is null (CR-01)', () async {
+      final notifier = container.read(gameSessionProvider.notifier);
+      // Do NOT await future — state.value may be null.
+      expect(
+        () => notifier.recordDrop('TX', isCorrect: true),
+        returnsNormally,
+      );
+    });
+  });
+
+  group('completeGame() null guard — CR-01', () {
+    test('completeGame() does not throw when state.value is null (CR-01)', () async {
+      final notifier = container.read(gameSessionProvider.notifier);
+      // Do NOT await future — state.value may be null.
+      await expectLater(
+        () => notifier.completeGame(),
+        returnsNormally,
+      );
     });
   });
 

@@ -124,17 +124,28 @@ class GameSessionNotifier extends AsyncNotifier<GameSession> {
   }
 
   void pauseGame() {
+    final current = state.value;
+    if (current == null) return; // provider still loading — ignore (CR-01)
+    // CR-02: only auto-pause when a game is actively running; backgrounding in
+    // idle or completed must not write a phantom snapshot to the repository.
+    if (current.phase != GamePhase.playing &&
+        current.phase != GamePhase.countdown) {
+      return;
+    }
     // D-02/D-12: _stopwatch.stop() is the ONLY thing that prevents background
     // time from accumulating. Must come before the state update.
     _stopwatch.stop();
     _ticker.stop();
-    state = AsyncData(state.value!.copyWith(phase: GamePhase.paused));
+    final paused = current.copyWith(phase: GamePhase.paused);
+    state = AsyncData(paused);
     // D-07: flush snapshot on pause.
-    _gameStateRepository?.saveSession(state.value!, hintPenalty: _hintPenalty);
+    _gameStateRepository?.saveSession(paused, hintPenalty: _hintPenalty);
   }
 
   void resumeGame() {
-    state = AsyncData(state.value!.copyWith(phase: GamePhase.playing));
+    final current = state.value;
+    if (current == null) return; // provider still loading — ignore (CR-01)
+    state = AsyncData(current.copyWith(phase: GamePhase.playing));
     _stopwatch.start(); // Resume Stopwatch from where it stopped.
     _ticker.start(_onTick);
   }
@@ -153,7 +164,8 @@ class GameSessionNotifier extends AsyncNotifier<GameSession> {
   }
 
   void recordDrop(String postal, {required bool isCorrect}) {
-    final current = state.value!;
+    final current = state.value;
+    if (current == null) return; // provider still loading — ignore (CR-01)
     if (isCorrect) {
       final updated = current.copyWith(
         matchedPostals: [...current.matchedPostals, postal],
@@ -202,7 +214,8 @@ class GameSessionNotifier extends AsyncNotifier<GameSession> {
   Future<void> completeGame() async {
     _stopwatch.stop(); // Stopwatch has no more work to do.
     _ticker.stop();
-    final current = state.value!;
+    final current = state.value;
+    if (current == null) return; // provider still loading — ignore (CR-01)
     state = AsyncData(current.copyWith(phase: GamePhase.completed));
     if (_highScoreRepository != null) {
       await _highScoreRepository!.saveBestScore(current.mode, current.score);
