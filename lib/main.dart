@@ -1,23 +1,30 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-// Placeholder main.dart — replaced in plan 01-04 with full app entry point.
-// Kept minimal so the project compiles while the app shell is being built.
-void main() {
-  runApp(const _PlaceholderApp());
-}
+import 'app.dart';
+import 'core/ads/ads_initializer.dart';
+import 'core/audio/audio_service_provider.dart';
+import 'core/audio/real_audio_service.dart';
 
-class _PlaceholderApp extends StatelessWidget {
-  const _PlaceholderApp();
-
-  @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(
-      title: 'State the States',
-      home: Scaffold(
-        body: Center(
-          child: Text('State the States — loading…'),
-        ),
-      ),
-    );
-  }
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // COPPA init: child-directed flags are set BEFORE MobileAds.initialize()
+  // inside initializeAds() (plan 01-01).
+  await initializeAds();
+  runApp(
+    ProviderScope(
+      overrides: [
+        // Swap the silent StubAudioService default for the real just_audio
+        // service in the running app (the ProviderScope-override pattern).
+        audioServiceProvider.overrideWith((_) {
+          final svc = RealAudioService();
+          unawaited(svc.init());
+          return svc;
+        }),
+      ],
+      child: const App(),
+    ),
+  );
 }
