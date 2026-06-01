@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 4 Plan 01 complete — routing foundation + Wave 0 test stubs
-last_updated: "2026-06-01T14:25:00.000Z"
+stopped_at: Phase 4 Plan 02 complete — MapScreen game loop core (sequence, DragTarget, PopScope, countdown overlay, mode matrix)
+last_updated: "2026-06-01T15:00:00.000Z"
 last_activity: 2026-06-01
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 19
-  completed_plans: 14
-  percent: 63
+  completed_plans: 15
+  percent: 68
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-05-30)
 ## Current Position
 
 Phase: 4
-Plan: 1 complete (1 of 6)
+Plan: 2 complete (2 of 6)
 Status: Executing
 Last activity: 2026-06-01
 
-Progress: [██████████░░░░░░░░░░] 63%
+Progress: [█████████████░░░░░░░] 68%
 
 ## Performance Metrics
 
@@ -58,6 +58,7 @@ Progress: [██████████░░░░░░░░░░] 63%
 | Phase 03 P04 | 25min | 2 tasks | 2 files |
 | Phase 03 P05 | 15min | 2 tasks | 3 files |
 | Phase 04 P01 | 15min | 2 tasks | 6 files |
+| Phase 04 P02 | 25min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -82,6 +83,8 @@ Recent decisions affecting current work:
 - 04-01: MapScreen.mode changed to non-nullable GameMode with default GameMode.learn — preserves const MapScreen() backward-compat (Risk 7)
 - 04-01: state_tray_test.dart skip param is bool? in Flutter 3.44/Dart 3.12 — string skip causes compile error; use skip:true
 - 04-01: state_tray_test.dart omits state_tray.dart import — Dart compile failure on missing file even with skip:true; import deferred to Plan 03
+- 04-02: find.byType(PopScope) finds PopScope<dynamic> not PopScope<Object?> — use find.byWidgetPredicate((w) => w is PopScope) for reliable generic-type matching in widget tests
+- 04-02: _startSequence called from _buildMapStack (inside stateDataProvider.when data callback) so it runs after MapData resolves, not from initState
 
 ### Pending Todos
 
@@ -104,6 +107,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-01T14:25:00.000Z
-Stopped at: Completed Phase 4 Plan 01 — routing foundation + Wave 0 test stubs
-Resume file: .planning/phases/04-full-play-loop/04-02-PLAN.md
+Last session: 2026-06-01T15:00:00.000Z
+Stopped at: Completed Phase 4 Plan 02 — MapScreen game loop core
+Resume file: .planning/phases/04-full-play-loop/04-03-PLAN.md
