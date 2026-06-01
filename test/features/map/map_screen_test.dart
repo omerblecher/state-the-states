@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:state_states/core/data/state_data_service.dart';
+import 'package:state_states/features/game/game_hud.dart';
 import 'package:state_states/features/game/game_mode.dart';
 import 'package:state_states/features/map/map_screen.dart';
 import 'package:state_states/features/map/usa_map_painter.dart';
@@ -308,6 +309,58 @@ void main() {
         find.byWidgetPredicate((w) => w is PopScope),
         findsAtLeastNWidgets(1),
       );
+    },
+  );
+
+  // ---------------------------------------------------------------------------
+  // Plan 04 tests: GameHud and StateTray AnimatedSwitcher
+  // ---------------------------------------------------------------------------
+
+  testWidgets(
+    'MapScreen shows GameHud in game layout',
+    (tester) async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final mapData =
+          await tester.runAsync(() => container.read(stateDataProvider.future));
+      expect(mapData, isNotNull);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            stateDataProvider.overrideWith((ref) async => mapData!),
+          ],
+          child: const MaterialApp(home: MapScreen()),
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.byType(GameHud), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'MapScreen shows StateTray AnimatedSwitcher area',
+    (tester) async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final mapData =
+          await tester.runAsync(() => container.read(stateDataProvider.future));
+      expect(mapData, isNotNull);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            stateDataProvider.overrideWith((ref) async => mapData!),
+          ],
+          child: const MaterialApp(home: MapScreen()),
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.byType(AnimatedSwitcher), findsAtLeastNWidgets(1));
     },
   );
 }
