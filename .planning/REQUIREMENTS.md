@@ -124,7 +124,7 @@ Golf-style scoring (lowest wins). Canonical entity set = **50 states** (no D.C.)
 | MAP-04 | Phase 3 | Complete |
 | DRAG-01 | Phase 4 | Pending |
 | DRAG-02 | Phase 4 | Pending |
-| DRAG-03 | Phase 4 | Pending |
+| DRAG-03 | Phase 4 | Complete (04-03) |
 | DRAG-04 | Phase 4 | Pending |
 | DRAG-05 | Phase 4 | Pending |
 | MODE-01 | Phase 4 | Pending |

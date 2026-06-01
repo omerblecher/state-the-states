@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 4 Plan 02 complete — MapScreen game loop core (sequence, DragTarget, PopScope, countdown overlay, mode matrix)
-last_updated: "2026-06-01T15:00:00.000Z"
+stopped_at: Phase 4 Plan 03 complete — StateTray widget (bounce animation, mode-driven card face, Draggable<String>, 7 widget tests)
+last_updated: "2026-06-01T12:43:00.000Z"
 last_activity: 2026-06-01
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 19
-  completed_plans: 15
-  percent: 68
+  completed_plans: 16
+  percent: 71
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-05-30)
 ## Current Position
 
 Phase: 4
-Plan: 2 complete (2 of 6)
+Plan: 3 complete (3 of 6)
 Status: Executing
 Last activity: 2026-06-01
 
-Progress: [█████████████░░░░░░░] 68%
+Progress: [██████████████░░░░░░] 71%
 
 ## Performance Metrics
 
@@ -59,6 +59,7 @@ Progress: [█████████████░░░░░░░] 68%
 | Phase 03 P05 | 15min | 2 tasks | 3 files |
 | Phase 04 P01 | 15min | 2 tasks | 6 files |
 | Phase 04 P02 | 25min | 2 tasks | 2 files |
+| Phase 04 P03 | 3min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -85,6 +86,8 @@ Recent decisions affecting current work:
 - 04-01: state_tray_test.dart omits state_tray.dart import — Dart compile failure on missing file even with skip:true; import deferred to Plan 03
 - 04-02: find.byType(PopScope) finds PopScope<dynamic> not PopScope<Object?> — use find.byWidgetPredicate((w) => w is PopScope) for reliable generic-type matching in widget tests
 - 04-02: _startSequence called from _buildMapStack (inside stateDataProvider.when data callback) so it runs after MapData resolves, not from initState
+- 04-03: StateTray is a direct port of FlagTray — SvgPicture replaced by mode-driven _cardFace() switch; no other structural changes
+- 04-03: triggerBounce() exposed as public on StateTrayState so MapScreen can call _trayKey.currentState?.triggerBounce() on incorrect drop
 
 ### Pending Todos
 
@@ -107,6 +110,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-01T15:00:00.000Z
-Stopped at: Completed Phase 4 Plan 02 — MapScreen game loop core
-Resume file: .planning/phases/04-full-play-loop/04-03-PLAN.md
+Last session: 2026-06-01T12:43:00.000Z
+Stopped at: Completed Phase 4 Plan 03 — StateTray widget
+Resume file: .planning/phases/04-full-play-loop/04-04-PLAN.md

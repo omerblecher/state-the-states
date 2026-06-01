@@ -132,7 +132,7 @@ Plans:
 **Wave 2** *(blocked on Wave 1 completion)*
 
 - [x] 04-02-PLAN.md — MapScreen game core: TickerProviderStateMixin, GameLifecycleObserver mount, sequence init (DC filtered, shuffled 50), DragTarget + _handleDrop, PopScope guard, countdown overlay, mode→showLabels mapping
-- [ ] 04-03-PLAN.md — StateTray widget: port FlagTray with mode-driven card face, bounce animation, GlobalKey discipline, kPinAnchor; state_tray_test MODE-01/04 assertions
+- [x] 04-03-PLAN.md — StateTray widget: port FlagTray with mode-driven card face, bounce animation, GlobalKey discipline, kPinAnchor; state_tray_test MODE-01/04 assertions
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -171,5 +171,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Foundation | 4/4 | Complete   | 2026-05-31 |
 | 2. State Machine & Repositories | 4/4 | Complete   | 2026-05-31 |
 | 3. Map Render + Coordinate Transform Spike | 5/5 | Complete   | 2026-05-31 |
-| 4. Full Play Loop | 2/6 | Executing | - |
+| 4. Full Play Loop | 3/6 | Executing | - |
 | 5. Polish, Welcome & Accessibility | 0/TBD | Not started | - |
