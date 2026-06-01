@@ -15,10 +15,10 @@ class StubAudioService implements AudioService {
   Future<void> playError() async {}
 
   @override
-  Future<void> playAnthem() async {}
+  Future<void> fadeInAnthem() async {}
 
   @override
-  Future<void> stopAnthem() async {}
+  Future<void> fadeOutAnthem() async {}
 
   @override
   Future<void> setMuted(bool muted) async {}

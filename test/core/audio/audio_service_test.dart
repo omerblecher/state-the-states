@@ -65,8 +65,8 @@ void main() {
       await stub.init();
       await stub.playCorrect();
       await stub.playError();
-      await stub.playAnthem();
-      await stub.stopAnthem();
+      await stub.fadeInAnthem();
+      await stub.fadeOutAnthem();
       await stub.setMuted(true);
       await stub.dispose();
       // If we reach here without throwing, all seven interface methods are no-ops.
