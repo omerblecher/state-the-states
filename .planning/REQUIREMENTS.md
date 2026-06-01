@@ -13,8 +13,8 @@ Golf-style scoring (lowest wins). Canonical entity set = **50 states** (no D.C.)
 ### Welcome & Audio
 
 - [ ] **WEL-01**: On launch, the app shows a premium opening screen featuring a stylized vector silhouette of the USA (no spinning globe).
-- [ ] **WEL-02**: The app programmatically plays a self-rendered, rights-clean "Star-Spangled Banner" instrumental on the opening screen.
-- [ ] **WEL-03**: The anthem fades out seamlessly when transitioning from the opening screen into the menu.
+- [x] **WEL-02**: The app programmatically plays a self-rendered, rights-clean "Star-Spangled Banner" instrumental on the opening screen.
+- [x] **WEL-03**: The anthem fades out seamlessly when transitioning from the opening screen into the menu.
 - [ ] **WEL-04**: An audio service (`just_audio`) safely loads, plays, and releases audio across lifecycle events, with no leaked players on dispose.
 
 ### Home & Navigation
@@ -138,8 +138,8 @@ Golf-style scoring (lowest wins). Canonical entity set = **50 states** (no D.C.)
 | HOME-01 | Phase 4 | Complete |
 | HOME-02 | Phase 4 | Complete |
 | WEL-01 | Phase 5 | Pending |
-| WEL-02 | Phase 5 | Pending |
-| WEL-03 | Phase 5 | Pending |
+| WEL-02 | Phase 5 | Complete |
+| WEL-03 | Phase 5 | Complete |
 | HINT-01 | Phase 5 | Pending |
 | HINT-02 | Phase 5 | Pending |
 | SESS-04 | Phase 5 | Pending |
