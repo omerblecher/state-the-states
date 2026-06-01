@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/data/state_data_service.dart';
+import '../../core/models/state_data.dart';
 import 'hit_detection.dart';
+import 'usa_map_painter.dart';
 
 // 6 named regions for Criterion 1 validation (TX, CA, FL, NY + insets AK, HI)
 const _regionPostals = ['TX', 'CA', 'FL', 'NY', 'AK', 'HI'];
@@ -213,33 +215,33 @@ class _SpikeMapScreenState extends ConsumerState<SpikeMapScreen> {
                         height: 628,
                         child: Stack(
                           children: [
-                            // Ocean background
-                            Container(
-                              width: 1000,
-                              height: 628,
-                              color: const Color(0xFFA8D5E8),
-                            ),
-                            // 6 named DragTarget regions — colored semi-transparent
-                            // boxes positioned at real state bounding boxes.
-                            for (int i = 0; i < regions.length; i++)
-                              Positioned.fromRect(
-                                rect: regions[i].boundingBox.rect,
-                                child: DragTarget<String>(
-                                  builder: (ctx, candidateData, rejectedData) => Container(
-                                    color: _regionColors[i].withValues(alpha: 0.4),
-                                    child: Center(
-                                      child: Text(
-                                        regions[i].postal,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
+                            // Full US map base layer — real state polygon outlines
+                            // and ocean background (matches the production MapScreen).
+                            AnimatedBuilder(
+                              animation: _controller,
+                              builder: (_, _) => CustomPaint(
+                                isComplex: true,
+                                size: const Size(1000, 628),
+                                painter: UsaMapPainter(
+                                  states: mapData.states,
+                                  matchedPostals: const {},
+                                  insetFrameRects: mapData.insetFrameRects,
+                                  viewScale: _controller.value.getMaxScaleOnAxis(),
                                 ),
                               ),
+                            ),
+                            // 6 spike states highlighted with ACTUAL polygon fills
+                            // (not bounding-box rectangles). Visual matches the hit
+                            // detection exactly — no false "miss" at bbox corners.
+                            CustomPaint(
+                              size: const Size(1000, 628),
+                              painter: _SpikeHighlightPainter(
+                                highlights: List.generate(
+                                  regions.length,
+                                  (i) => (regions[i], _regionColors[i]),
+                                ),
+                              ),
+                            ),
                             // Outer full-size catch-all DragTarget — validates
                             // coordinate transform accuracy via stateHitTest().
                             Positioned.fill(
@@ -303,4 +305,41 @@ class _SpikeMapScreenState extends ConsumerState<SpikeMapScreen> {
       ),
     );
   }
+}
+
+/// Draws the actual polygon fills for the spike test states — no bounding-box
+/// rectangles. The colored region on screen matches exactly what stateHitTest()
+/// considers to be that state, so drops inside the colored area always return
+/// the correct postal code.
+class _SpikeHighlightPainter extends CustomPainter {
+  final List<(StateData, Color)> highlights;
+
+  const _SpikeHighlightPainter({required this.highlights});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final fillPaint = Paint()..style = PaintingStyle.fill;
+    for (final (state, color) in highlights) {
+      fillPaint.color = color.withValues(alpha: 0.45);
+      for (final path in state.paths) {
+        canvas.drawPath(path, fillPaint);
+      }
+      // Label at centroid.
+      final tp = TextPainter(
+        text: TextSpan(
+          text: state.postal,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 12,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      tp.paint(canvas, state.centroid - Offset(tp.width / 2, tp.height / 2));
+    }
+  }
+
+  @override
+  bool shouldRepaint(_SpikeHighlightPainter old) => false;
 }
