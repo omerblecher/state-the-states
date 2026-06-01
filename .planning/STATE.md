@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 4 planned — 6 plans ready to execute
-last_updated: "2026-06-01T14:00:00.000Z"
+stopped_at: Phase 4 Plan 01 complete — routing foundation + Wave 0 test stubs
+last_updated: "2026-06-01T14:25:00.000Z"
 last_activity: 2026-06-01
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 19
-  completed_plans: 13
-  percent: 60
+  completed_plans: 14
+  percent: 63
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-30)
 
 **Core value:** A child can drag a state onto its correct place on the U.S. map and immediately feel they got it right — the interactive map placement loop must be smooth, forgiving, and rewarding above everything else.
-**Current focus:** Phase 3 — map render + coordinate transform spike
+**Current focus:** Phase 4 — full play loop
 
 ## Current Position
 
-Phase: 3
-Plan: 5 complete (2 of 5)
-Status: Ready to execute
-Last activity: 2026-05-31
+Phase: 4
+Plan: 1 complete (1 of 6)
+Status: Executing
+Last activity: 2026-06-01
 
-Progress: [██████████] 100%
+Progress: [██████████░░░░░░░░░░] 63%
 
 ## Performance Metrics
 
@@ -57,6 +57,7 @@ Progress: [██████████] 100%
 | Phase 03 P03 | 5min | 1 tasks | 1 files |
 | Phase 03 P04 | 25min | 2 tasks | 2 files |
 | Phase 03 P05 | 15min | 2 tasks | 3 files |
+| Phase 04 P01 | 15min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -78,6 +79,9 @@ Recent decisions affecting current work:
 - [Phase ?]: 03-04-SUMMARY.md
 - [Phase ?]: 03-05: if (kDebugMode) GoRoute single-element collection-if (no spread) avoids List<GoRoute> type error in routes list
 - [Phase ?]: 03-05: Fixture-backed spike tests need no tester.runAsync() — overrideWith(async => fixture) resolves synchronously unlike compute()-backed provider
+- 04-01: MapScreen.mode changed to non-nullable GameMode with default GameMode.learn — preserves const MapScreen() backward-compat (Risk 7)
+- 04-01: state_tray_test.dart skip param is bool? in Flutter 3.44/Dart 3.12 — string skip causes compile error; use skip:true
+- 04-01: state_tray_test.dart omits state_tray.dart import — Dart compile failure on missing file even with skip:true; import deferred to Plan 03
 
 ### Pending Todos
 
@@ -100,6 +104,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-01T09:35:35.338Z
-Stopped at: Phase 4 context gathered
-Resume file: .planning/phases/04-full-play-loop/04-UI-SPEC.md
+Last session: 2026-06-01T14:25:00.000Z
+Stopped at: Completed Phase 4 Plan 01 — routing foundation + Wave 0 test stubs
+Resume file: .planning/phases/04-full-play-loop/04-02-PLAN.md

@@ -127,7 +127,7 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 04-01-PLAN.md — Routing foundation: /play GameMode extra + /complete route + CompletionScreen stub + three Wave 0 test file stubs
+- [x] 04-01-PLAN.md — Routing foundation: /play GameMode extra + /complete route + CompletionScreen stub + three Wave 0 test file stubs
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -171,5 +171,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Foundation | 4/4 | Complete   | 2026-05-31 |
 | 2. State Machine & Repositories | 4/4 | Complete   | 2026-05-31 |
 | 3. Map Render + Coordinate Transform Spike | 5/5 | Complete   | 2026-05-31 |
-| 4. Full Play Loop | 0/6 | Planned | - |
+| 4. Full Play Loop | 1/6 | Executing | - |
 | 5. Polish, Welcome & Accessibility | 0/TBD | Not started | - |
