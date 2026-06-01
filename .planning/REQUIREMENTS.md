@@ -54,8 +54,8 @@ Golf-style scoring (lowest wins). Canonical entity set = **50 states** (no D.C.)
 - [x] **SCORE-03**: The HUD displays the live score and elapsed time during play.
 - [x] **SCORE-04**: The HUD shows a progress indicator (states placed / 50).
 - [ ] **SCORE-05**: The best (lowest) score for each mode is stored locally via `SharedPreferences`.
-- [ ] **SCORE-06**: A completion screen shows the final score, a 1–3 star rating, and a play-again call to action.
-- [ ] **SCORE-07**: Beating the stored best score shows a personal-best badge and a confetti overlay on the completion screen.
+- [x] **SCORE-06**: A completion screen shows the final score, a 1–3 star rating, and a play-again call to action.
+- [x] **SCORE-07**: Beating the stored best score shows a personal-best badge and a confetti overlay on the completion screen.
 
 ### Hints
 
@@ -133,8 +133,8 @@ Golf-style scoring (lowest wins). Canonical entity set = **50 states** (no D.C.)
 | MODE-04 | Phase 4 | Pending |
 | SCORE-03 | Phase 4 | Complete (04-04) |
 | SCORE-04 | Phase 4 | Complete (04-04) |
-| SCORE-06 | Phase 4 | Pending |
-| SCORE-07 | Phase 4 | Pending |
+| SCORE-06 | Phase 4 | Complete (04-05) |
+| SCORE-07 | Phase 4 | Complete (04-05) |
 | HOME-01 | Phase 4 | Pending |
 | HOME-02 | Phase 4 | Pending |
 | WEL-01 | Phase 5 | Pending |

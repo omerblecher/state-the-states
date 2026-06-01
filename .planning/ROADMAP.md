@@ -140,7 +140,7 @@ Plans:
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 04-05-PLAN.md — Full CompletionScreen: star formula, PB badge, confetti overlay, score card, both CTAs; completion_screen_test widget tests
+- [x] 04-05-PLAN.md — Full CompletionScreen: star formula, PB badge, confetti overlay, score card, both CTAs; completion_screen_test widget tests
 - [ ] 04-06-PLAN.md — HomeScreen mode cards: 4 gradient _ModeCard widgets, FutureBuilder scores, tap-to-play navigation; home_screen_test assertions
 
 **UI hint**: yes
@@ -171,5 +171,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Foundation | 4/4 | Complete   | 2026-05-31 |
 | 2. State Machine & Repositories | 4/4 | Complete   | 2026-05-31 |
 | 3. Map Render + Coordinate Transform Spike | 5/5 | Complete   | 2026-05-31 |
-| 4. Full Play Loop | 4/6 | Executing | - |
+| 4. Full Play Loop | 5/6 | Executing | - |
 | 5. Polish, Welcome & Accessibility | 0/TBD | Not started | - |
