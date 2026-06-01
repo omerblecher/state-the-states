@@ -27,12 +27,12 @@ class MapScreen extends ConsumerStatefulWidget {
     super.key,
     this.matchedPostals = const {},
     this.showLabels = false,
-    this.mode,
+    this.mode = GameMode.learn,
   });
 
   final Set<String> matchedPostals;
   final bool showLabels;
-  final GameMode? mode;
+  final GameMode mode;
 
   @override
   ConsumerState<MapScreen> createState() => _MapScreenState();
