@@ -35,10 +35,10 @@ Golf-style scoring (lowest wins). Canonical entity set = **50 states** (no D.C.)
 ### Drag-and-Drop Interaction
 
 - [ ] **DRAG-01**: The player drags a state token from the tray and drops it on the map; drop coordinates are recovered via `TransformationController.toScene()` (correct under zoom/pan).
-- [ ] **DRAG-02**: A correct drop fills the placed state and plays a fly-to-centroid confirmation animation.
+- [x] **DRAG-02**: A correct drop fills the placed state and plays a fly-to-centroid confirmation animation.
 - [ ] **DRAG-03**: Micro-states use an invisible 48dp radial proximity-snapping hit-box around their centroid (RI, DE, CT, NJ, MD, NH, VT), with deterministic tiebreaking between adjacent small states.
-- [ ] **DRAG-04**: Correct drops produce light haptic feedback plus a success sound effect.
-- [ ] **DRAG-05**: Incorrect drops produce medium haptic feedback, an error sound, a "not quite — try again" snackbar, and a token bounce.
+- [x] **DRAG-04**: Correct drops produce light haptic feedback plus a success sound effect.
+- [x] **DRAG-05**: Incorrect drops produce medium haptic feedback, an error sound, a "not quite — try again" snackbar, and a token bounce.
 
 ### Game Modes (label visibility matrix)
 
@@ -51,8 +51,8 @@ Golf-style scoring (lowest wins). Canonical entity set = **50 states** (no D.C.)
 
 - [ ] **SCORE-01**: Golf scoring adds +1 point for every 10 seconds elapsed.
 - [ ] **SCORE-02**: Golf scoring adds +5 points for each token placed on an incorrect state path.
-- [ ] **SCORE-03**: The HUD displays the live score and elapsed time during play.
-- [ ] **SCORE-04**: The HUD shows a progress indicator (states placed / 50).
+- [x] **SCORE-03**: The HUD displays the live score and elapsed time during play.
+- [x] **SCORE-04**: The HUD shows a progress indicator (states placed / 50).
 - [ ] **SCORE-05**: The best (lowest) score for each mode is stored locally via `SharedPreferences`.
 - [ ] **SCORE-06**: A completion screen shows the final score, a 1–3 star rating, and a play-again call to action.
 - [ ] **SCORE-07**: Beating the stored best score shows a personal-best badge and a confetti overlay on the completion screen.
@@ -123,16 +123,16 @@ Golf-style scoring (lowest wins). Canonical entity set = **50 states** (no D.C.)
 | MAP-03 | Phase 3 | Complete |
 | MAP-04 | Phase 3 | Complete |
 | DRAG-01 | Phase 4 | Pending |
-| DRAG-02 | Phase 4 | Pending |
+| DRAG-02 | Phase 4 | Complete (04-04) |
 | DRAG-03 | Phase 4 | Complete (04-03) |
-| DRAG-04 | Phase 4 | Pending |
-| DRAG-05 | Phase 4 | Pending |
+| DRAG-04 | Phase 4 | Complete (04-04) |
+| DRAG-05 | Phase 4 | Complete (04-04) |
 | MODE-01 | Phase 4 | Pending |
 | MODE-02 | Phase 4 | Pending |
 | MODE-03 | Phase 4 | Pending |
 | MODE-04 | Phase 4 | Pending |
-| SCORE-03 | Phase 4 | Pending |
-| SCORE-04 | Phase 4 | Pending |
+| SCORE-03 | Phase 4 | Complete (04-04) |
+| SCORE-04 | Phase 4 | Complete (04-04) |
 | SCORE-06 | Phase 4 | Pending |
 | SCORE-07 | Phase 4 | Pending |
 | HOME-01 | Phase 4 | Pending |

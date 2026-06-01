@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 4 Plan 03 complete — StateTray widget (bounce animation, mode-driven card face, Draggable<String>, 7 widget tests)
-last_updated: "2026-06-01T12:43:00.000Z"
+stopped_at: Phase 4 Plan 04 complete — GameHud widget, fly-to-centroid OverlayEntry, StateTray wired into MapScreen
+last_updated: "2026-06-01T12:52:00.000Z"
 last_activity: 2026-06-01
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 19
-  completed_plans: 16
-  percent: 71
+  completed_plans: 17
+  percent: 74
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-05-30)
 ## Current Position
 
 Phase: 4
-Plan: 3 complete (3 of 6)
+Plan: 4 complete (4 of 6)
 Status: Executing
 Last activity: 2026-06-01
 
-Progress: [██████████████░░░░░░] 71%
+Progress: [██████████████░░░░░░] 74%
 
 ## Performance Metrics
 
@@ -60,6 +60,7 @@ Progress: [██████████████░░░░░░] 71%
 | Phase 04 P01 | 15min | 2 tasks | 6 files |
 | Phase 04 P02 | 25min | 2 tasks | 2 files |
 | Phase 04 P03 | 3min | 2 tasks | 2 files |
+| Phase 04 P04 | 7min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -88,6 +89,9 @@ Recent decisions affecting current work:
 - 04-02: _startSequence called from _buildMapStack (inside stateDataProvider.when data callback) so it runs after MapData resolves, not from initState
 - 04-03: StateTray is a direct port of FlagTray — SvgPicture replaced by mode-driven _cardFace() switch; no other structural changes
 - 04-03: triggerBounce() exposed as public on StateTrayState so MapScreen can call _trayKey.currentState?.triggerBounce() on incorrect drop
+- 04-04: GameHud uses hardcoded string literals — no l10n dependency in Phase 4
+- 04-04: _buildMapStack receives GameSession? as parameter from build() to avoid double ref.watch on same provider
+- 04-04: UsaMapPainter predicate cast: use 'is UsaMapPainter' guard before 'as UsaMapPainter' — avoids TypeError from _ShapeBorderPainter in StateTray's button painter
 
 ### Pending Todos
 
@@ -110,6 +114,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-01T12:43:00.000Z
-Stopped at: Completed Phase 4 Plan 03 — StateTray widget
-Resume file: .planning/phases/04-full-play-loop/04-04-PLAN.md
+Last session: 2026-06-01T12:52:00.000Z
+Stopped at: Completed Phase 4 Plan 04 — GameHud + fly-to-centroid overlay + StateTray wired
+Resume file: .planning/phases/04-full-play-loop/04-05-PLAN.md

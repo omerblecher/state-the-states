@@ -136,7 +136,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 04-04-PLAN.md — GameHud + fly-to-centroid OverlayEntry: full HUD wired, AnimatedSwitcher StateTray, _animateCorrectDrop, _advanceToNextPostal → /complete navigation
+- [x] 04-04-PLAN.md — GameHud + fly-to-centroid OverlayEntry: full HUD wired, AnimatedSwitcher StateTray, _animateCorrectDrop, _advanceToNextPostal → /complete navigation
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
@@ -171,5 +171,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Foundation | 4/4 | Complete   | 2026-05-31 |
 | 2. State Machine & Repositories | 4/4 | Complete   | 2026-05-31 |
 | 3. Map Render + Coordinate Transform Spike | 5/5 | Complete   | 2026-05-31 |
-| 4. Full Play Loop | 3/6 | Executing | - |
+| 4. Full Play Loop | 4/6 | Executing | - |
 | 5. Polish, Welcome & Accessibility | 0/TBD | Not started | - |
