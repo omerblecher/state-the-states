@@ -152,14 +152,24 @@ class _MapScreenState extends ConsumerState<MapScreen>
     }
   }
 
-  /// Computes the Matrix4 that centers [sceneCentroid] on screen at 2.5× zoom.
+  /// Computes the Matrix4 that centers [sceneCentroid] on screen at an adaptive zoom.
   ///
   /// Template: _fitMapToScreen() matrix construction — MUST include setEntry(2,2)
   /// (RESEARCH.md Pitfall 1; T-05-12). Returns current matrix if context unavailable.
-  Matrix4 _computeHintMatrix(Offset sceneCentroid) {
+  /// [target] is used to pick zoom level: tiny states (area<400) get 6×, small
+  /// states (area<1500) get 4×, everything else gets 2.5×.
+  Matrix4 _computeHintMatrix(Offset sceneCentroid, [StateData? target]) {
     final box = _ivKey.currentContext?.findRenderObject() as RenderBox?;
     if (box == null) return _controller.value; // T-05-11: null-guard prevents crash
-    const double targetZoom = 2.5;
+    double targetZoom = 2.5;
+    if (target != null) {
+      final area = target.boundingBox.rect.width * target.boundingBox.rect.height;
+      if (area < 400) {
+        targetZoom = 6.0;
+      } else if (area < 1500) {
+        targetZoom = 4.0;
+      }
+    }
     final double newScale = (_minScale * targetZoom).clamp(_minScale, _maxScale);
     final double tx = box.size.width / 2 - sceneCentroid.dx * newScale;
     final double ty = box.size.height / 2 - sceneCentroid.dy * newScale;
@@ -185,7 +195,7 @@ class _MapScreenState extends ConsumerState<MapScreen>
     setState(() => _hintPostal = _currentPostal);
 
     final startMatrix = _controller.value.clone();
-    final endMatrix = _computeHintMatrix(target.centroid);
+    final endMatrix = _computeHintMatrix(target.centroid, target);
     _hintZoomAnimation = Matrix4Tween(begin: startMatrix, end: endMatrix)
         .animate(CurvedAnimation(
       parent: _hintZoomController,
@@ -211,7 +221,7 @@ class _MapScreenState extends ConsumerState<MapScreen>
     final fitScale =
         math.min(box.size.width / mapW, box.size.height / mapH).clamp(0.08, 1.0);
     _minScale = fitScale;
-    _maxScale = fitScale * 4.0;
+    _maxScale = fitScale * 12.0;
     final tx = (box.size.width - mapW * fitScale) / 2;
     final ty = (box.size.height - mapH * fitScale) / 2;
     final m = Matrix4.identity()
@@ -361,10 +371,19 @@ class _MapScreenState extends ConsumerState<MapScreen>
 
     final scale = _controller.value.getMaxScaleOnAxis();
     final hitPostal = stateHitTest(rawScene, _states, scale: scale);
-    final isCorrect = hitPostal == _currentPostal;
+    bool isCorrect = hitPostal == _currentPostal;
+
+    // Forgiving fallback for tiny states (RI, DE, CT, etc.): if the drop missed
+    // all polygons but landed inside the target's bounding box, accept as correct.
+    if (!isCorrect && hitPostal == null) {
+      final targetRect = _stateIndex[_currentPostal]?.boundingBox.rect;
+      if (targetRect != null && targetRect.contains(rawScene)) {
+        isCorrect = true;
+      }
+    }
 
     if (isCorrect) {
-      ref.read(gameSessionProvider.notifier).recordDrop(hitPostal!, isCorrect: true);
+      ref.read(gameSessionProvider.notifier).recordDrop(hitPostal ?? _currentPostal, isCorrect: true);
       HapticFeedback.lightImpact();
       ref.read(audioServiceProvider).playCorrect();
       // Fly-to-centroid animation; advances sequence in whenComplete callback.
@@ -723,7 +742,7 @@ class _MapScreenState extends ConsumerState<MapScreen>
                     cardKey: _trayCardKey,
                     showName: showName,
                     hintsRemaining: session?.hintsRemaining ?? 2,
-                    onHintPressed: _onHintPressed, // Phase 5: hint zoom animation
+                    onHintPressed: session?.phase == GamePhase.playing ? _onHintPressed : null,
                   ),
           ),
         ],
