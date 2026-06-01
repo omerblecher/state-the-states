@@ -167,7 +167,7 @@ Plans:
 **Wave 1** *(parallel — 05-02 and 05-03 share no files)*
 
 - [x] 05-02-PLAN.md — Audio service refactor: playAnthem/stopAnthem → fadeInAnthem/fadeOutAnthem (Timer.periodic, 500ms/800ms); anthem.wav path wired in RealAudioService
-- [ ] 05-03-PLAN.md — app.dart routing + WelcomeScreen: /welcome initial route, /tutorial stub route, stagger USA silhouette CustomPainter, anthem fade-in/out CTA
+- [x] 05-03-PLAN.md — app.dart routing + WelcomeScreen: /welcome initial route, /tutorial stub route, stagger USA silhouette CustomPainter, anthem fade-in/out CTA
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -192,4 +192,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. State Machine & Repositories | 4/4 | Complete   | 2026-05-31 |
 | 3. Map Render + Coordinate Transform Spike | 5/5 | Complete   | 2026-05-31 |
 | 4. Full Play Loop | 6/6 | Complete   | 2026-06-01 |
-| 5. Polish, Welcome & Accessibility | 2/7 | In Progress|  |
+| 5. Polish, Welcome & Accessibility | 3/7 | In Progress|  |

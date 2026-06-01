@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 05-polish-welcome-accessibility/05-02-PLAN.md
-last_updated: "2026-06-01T15:14:57.333Z"
+stopped_at: Completed 05-polish-welcome-accessibility/05-03-PLAN.md
+last_updated: "2026-06-01T15:22:04.947Z"
 last_activity: 2026-06-01
 progress:
   total_phases: 5
   completed_phases: 4
   total_plans: 26
-  completed_plans: 21
+  completed_plans: 22
   percent: 80
 ---
 
@@ -30,7 +30,7 @@ Plan: 6 complete (5 of 6)
 Status: Phase complete — ready for verification
 Last activity: 2026-06-01
 
-Progress: [████████░░] 81%
+Progress: [█████████░] 85%
 
 ## Performance Metrics
 
@@ -64,6 +64,7 @@ Progress: [████████░░] 81%
 | Phase 04 P05 | 3min | 2 tasks | 2 files |
 | Phase 04 P06 | 2 | 2 tasks | 2 files |
 | Phase 05-polish-welcome-accessibility P02 | 3min | 2 tasks | 4 files |
+| Phase 05-polish-welcome-accessibility P03 | 15min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -99,6 +100,9 @@ Recent decisions affecting current work:
 - 04-05: geographicalMaster mode color is BF360C not E65100 — UI-SPEC locked value
 - 04-05: CompletionScreen widget tests use MaterialApp(home: ...) — no ProviderScope needed (reads only widget fields)
 - [Phase ?]: 05-02: playAnthem/stopAnthem renamed to fadeInAnthem/fadeOutAnthem; Timer.periodic 20ms chosen over AnimationController for service-layer fade
+- [Phase ?]: TutorialScreen stub uses ConsumerStatefulWidget for forward-compatibility with Plan 04 PageView onboarding
+- [Phase ?]: 05-03: staggerOrder initialized lazily in stateDataProvider data callback to avoid crash before MapData resolves
+- [Phase ?]: 05-03: fire-and-forget fadeOutAnthem() + Future.delayed 850ms for smooth navigation (RESEARCH.md Pitfall 5)
 
 ### Pending Todos
 
@@ -121,6 +125,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-01T15:14:57.323Z
-Stopped at: Completed 05-polish-welcome-accessibility/05-02-PLAN.md
+Last session: 2026-06-01T15:22:04.936Z
+Stopped at: Completed 05-polish-welcome-accessibility/05-03-PLAN.md
 Resume file: None
