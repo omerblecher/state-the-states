@@ -233,12 +233,18 @@ class _SpikeMapScreenState extends ConsumerState<SpikeMapScreen> {
                             // 6 spike states highlighted with ACTUAL polygon fills
                             // (not bounding-box rectangles). Visual matches the hit
                             // detection exactly — no false "miss" at bbox corners.
-                            CustomPaint(
-                              size: const Size(1000, 628),
-                              painter: _SpikeHighlightPainter(
-                                highlights: List.generate(
-                                  regions.length,
-                                  (i) => (regions[i], _regionColors[i]),
+                            // AnimatedBuilder keeps label font size in screen pixels
+                            // by passing viewScale so the painter can invert it.
+                            AnimatedBuilder(
+                              animation: _controller,
+                              builder: (_, _) => CustomPaint(
+                                size: const Size(1000, 628),
+                                painter: _SpikeHighlightPainter(
+                                  highlights: List.generate(
+                                    regions.length,
+                                    (i) => (regions[i], _regionColors[i]),
+                                  ),
+                                  viewScale: _controller.value.getMaxScaleOnAxis(),
                                 ),
                               ),
                             ),
@@ -313,25 +319,31 @@ class _SpikeMapScreenState extends ConsumerState<SpikeMapScreen> {
 /// the correct postal code.
 class _SpikeHighlightPainter extends CustomPainter {
   final List<(StateData, Color)> highlights;
+  final double viewScale;
 
-  const _SpikeHighlightPainter({required this.highlights});
+  const _SpikeHighlightPainter({
+    required this.highlights,
+    required this.viewScale,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
     final fillPaint = Paint()..style = PaintingStyle.fill;
+    // Font size in scene units: dividing by viewScale keeps it ~12 screen pixels
+    // at any zoom level (scene coords are multiplied by viewScale on screen).
+    final labelSize = 12.0 / viewScale;
     for (final (state, color) in highlights) {
       fillPaint.color = color.withValues(alpha: 0.45);
       for (final path in state.paths) {
         canvas.drawPath(path, fillPaint);
       }
-      // Label at centroid.
       final tp = TextPainter(
         text: TextSpan(
           text: state.postal,
-          style: const TextStyle(
+          style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
-            fontSize: 12,
+            fontSize: labelSize,
           ),
         ),
         textDirection: TextDirection.ltr,
@@ -341,5 +353,6 @@ class _SpikeHighlightPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_SpikeHighlightPainter old) => false;
+  bool shouldRepaint(_SpikeHighlightPainter old) =>
+      (old.viewScale - viewScale).abs() > 0.001;
 }
