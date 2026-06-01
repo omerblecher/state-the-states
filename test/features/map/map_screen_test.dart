@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:state_states/core/data/state_data_service.dart';
+import 'package:state_states/features/game/game_mode.dart';
 import 'package:state_states/features/map/map_screen.dart';
+import 'package:state_states/features/map/usa_map_painter.dart';
 
 void main() {
   // rootBundle asset access + compute() require an initialized binding.
@@ -138,6 +140,174 @@ void main() {
       // Complete the future before widget disposal to avoid timer-pending assertions.
       completer.complete(MapData(states: const [], insetFrameRects: const []));
       await tester.pump();
+    },
+  );
+
+  // ---------------------------------------------------------------------------
+  // Mode → showLabels matrix tests
+  // ---------------------------------------------------------------------------
+
+  group('MapScreen mode visibility', () {
+    Future<void> pumpWithMode(
+      WidgetTester tester,
+      MapData mapData,
+      GameMode mode,
+    ) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            stateDataProvider.overrideWith((ref) async => mapData),
+          ],
+          child: MaterialApp(home: MapScreen(mode: mode)),
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+    }
+
+    testWidgets(
+      'Learn mode passes showLabels: true to UsaMapPainter',
+      (tester) async {
+        final container = ProviderContainer();
+        addTearDown(container.dispose);
+        final mapData =
+            await tester.runAsync(() => container.read(stateDataProvider.future));
+        expect(mapData, isNotNull);
+
+        await pumpWithMode(tester, mapData!, GameMode.learn);
+
+        expect(
+          find.byWidgetPredicate(
+            (w) =>
+                w is CustomPaint &&
+                (w.painter as UsaMapPainter?)?.showLabels == true,
+          ),
+          findsAtLeastNWidgets(1),
+        );
+      },
+    );
+
+    testWidgets(
+      'StatesMaster mode passes showLabels: false to UsaMapPainter',
+      (tester) async {
+        final container = ProviderContainer();
+        addTearDown(container.dispose);
+        final mapData =
+            await tester.runAsync(() => container.read(stateDataProvider.future));
+        expect(mapData, isNotNull);
+
+        await pumpWithMode(tester, mapData!, GameMode.statesMaster);
+
+        expect(
+          find.byWidgetPredicate(
+            (w) =>
+                w is CustomPaint &&
+                (w.painter as UsaMapPainter?)?.showLabels == false,
+          ),
+          findsAtLeastNWidgets(1),
+        );
+      },
+    );
+
+    testWidgets(
+      'GeographicalMaster mode passes showLabels: true to UsaMapPainter',
+      (tester) async {
+        final container = ProviderContainer();
+        addTearDown(container.dispose);
+        final mapData =
+            await tester.runAsync(() => container.read(stateDataProvider.future));
+        expect(mapData, isNotNull);
+
+        await pumpWithMode(tester, mapData!, GameMode.geographicalMaster);
+
+        expect(
+          find.byWidgetPredicate(
+            (w) =>
+                w is CustomPaint &&
+                (w.painter as UsaMapPainter?)?.showLabels == true,
+          ),
+          findsAtLeastNWidgets(1),
+        );
+      },
+    );
+
+    testWidgets(
+      'GrandMaster mode passes showLabels: false to UsaMapPainter',
+      (tester) async {
+        final container = ProviderContainer();
+        addTearDown(container.dispose);
+        final mapData =
+            await tester.runAsync(() => container.read(stateDataProvider.future));
+        expect(mapData, isNotNull);
+
+        await pumpWithMode(tester, mapData!, GameMode.grandMaster);
+
+        expect(
+          find.byWidgetPredicate(
+            (w) =>
+                w is CustomPaint &&
+                (w.painter as UsaMapPainter?)?.showLabels == false,
+          ),
+          findsAtLeastNWidgets(1),
+        );
+      },
+    );
+  });
+
+  // ---------------------------------------------------------------------------
+  // DragTarget and PopScope presence tests
+  // ---------------------------------------------------------------------------
+
+  testWidgets(
+    'MapScreen has DragTarget for drop handling',
+    (tester) async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final mapData =
+          await tester.runAsync(() => container.read(stateDataProvider.future));
+      expect(mapData, isNotNull);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            stateDataProvider.overrideWith((ref) async => mapData!),
+          ],
+          child: const MaterialApp(home: MapScreen()),
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.byType(DragTarget<String>), findsAtLeastNWidgets(1));
+    },
+  );
+
+  testWidgets(
+    'MapScreen has PopScope back-button guard',
+    (tester) async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final mapData =
+          await tester.runAsync(() => container.read(stateDataProvider.future));
+      expect(mapData, isNotNull);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            stateDataProvider.overrideWith((ref) async => mapData!),
+          ],
+          child: const MaterialApp(home: MapScreen()),
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+
+      // find.byType(PopScope) matches PopScope<dynamic> but the tree has
+      // PopScope<Object?> — use a widgetPredicate to match any PopScope.
+      expect(
+        find.byWidgetPredicate((w) => w is PopScope),
+        findsAtLeastNWidgets(1),
+      );
     },
   );
 }
