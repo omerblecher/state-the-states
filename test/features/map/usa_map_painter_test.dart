@@ -108,4 +108,100 @@ void main() {
 
     expect(painter2.shouldRepaint(painter1), isTrue);
   });
+
+  group('hintPostal glow', () {
+    test('shouldRepaint returns true when hintPostal changes from null to non-null',
+        () {
+      const painterNull = UsaMapPainter(
+        states: [],
+        matchedPostals: {},
+        insetFrameRects: [],
+        viewScale: 1.0,
+        hintPostal: null,
+      );
+      const painterWithHint = UsaMapPainter(
+        states: [],
+        matchedPostals: {},
+        insetFrameRects: [],
+        viewScale: 1.0,
+        hintPostal: 'TX',
+      );
+
+      // Glow start: null → 'TX' must trigger repaint (D-H3)
+      expect(painterWithHint.shouldRepaint(painterNull), isTrue);
+
+      // Glow end: 'TX' → null must trigger repaint (D-H3)
+      expect(painterNull.shouldRepaint(painterWithHint), isTrue);
+    });
+
+    test('shouldRepaint returns false when hintPostal is unchanged', () {
+      const painter1 = UsaMapPainter(
+        states: [],
+        matchedPostals: {},
+        insetFrameRects: [],
+        viewScale: 1.0,
+        hintPostal: 'CA',
+      );
+      const painter2 = UsaMapPainter(
+        states: [],
+        matchedPostals: {},
+        insetFrameRects: [],
+        viewScale: 1.0,
+        hintPostal: 'CA',
+      );
+
+      expect(painter2.shouldRepaint(painter1), isFalse);
+    });
+
+    testWidgets(
+        'UsaMapPainter with hintPostal renders without exception using real data',
+        (tester) async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final mapData =
+          await tester.runAsync(() => container.read(stateDataProvider.future));
+      expect(mapData, isNotNull);
+
+      // Verify TX is in the data (it always is in the full 51-record set).
+      final txState =
+          mapData!.states.where((s) => s.postal == 'TX').toList();
+      expect(txState, isNotEmpty,
+          reason: 'TX must be present in state data for hint glow test');
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: SizedBox(
+            width: 1000,
+            height: 628,
+            child: CustomPaint(
+              isComplex: true,
+              painter: UsaMapPainter(
+                states: mapData.states,
+                matchedPostals: const {},
+                insetFrameRects: mapData.insetFrameRects,
+                viewScale: 1.0,
+                hintPostal: 'TX', // hint glow active
+              ),
+              size: const Size(1000, 628),
+            ),
+          ),
+        ),
+      );
+
+      // Painter renders without throwing; CustomPaint widget is present.
+      expect(find.byType(CustomPaint), findsAtLeastNWidgets(1));
+
+      // The painter itself should have the hintPostal set.
+      expect(
+        find.byWidgetPredicate(
+          (w) =>
+              w is CustomPaint &&
+              w.painter is UsaMapPainter &&
+              (w.painter! as UsaMapPainter).hintPostal == 'TX',
+        ),
+        findsAtLeastNWidgets(1),
+      );
+    });
+  });
 }

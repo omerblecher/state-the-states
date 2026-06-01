@@ -37,6 +37,7 @@ class UsaMapPainter extends CustomPainter {
     this.showLabels = false,
     this.mode,
     this.viewScale = 1.0,
+    this.hintPostal, // Phase 5: yellow-green glow target state
   });
 
   final List<StateData> states;
@@ -55,12 +56,17 @@ class UsaMapPainter extends CustomPainter {
   /// Current InteractiveViewer scale factor; drives scale-adaptive border width.
   final double viewScale;
 
+  /// Phase 5: if non-null, this state postal is rendered with the D-H3
+  /// yellow-green glow color (0xFFBBFF44) during the 3-second hint window.
+  final String? hintPostal;
+
   @override
   bool shouldRepaint(covariant UsaMapPainter old) =>
       !setEquals(old.matchedPostals, matchedPostals) || // setEquals avoids reference-equality trap (Pitfall 5)
       old.showLabels != showLabels ||
       old.mode != mode ||
-      (old.viewScale - viewScale).abs() > 0.001; // threshold avoids sub-pixel thrash
+      (old.viewScale - viewScale).abs() > 0.001 || // threshold avoids sub-pixel thrash
+      old.hintPostal != hintPostal; // Phase 5: glow start/end must trigger repaint (D-H3)
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -121,6 +127,24 @@ class UsaMapPainter extends CustomPainter {
           textDirection: TextDirection.ltr,
         )..layout();
         tp.paint(canvas, state.centroid - Offset(tp.width / 2, tp.height / 2));
+      }
+    }
+
+    // Step 5: Hint glow (Phase 5 — direct port of HighlightPainter._drawHintHighlight())
+    // Source: FlagsRoundTheWorld/lib/features/map/highlight_painter.dart lines 140-151
+    // Drawn AFTER labels so the glow appears on top of everything.
+    if (hintPostal != null) {
+      final hintState = states.cast<StateData?>().firstWhere(
+        (s) => s?.postal == hintPostal,
+        orElse: () => null,
+      );
+      if (hintState != null) {
+        final hintPaint = Paint()
+          ..color = const Color(0xFFBBFF44) // D-H3: locked yellow-green color
+          ..style = PaintingStyle.fill;
+        for (final path in hintState.paths) {
+          canvas.drawPath(path, hintPaint);
+        }
       }
     }
   }
