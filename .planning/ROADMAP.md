@@ -173,7 +173,7 @@ Plans:
 
 - [x] 05-04-PLAN.md — TutorialScreen: 4-slide PageView, _completeTutorial() shared by Skip + Done, setTutorialSeen wired; tutorial_screen_test skip/done paths
 - [x] 05-05-PLAN.md — Hint animation: MapScreen _hintZoomController + Matrix4Tween, _computeHintMatrix, _onHintPressed; UsaMapPainter hintPostal glow
-- [ ] 05-06-PLAN.md — Session restore card: SessionRestoreCard widget + HomeScreen FutureBuilder; home_screen_test HOME-03 coverage
+- [x] 05-06-PLAN.md — Session restore card: SessionRestoreCard widget + HomeScreen FutureBuilder; home_screen_test HOME-03 coverage
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -192,4 +192,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. State Machine & Repositories | 4/4 | Complete   | 2026-05-31 |
 | 3. Map Render + Coordinate Transform Spike | 5/5 | Complete   | 2026-05-31 |
 | 4. Full Play Loop | 6/6 | Complete   | 2026-06-01 |
-| 5. Polish, Welcome & Accessibility | 5/7 | In Progress|  |
+| 5. Polish, Welcome & Accessibility | 6/7 | In Progress|  |

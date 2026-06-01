@@ -21,7 +21,7 @@ Golf-style scoring (lowest wins). Canonical entity set = **50 states** (no D.C.)
 
 - [x] **HOME-01**: The home screen presents one selectable card per game mode.
 - [x] **HOME-02**: Each mode card displays the player's best score and star rating (1–3) for that mode.
-- [ ] **HOME-03**: On relaunch with a saved session, the home screen offers a "continue game" dialog showing mode, score, elapsed time, and states placed.
+- [x] **HOME-03**: On relaunch with a saved session, the home screen offers a "continue game" dialog showing mode, score, elapsed time, and states placed.
 
 ### Map Canvas & Data
 
@@ -143,6 +143,6 @@ Golf-style scoring (lowest wins). Canonical entity set = **50 states** (no D.C.)
 | HINT-01 | Phase 5 | Complete |
 | HINT-02 | Phase 5 | Complete |
 | SESS-04 | Phase 5 | Complete |
-| HOME-03 | Phase 5 | Pending |
+| HOME-03 | Phase 5 | Complete |
 | A11Y-01 | Phase 5 | Pending |
 | A11Y-02 | Phase 5 | Pending |
