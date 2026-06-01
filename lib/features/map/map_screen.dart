@@ -1,3 +1,4 @@
+import 'dart:async' show Timer;
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart' show kDebugMode;
@@ -87,6 +88,12 @@ class _MapScreenState extends ConsumerState<MapScreen>
   // Mute state
   bool _isMuted = false;
 
+  // Phase 5: hint zoom animation
+  late final AnimationController _hintZoomController;
+  Animation<Matrix4>? _hintZoomAnimation;
+  String? _hintPostal; // non-null during 3s glow window (D-H3)
+  Timer? _hintGlowTimer;
+
   // State index: postal → StateData (for centroid lookups in Plan 04 fly animation)
   Map<String, StateData> _stateIndex = {};
 
@@ -106,6 +113,12 @@ class _MapScreenState extends ConsumerState<MapScreen>
     WidgetsBinding.instance.addObserver(_lifecycleObserver);
     _controller = TransformationController();
     _controller.addListener(_onScaleChanged);
+    // Phase 5: hint zoom AnimationController (400ms, RESEARCH.md Pattern 4)
+    _hintZoomController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    _hintZoomController.addListener(_onHintZoomTick);
     // Pitfall 2: _fitMapToScreen() MUST be in addPostFrameCallback, never in initState.
     WidgetsBinding.instance.addPostFrameCallback((_) => _fitMapToScreen());
   }
@@ -116,6 +129,9 @@ class _MapScreenState extends ConsumerState<MapScreen>
     _controller.removeListener(_onScaleChanged);
     _activeOverlay?.remove(); // Pitfall 4: always remove overlay on dispose
     _activeOverlay = null;
+    _hintGlowTimer?.cancel(); // RESEARCH.md Pitfall 4 — MUST cancel before dispose (T-05-10)
+    _hintZoomController.removeListener(_onHintZoomTick);
+    _hintZoomController.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -125,6 +141,65 @@ class _MapScreenState extends ConsumerState<MapScreen>
     if ((s - _currentScale).abs() > 0.005) {
       setState(() => _currentScale = s);
     }
+  }
+
+  // ---------- Hint zoom animation (Phase 5) ------------------------------------
+
+  /// Drives TransformationController from the hint zoom animation on each tick.
+  void _onHintZoomTick() {
+    if (_hintZoomAnimation != null && mounted) {
+      _controller.value = _hintZoomAnimation!.value;
+    }
+  }
+
+  /// Computes the Matrix4 that centers [sceneCentroid] on screen at 2.5× zoom.
+  ///
+  /// Template: _fitMapToScreen() matrix construction — MUST include setEntry(2,2)
+  /// (RESEARCH.md Pitfall 1; T-05-12). Returns current matrix if context unavailable.
+  Matrix4 _computeHintMatrix(Offset sceneCentroid) {
+    final box = _ivKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null) return _controller.value; // T-05-11: null-guard prevents crash
+    const double targetZoom = 2.5;
+    final double newScale = (_minScale * targetZoom).clamp(_minScale, _maxScale);
+    final double tx = box.size.width / 2 - sceneCentroid.dx * newScale;
+    final double ty = box.size.height / 2 - sceneCentroid.dy * newScale;
+    return Matrix4.identity()
+      ..setEntry(0, 0, newScale)
+      ..setEntry(1, 1, newScale)
+      ..setEntry(2, 2, newScale) // Pitfall 1: NEVER omit — InteractiveViewer z-scale
+      ..setEntry(0, 3, tx)
+      ..setEntry(1, 3, ty);
+  }
+
+  /// Called when the hint button is tapped.
+  ///
+  /// 1. Calls useHint() on the notifier (penalty + decrement).
+  /// 2. If consumed: sets _hintPostal for glow, animates zoom to centroid.
+  /// 3. Starts a 3-second Timer that clears _hintPostal (D-H2: stays zoomed after glow).
+  void _onHintPressed() {
+    final consumed = ref.read(gameSessionProvider.notifier).useHint();
+    if (!consumed) return;
+    final target = _stateIndex[_currentPostal];
+    if (target == null) return;
+
+    setState(() => _hintPostal = _currentPostal);
+
+    final startMatrix = _controller.value.clone();
+    final endMatrix = _computeHintMatrix(target.centroid);
+    _hintZoomAnimation = Matrix4Tween(begin: startMatrix, end: endMatrix)
+        .animate(CurvedAnimation(
+      parent: _hintZoomController,
+      curve: Curves.easeInOut, // Claude's discretion (RESEARCH.md §Pattern 4)
+    ));
+    _hintZoomController
+      ..reset()
+      ..forward();
+
+    // 3-second glow window — clear hintPostal after glow (D-H2: viewport stays zoomed)
+    _hintGlowTimer?.cancel();
+    _hintGlowTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted) setState(() => _hintPostal = null);
+    });
   }
 
   /// Fits the 1000×628 viewBox into the available screen area.
@@ -592,6 +667,7 @@ class _MapScreenState extends ConsumerState<MapScreen>
                               showLabels: showLabels,
                               mode: widget.mode,
                               viewScale: _controller.value.getMaxScaleOnAxis(),
+                              hintPostal: _hintPostal, // Phase 5: yellow-green glow
                             ),
                           ),
                         ),
@@ -648,7 +724,7 @@ class _MapScreenState extends ConsumerState<MapScreen>
                     cardKey: _trayCardKey,
                     showName: showName,
                     hintsRemaining: session?.hintsRemaining ?? 2,
-                    onHintPressed: () {}, // Phase 5 wires hint zoom
+                    onHintPressed: _onHintPressed, // Phase 5: hint zoom animation
                   ),
           ),
         ],
