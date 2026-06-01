@@ -304,4 +304,33 @@ void main() {
       expect(find.text('Grand Master'), findsAtLeastNWidgets(1));
     });
   });
+
+  // ---------------------------------------------------------------------------
+  // A11Y: Tap target guideline tests (A11Y-01)
+  // ---------------------------------------------------------------------------
+
+  group('HomeScreen A11Y', () {
+    testWidgets(
+        'Test 1 (A11Y-01): meets androidTapTargetGuideline — all interactive '
+        'controls are at least 48×48dp', (tester) async {
+      final handle = tester.ensureSemantics();
+
+      final mockRepo = MockHighScoreRepository();
+      when(() => mockRepo.getBestScore(any())).thenAnswer((_) async => null);
+
+      final mockGameStateRepo = MockGameStateRepository();
+      when(() => mockGameStateRepo.loadSession())
+          .thenAnswer((_) async => null);
+
+      await tester.pumpWidget(
+        buildHomeScreen(mockRepo, mockGameStateRepo: mockGameStateRepo),
+      );
+      await tester.pump();
+      await tester.pump();
+
+      await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+
+      handle.dispose();
+    });
+  });
 }

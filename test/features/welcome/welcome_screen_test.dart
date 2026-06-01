@@ -130,5 +130,21 @@ void main() {
 
       handle.dispose();
     });
+
+    testWidgets(
+        'Test 4 (A11Y): meets labeledTapTargetGuideline — all interactive '
+        'controls have Semantics labels', (tester) async {
+      final handle = tester.ensureSemantics();
+
+      await tester.pumpWidget(_buildTestApp());
+      await tester.pumpAndSettle();
+
+      await expectLater(
+        tester,
+        meetsGuideline(labeledTapTargetGuideline),
+      );
+
+      handle.dispose();
+    });
   });
 }
