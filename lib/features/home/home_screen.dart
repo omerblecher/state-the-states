@@ -152,11 +152,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         Padding(
           padding: const EdgeInsets.only(bottom: 8),
           child: Center(
-            child: TextButton(
-              onPressed: () {},
-              child: const Text(
-                'Privacy Policy',
-                style: TextStyle(fontSize: 12, color: Colors.grey),
+            child: Semantics(
+              button: true,
+              label: 'View privacy policy',
+              child: SizedBox(
+                height: 48,
+                child: TextButton(
+                  onPressed: () {},
+                  child: const Text(
+                    'Privacy Policy',
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                ),
               ),
             ),
           ),

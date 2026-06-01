@@ -145,7 +145,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
                 padding: const EdgeInsets.symmetric(horizontal: 32),
                 child: Semantics(
                   button: true,
-                  label: 'Get started',
+                  label: 'Get started, opens the game',
                   child: SizedBox(
                     width: double.infinity,
                     height: 56,
@@ -180,15 +180,22 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    TextButton(
-                      onPressed: () {
-                        // Privacy Policy link — url_launcher deferred to v2
-                      },
-                      child: Text(
-                        'Privacy Policy',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.7),
-                          fontSize: 12,
+                    Semantics(
+                      button: true,
+                      label: 'View privacy policy',
+                      child: SizedBox(
+                        height: 48,
+                        child: TextButton(
+                          onPressed: () {
+                            // Privacy Policy link — url_launcher deferred to v2
+                          },
+                          child: Text(
+                            'Privacy Policy',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.7),
+                              fontSize: 12,
+                            ),
+                          ),
                         ),
                       ),
                     ),

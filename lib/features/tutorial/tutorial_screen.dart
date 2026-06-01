@@ -157,12 +157,16 @@ class _TutorialScreenState extends ConsumerState<TutorialScreen> {
                       ),
                       // Next or Done button
                       _currentPage < _slides.length - 1
-                          ? ElevatedButton(
-                              onPressed: () => _pageController.nextPage(
-                                duration: const Duration(milliseconds: 300),
-                                curve: Curves.easeInOut,
+                          ? Semantics(
+                              button: true,
+                              label: 'Next tutorial slide',
+                              child: ElevatedButton(
+                                onPressed: () => _pageController.nextPage(
+                                  duration: const Duration(milliseconds: 300),
+                                  curve: Curves.easeInOut,
+                                ),
+                                child: const Text('NEXT'),
                               ),
-                              child: const Text('NEXT'),
                             )
                           : Semantics(
                               button: true,
@@ -185,11 +189,18 @@ class _TutorialScreenState extends ConsumerState<TutorialScreen> {
               child: Semantics(
                 button: true,
                 label: 'Skip tutorial',
-                child: TextButton(
-                  onPressed: _completeTutorial,
-                  child: const Text(
-                    'Skip',
-                    style: TextStyle(color: Colors.white70, fontSize: 16),
+                child: SizedBox(
+                  height: 48,
+                  child: TextButton(
+                    onPressed: _completeTutorial,
+                    style: TextButton.styleFrom(
+                      minimumSize: const Size(48, 48),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                    ),
+                    child: const Text(
+                      'Skip',
+                      style: TextStyle(color: Colors.white70, fontSize: 16),
+                    ),
                   ),
                 ),
               ),
