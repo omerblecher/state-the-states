@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: context exhaustion at 76% (2026-05-31)
-last_updated: "2026-05-31T17:45:21.906Z"
-last_activity: 2026-05-31
+stopped_at: ~
+last_updated: "2026-06-01T00:00:00Z"
+last_activity: 2026-06-01
 progress:
   total_phases: 5
   completed_phases: 3
