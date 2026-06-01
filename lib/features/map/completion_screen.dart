@@ -9,7 +9,7 @@ import 'package:state_states/features/game/game_session.dart';
 
 /// Returns the number of stars (1–3) earned for this game result.
 ///
-/// D-11 formula:
+/// D-11 formula (lower score is better — golf-style):
 /// - previousBest == null → 3 (first ever game)
 /// - score < previousBest  → 3 (personal best)
 /// - score <= ceil(previousBest * 1.20) → 2 (within 20%)
@@ -21,10 +21,11 @@ int computeStarCount(int score, int? previousBest) {
   return 1;
 }
 
-/// Stub completion screen shown after all 50 states are placed.
+/// Full completion screen shown after all 50 states are placed.
 ///
-/// Plan 04-01: stub only — score display and navigation CTAs.
-/// Plan 04-05: full UI (star animation, confetti, time display).
+/// Shows a 1–3 star rating (D-11), personal-best badge with confetti overlay,
+/// a score card with stat rows, and Back to Menu / Play Again CTAs.
+/// No share_plus or AdMob calls (D-13 — v2 only).
 class CompletionScreen extends ConsumerStatefulWidget {
   const CompletionScreen({
     super.key,
@@ -41,10 +42,10 @@ class CompletionScreen extends ConsumerStatefulWidget {
 
 class _CompletionScreenState extends ConsumerState<CompletionScreen>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _pbController;
-  late final int _starCount;
+  int _starCount = 3;
   bool _isNewPb = false;
   bool _showPbOverlay = false;
+  late AnimationController _pbController;
 
   @override
   void initState() {
@@ -87,115 +88,244 @@ class _CompletionScreenState extends ConsumerState<CompletionScreen>
   Color _modeColor(GameMode mode) => switch (mode) {
         GameMode.learn => const Color(0xFF2E7D32),
         GameMode.statesMaster => const Color(0xFF1565C0),
-        GameMode.geographicalMaster => const Color(0xFFE65100),
+        GameMode.geographicalMaster => const Color(0xFFBF360C),
         GameMode.grandMaster => const Color(0xFF4A148C),
       };
 
+  String _formatTime(Duration elapsed) {
+    final minutes = elapsed.inMinutes;
+    final seconds = (elapsed.inSeconds % 60).toString().padLeft(2, '0');
+    return '${minutes}m ${seconds}s';
+  }
+
   @override
   Widget build(BuildContext context) {
-    final modeColor = _modeColor(widget.session.mode);
     return Scaffold(
+      backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
-        title: Text(widget.session.mode.name),
-        backgroundColor: modeColor,
+        backgroundColor: _modeColor(widget.session.mode),
         foregroundColor: Colors.white,
+        title: Text(widget.session.mode.name),
+        leading: IconButton(
+          icon: const Icon(Icons.home),
+          tooltip: 'Back to menu',
+          onPressed: () => context.go('/'),
+        ),
       ),
       body: Stack(
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Score display
-                Center(
-                  child: Text(
-                    'Score: ${widget.session.score}',
-                    style: const TextStyle(
-                        fontSize: 32, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                // Stars
-                Center(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: List.generate(
-                      3,
-                      (i) => Icon(
-                        i < _starCount
-                            ? Icons.star_rounded
-                            : Icons.star_outline_rounded,
-                        color: i < _starCount ? Colors.amber : Colors.grey,
-                        size: 40,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 32),
-                // Primary CTA — back to home
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton.icon(
-                    onPressed: () => context.go('/'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: modeColor,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14)),
-                    ),
-                    icon: const Icon(Icons.home),
-                    label: const Text('Back to Menu',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold)),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                // Secondary CTA — play again same mode
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: OutlinedButton.icon(
-                    onPressed: () =>
-                        context.go('/play', extra: widget.session.mode),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: modeColor,
-                      side: BorderSide(color: modeColor),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14)),
-                    ),
-                    icon: const Icon(Icons.replay),
-                    label: const Text('Play Again'),
-                  ),
-                ),
-                // NOTE: NO share button (D-13 — v2 only)
-              ],
-            ),
-          ),
-          // Confetti overlay for personal best
-          if (_showPbOverlay)
-            AnimatedBuilder(
-              animation: _pbController,
-              builder: (ctx, _) {
-                final opacity = _pbController.value < 0.8
-                    ? 1.0
-                    : (1.0 - ((_pbController.value - 0.8) / 0.2))
-                        .clamp(0.0, 1.0);
-                return IgnorePointer(
-                  child: Opacity(
-                    opacity: opacity,
-                    child: Positioned.fill(
-                      child: CustomPaint(
-                        painter:
-                            _ConfettiPainter(progress: _pbController.value),
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
+          _buildBody(),
+          if (_showPbOverlay) _buildConfettiOverlay(),
         ],
       ),
+    );
+  }
+
+  Widget _buildBody() {
+    final modeColor = _modeColor(widget.session.mode);
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Star row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(
+              3,
+              (i) => Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Icon(
+                  i < _starCount
+                      ? Icons.star_rounded
+                      : Icons.star_outline_rounded,
+                  color:
+                      i < _starCount ? Colors.amber : Colors.grey.shade400,
+                  size: 56,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Well done! title
+          Text(
+            'Well done!',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.w700,
+              color: modeColor,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          // Personal best badge
+          if (_isNewPb)
+            Column(
+              children: [
+                const SizedBox(height: 8),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    color: Colors.amber.shade700,
+                  ),
+                  child: const Text(
+                    'New Personal Best!',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          const SizedBox(height: 32),
+          // Score card
+          RepaintBoundary(
+            child: Card(
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 8,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    _StatRow(
+                      label: 'Score',
+                      value: '${widget.session.score}',
+                    ),
+                    const Divider(height: 24),
+                    _StatRow(
+                      label: 'Time',
+                      value: _formatTime(widget.session.elapsed),
+                    ),
+                    const Divider(height: 24),
+                    _StatRow(
+                      label: 'Mode',
+                      value: widget.session.mode.name,
+                    ),
+                    if (widget.previousBest != null) ...[
+                      const Divider(height: 24),
+                      _StatRow(
+                        label: 'Previous best',
+                        value: '${widget.previousBest}',
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 32),
+          // Primary CTA — back to home
+          SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: ElevatedButton.icon(
+              onPressed: () => context.go('/'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: modeColor,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              icon: const Icon(Icons.home),
+              label: const Text(
+                'Back to Menu',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Secondary CTA — play again same mode
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: OutlinedButton.icon(
+              onPressed: () =>
+                  context.go('/play', extra: widget.session.mode),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: modeColor,
+                side: BorderSide(color: modeColor),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              icon: const Icon(Icons.replay),
+              label: const Text('Play Again'),
+            ),
+          ),
+          // NOTE: NO share button (D-13 — v2 only)
+        ],
+      ),
+    );
+  }
+
+  Widget _buildConfettiOverlay() {
+    return AnimatedBuilder(
+      animation: _pbController,
+      builder: (ctx, _) {
+        final opacity = _pbController.value < 0.8
+            ? 1.0
+            : (1.0 - ((_pbController.value - 0.8) / 0.2)).clamp(0.0, 1.0);
+        return IgnorePointer(
+          child: Opacity(
+            opacity: opacity,
+            child: Positioned.fill(
+              child: CustomPaint(
+                painter: _ConfettiPainter(progress: _pbController.value),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _StatRow extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _StatRow({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+              color: Colors.grey.shade600,
+            ),
+          ),
+        ),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+          ),
+          textAlign: TextAlign.right,
+        ),
+      ],
     );
   }
 }
@@ -220,15 +350,16 @@ class _ConfettiPainter extends CustomPainter {
       Colors.green,
       Colors.yellow,
       Colors.purple,
-      Colors.orange
+      Colors.orange,
     ];
     return List.generate(
-        40,
-        (i) => _Particle(
-              x: rng.nextDouble(),
-              speed: 0.5 + rng.nextDouble(),
-              color: colors[i % colors.length],
-            ));
+      40,
+      (i) => _Particle(
+        x: rng.nextDouble(),
+        speed: 0.5 + rng.nextDouble(),
+        color: colors[i % colors.length],
+      ),
+    );
   }
 
   @override
