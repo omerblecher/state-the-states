@@ -21,7 +21,8 @@ class StateTray extends StatefulWidget {
   final GlobalKey cardKey; // ONLY assigned to Draggable.child, not feedback
   final bool showName; // true for Learn + StatesMaster; false for Geo/GrandMaster
   final int hintsRemaining;
-  final VoidCallback onHintPressed;
+  /// Null during countdown — button is disabled until game phase is playing.
+  final VoidCallback? onHintPressed;
 
   const StateTray({
     super.key,
@@ -32,10 +33,8 @@ class StateTray extends StatefulWidget {
     required this.cardKey,
     this.showName = true,
     this.hintsRemaining = 2,
-    this.onHintPressed = _noOp,
+    this.onHintPressed,
   });
-
-  static void _noOp() {}
 
   /// The point within the feedback widget that sits at the pointer during drag.
   /// Centre of the 90×60 card: x=45, y=30. Kids aim the card center at the state.
@@ -125,15 +124,18 @@ class StateTrayState extends State<StateTray>
   }
 
   Widget _buildHintButton(BuildContext context) {
+    final enabled = widget.onHintPressed != null && widget.hintsRemaining > 0;
     return Semantics(
       label: 'Hint button, ${widget.hintsRemaining} hints remaining',
       button: true,
+      enabled: enabled,
       child: ElevatedButton.icon(
         style: ElevatedButton.styleFrom(
           minimumSize: const Size(88, 48),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+          disabledBackgroundColor: Colors.grey.shade300,
         ),
-        onPressed: widget.onHintPressed,
+        onPressed: enabled ? widget.onHintPressed : null,
         icon: const Icon(Icons.lightbulb_outline, size: 18),
         label: Text('Hint ×${widget.hintsRemaining}'),
       ),
