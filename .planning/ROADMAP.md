@@ -123,7 +123,26 @@ Plans:
   4. The completion screen shows the final score, a 1–3 star rating, a personal-best badge when the score beats the stored record, and a confetti overlay on a personal best; a play-again call to action returns to mode selection.
   5. The home screen lists all four mode cards, each showing the player's best score and star rating for that mode (or a blank state if never played).
 
-**Plans**: TBD
+**Plans**: 6 plans
+Plans:
+**Wave 1**
+
+- [ ] 04-01-PLAN.md — Routing foundation: /play GameMode extra + /complete route + CompletionScreen stub + three Wave 0 test file stubs
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 04-02-PLAN.md — MapScreen game core: TickerProviderStateMixin, GameLifecycleObserver mount, sequence init (DC filtered, shuffled 50), DragTarget + _handleDrop, PopScope guard, countdown overlay, mode→showLabels mapping
+- [ ] 04-03-PLAN.md — StateTray widget: port FlagTray with mode-driven card face, bounce animation, GlobalKey discipline, kPinAnchor; state_tray_test MODE-01/04 assertions
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 04-04-PLAN.md — GameHud + fly-to-centroid OverlayEntry: full HUD wired, AnimatedSwitcher StateTray, _animateCorrectDrop, _advanceToNextPostal → /complete navigation
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 04-05-PLAN.md — Full CompletionScreen: star formula, PB badge, confetti overlay, score card, both CTAs; completion_screen_test widget tests
+- [ ] 04-06-PLAN.md — HomeScreen mode cards: 4 gradient _ModeCard widgets, FutureBuilder scores, tap-to-play navigation; home_screen_test assertions
+
 **UI hint**: yes
 
 ### Phase 5: Polish, Welcome & Accessibility
@@ -152,5 +171,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Foundation | 4/4 | Complete   | 2026-05-31 |
 | 2. State Machine & Repositories | 4/4 | Complete   | 2026-05-31 |
 | 3. Map Render + Coordinate Transform Spike | 5/5 | Complete   | 2026-05-31 |
-| 4. Full Play Loop | 0/TBD | Not started | - |
+| 4. Full Play Loop | 0/6 | Not started | - |
 | 5. Polish, Welcome & Accessibility | 0/TBD | Not started | - |
