@@ -171,5 +171,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Foundation | 4/4 | Complete   | 2026-05-31 |
 | 2. State Machine & Repositories | 4/4 | Complete   | 2026-05-31 |
 | 3. Map Render + Coordinate Transform Spike | 5/5 | Complete   | 2026-05-31 |
-| 4. Full Play Loop | 0/6 | Not started | - |
+| 4. Full Play Loop | 0/6 | Planned | - |
 | 5. Polish, Welcome & Accessibility | 0/TBD | Not started | - |
