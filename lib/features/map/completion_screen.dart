@@ -285,7 +285,7 @@ class _CompletionScreenState extends ConsumerState<CompletionScreen>
         return IgnorePointer(
           child: Opacity(
             opacity: opacity,
-            child: Positioned.fill(
+            child: SizedBox.expand(
               child: CustomPaint(
                 painter: _ConfettiPainter(progress: _pbController.value),
               ),
