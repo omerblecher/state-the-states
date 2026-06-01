@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 05-polish-welcome-accessibility/05-03-PLAN.md
-last_updated: "2026-06-01T15:28:07.209Z"
+stopped_at: Completed 05-polish-welcome-accessibility/05-04-PLAN.md
+last_updated: "2026-06-01T15:37:09.649Z"
 last_activity: 2026-06-01
 progress:
   total_phases: 5
   completed_phases: 4
   total_plans: 26
-  completed_plans: 23
+  completed_plans: 24
   percent: 80
 ---
 
@@ -30,7 +30,7 @@ Plan: 6 complete (5 of 6)
 Status: Phase complete — ready for verification
 Last activity: 2026-06-01
 
-Progress: [█████████░] 88%
+Progress: [█████████░] 92%
 
 ## Performance Metrics
 
@@ -66,6 +66,7 @@ Progress: [█████████░] 88%
 | Phase 05-polish-welcome-accessibility P02 | 3min | 2 tasks | 4 files |
 | Phase 05-polish-welcome-accessibility P03 | 15min | 2 tasks | 5 files |
 | Phase 05-polish-welcome-accessibility P05 | 10min | 2 tasks | 3 files |
+| Phase 05-polish-welcome-accessibility P04 | 7min | 1 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -105,6 +106,7 @@ Recent decisions affecting current work:
 - [Phase ?]: 05-03: staggerOrder initialized lazily in stateDataProvider data callback to avoid crash before MapData resolves
 - [Phase ?]: 05-03: fire-and-forget fadeOutAnthem() + Future.delayed 850ms for smooth navigation (RESEARCH.md Pitfall 5)
 - [Phase ?]: .planning/phases/05-polish-welcome-accessibility/05-05-SUMMARY.md
+- [Phase ?]: 05-04: GoRouter wrapper in widget tests required when testing context.go('/') — use MaterialApp.router(routerConfig: GoRouter(...))
 
 ### Pending Todos
 
@@ -127,6 +129,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-01T15:28:07.190Z
-Stopped at: Completed 05-polish-welcome-accessibility/05-03-PLAN.md
+Last session: 2026-06-01T15:37:09.633Z
+Stopped at: Completed 05-polish-welcome-accessibility/05-04-PLAN.md
 Resume file: None

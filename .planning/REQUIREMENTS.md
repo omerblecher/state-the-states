@@ -67,7 +67,7 @@ Golf-style scoring (lowest wins). Canonical entity set = **50 states** (no D.C.)
 - [ ] **SESS-01**: The player can pause and resume; the game auto-pauses when the app is backgrounded (timer stops).
 - [ ] **SESS-02**: A mute toggle is available in the HUD and on the pause screen; the preference persists across sessions.
 - [ ] **SESS-03**: An in-progress session persists and can be resumed mid-game after relaunch.
-- [ ] **SESS-04**: A skippable 4-step first-launch tutorial runs once; a "seen" flag persists so it does not repeat.
+- [x] **SESS-04**: A skippable 4-step first-launch tutorial runs once; a "seen" flag persists so it does not repeat.
 - [ ] **SESS-05**: The game is fully offline — all assets and data are bundled, with no network dependency for any core feature.
 
 ### Compliance & Accessibility (COPPA / Families)
@@ -142,7 +142,7 @@ Golf-style scoring (lowest wins). Canonical entity set = **50 states** (no D.C.)
 | WEL-03 | Phase 5 | Complete |
 | HINT-01 | Phase 5 | Complete |
 | HINT-02 | Phase 5 | Complete |
-| SESS-04 | Phase 5 | Pending |
+| SESS-04 | Phase 5 | Complete |
 | HOME-03 | Phase 5 | Pending |
 | A11Y-01 | Phase 5 | Pending |
 | A11Y-02 | Phase 5 | Pending |
