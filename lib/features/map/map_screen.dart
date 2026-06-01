@@ -10,10 +10,13 @@ import '../../core/audio/audio_service_provider.dart';
 import '../../core/data/high_score_repository.dart';
 import '../../core/data/state_data_service.dart';
 import '../../core/models/state_data.dart';
+import '../../features/game/game_hud.dart';
 import '../../features/game/game_lifecycle_observer.dart';
 import '../../features/game/game_mode.dart';
 import '../../features/game/game_phase.dart';
+import '../../features/game/game_session.dart';
 import '../../features/game/game_session_notifier.dart';
+import '../../features/game/state_tray.dart';
 import 'hit_detection.dart';
 import 'usa_map_painter.dart';
 
@@ -71,7 +74,8 @@ class _MapScreenState extends ConsumerState<MapScreen>
   bool _sequenceInitialized = false;
 
   // Tray keys — re-created on each advance (AnimatedSwitcher trigger, Risk 3)
-  GlobalKey _trayKey = GlobalKey();
+  // _trayKey typed as GlobalKey<StateTrayState> so MapScreen can call triggerBounce().
+  GlobalKey<StateTrayState> _trayKey = GlobalKey<StateTrayState>();
   GlobalKey _trayCardKey = GlobalKey();
 
   // Overlay animation — ref held for dispose() cleanup (Pitfall 4)
@@ -263,7 +267,7 @@ class _MapScreenState extends ConsumerState<MapScreen>
       setState(() {
         _currentPostal = _remainingPostals.first;
         // Risk 3: re-create keys so AnimatedSwitcher correctly detects a new widget.
-        _trayKey = GlobalKey();
+        _trayKey = GlobalKey<StateTrayState>();
         _trayCardKey = GlobalKey();
       });
     }
@@ -288,8 +292,8 @@ class _MapScreenState extends ConsumerState<MapScreen>
       ref.read(gameSessionProvider.notifier).recordDrop(hitPostal!, isCorrect: true);
       HapticFeedback.lightImpact();
       ref.read(audioServiceProvider).playCorrect();
-      // Plan 04 adds fly animation (_animateCorrectDrop); for now advance directly.
-      _advanceToNextPostal();
+      // Fly-to-centroid animation; advances sequence in whenComplete callback.
+      _animateCorrectDrop(_currentPostal);
     } else {
       ref.read(gameSessionProvider.notifier).recordDrop(
           hitPostal ?? _currentPostal, isCorrect: false);
@@ -306,7 +310,99 @@ class _MapScreenState extends ConsumerState<MapScreen>
           // Risk 6: float above 120dp tray + 16dp gap
           margin: const EdgeInsets.fromLTRB(16, 0, 16, 136),
         ));
+      _trayKey.currentState?.triggerBounce();
     }
+  }
+
+  // ---------- Fly-to-centroid animation ----------------------------------------
+
+  /// Converts a scene-coordinate centroid to a global screen offset.
+  Offset _centroidToScreen(Offset sceneCentroid) {
+    final matrix = _controller.value;
+    final viewportLocal = MatrixUtils.transformPoint(matrix, sceneCentroid);
+    final box = _ivKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null) return Offset.zero;
+    return box.localToGlobal(viewportLocal);
+  }
+
+  /// Simple token preview used in the fly-to-centroid overlay.
+  Widget _buildTokenPreview(String postal) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(8),
+      child: SizedBox(
+        width: 90,
+        height: 60,
+        child: Center(
+          child: Text(
+            postal,
+            style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w700),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Animates the token card from the tray card position to the state centroid.
+  ///
+  /// Creates an OverlayEntry with a 500ms fly animation (position, scale, opacity).
+  /// On completion: removes overlay, disposes controller, advances to next postal
+  /// (with mounted guard — Risk 2).
+  void _animateCorrectDrop(String postal) {
+    final trayBox =
+        _trayCardKey.currentContext?.findRenderObject() as RenderBox?;
+    if (trayBox == null) {
+      _advanceToNextPostal();
+      return;
+    }
+    final startOffset = trayBox.localToGlobal(Offset.zero);
+
+    final state = _stateIndex[postal];
+    if (state == null) {
+      _advanceToNextPostal();
+      return;
+    }
+    final endOffset = _centroidToScreen(state.centroid);
+
+    final animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    final posAnim = Tween<Offset>(begin: startOffset, end: endOffset)
+        .animate(CurvedAnimation(parent: animController, curve: Curves.easeInOut));
+    final scaleAnim = Tween<double>(begin: 1.0, end: 0.15)
+        .animate(CurvedAnimation(parent: animController, curve: Curves.easeInOut));
+    final opacityAnim = Tween<double>(begin: 1.0, end: 0.0)
+        .animate(CurvedAnimation(parent: animController, curve: Curves.easeInOut));
+
+    // Remove any previous overlay before inserting a new one (Pitfall 4).
+    _activeOverlay?.remove();
+    _activeOverlay = OverlayEntry(
+      builder: (_) => AnimatedBuilder(
+        animation: animController,
+        builder: (ctx, child) => Positioned(
+          left: posAnim.value.dx,
+          top: posAnim.value.dy,
+          child: Opacity(
+            opacity: opacityAnim.value,
+            child: Transform.scale(scale: scaleAnim.value, child: child),
+          ),
+        ),
+        child: SizedBox(
+          width: 90,
+          height: 60,
+          child: _buildTokenPreview(postal),
+        ),
+      ),
+    );
+    Overlay.of(context).insert(_activeOverlay!);
+
+    animController.forward().whenComplete(() {
+      _activeOverlay?.remove();
+      _activeOverlay = null;
+      animController.dispose();
+      if (mounted) _advanceToNextPostal(); // Risk 2: mounted guard
+    });
   }
 
   // ---------- Overlays --------------------------------------------------------
@@ -406,7 +502,7 @@ class _MapScreenState extends ConsumerState<MapScreen>
           error: (e, _) => Center(child: Text('Could not load map: $e')),
           data: (mapData) {
             final mapWidget =
-                _buildMapStack(mapData.states, mapData.insetFrameRects);
+                _buildMapStack(mapData.states, mapData.insetFrameRects, session);
             return Stack(
               children: [
                 mapWidget,
@@ -429,6 +525,7 @@ class _MapScreenState extends ConsumerState<MapScreen>
   Widget _buildMapStack(
     List<StateData> states,
     List<Rect> insetFrameRects,
+    GameSession? session,
   ) {
     // Store states for _handleDrop; call _startSequence once.
     _states = states;
@@ -456,10 +553,15 @@ class _MapScreenState extends ConsumerState<MapScreen>
       color: const Color(0xFFA8D5E8), // ocean colour fills letterbox area
       child: Column(
         children: [
-          // Row 1: GameHud placeholder (replaced by real GameHud in Plan 04)
-          SizedBox(
-            height: 48,
-            child: ColoredBox(color: Colors.grey.shade800),
+          // Row 1: Real GameHud — score, timer, progress bar, mute/pause
+          GameHud(
+            score: session?.score ?? 0,
+            elapsed: session?.elapsed ?? Duration.zero,
+            matchedCount: _matchedPostals.length,
+            totalFlags: 50,
+            onPause: _onPausePressed,
+            isMuted: _isMuted,
+            onMuteToggle: _toggleMute,
           ),
           // Row 2: Map area
           Expanded(
@@ -494,7 +596,8 @@ class _MapScreenState extends ConsumerState<MapScreen>
                         ),
                         // DragTarget covers the full map canvas — last in stack
                         DragTarget<String>(
-                          builder: (ctx, _, __) => const SizedBox.expand(),
+                          builder: (context2, candidate, rejected) =>
+                              const SizedBox.expand(),
                           onWillAcceptWithDetails: (_) => true,
                           onAcceptWithDetails: _handleDrop,
                         ),
@@ -528,46 +631,28 @@ class _MapScreenState extends ConsumerState<MapScreen>
               ],
             ),
           ),
-          // Row 3: StateTray placeholder (AnimatedSwitcher — replaced in Plan 03)
+          // Row 3: Real StateTray in AnimatedSwitcher (FadeTransition only — Risk: SlideTransition moves hit-test area)
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 300),
             transitionBuilder: (child, animation) =>
                 FadeTransition(opacity: animation, child: child),
             child: _currentPostal.isEmpty
                 ? const SizedBox.shrink()
-                : _buildStateTrayPlaceholder(showName),
+                : StateTray(
+                    key: _trayKey,
+                    postal: _currentPostal,
+                    stateName: _stateNameFor(_currentPostal),
+                    mode: widget.mode,
+                    sequenceIndex: 50 - _remainingPostals.length,
+                    cardKey: _trayCardKey,
+                    showName: showName,
+                    hintsRemaining: session?.hintsRemaining ?? 2,
+                    onHintPressed: () {}, // Phase 5 wires hint zoom
+                  ),
           ),
         ],
       ),
     );
   }
 
-  /// Placeholder tray card shown until Plan 03 creates StateTray.
-  /// Displays postal (and optionally name) in a 120dp container.
-  Widget _buildStateTrayPlaceholder(bool showName) {
-    return SizedBox(
-      key: _trayKey,
-      height: 120,
-      child: ColoredBox(
-        color: Colors.grey.shade200,
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                _currentPostal,
-                style: const TextStyle(
-                    fontSize: 28, fontWeight: FontWeight.bold),
-              ),
-              if (showName)
-                Text(
-                  _stateNameFor(_currentPostal),
-                  style: const TextStyle(fontSize: 14),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }

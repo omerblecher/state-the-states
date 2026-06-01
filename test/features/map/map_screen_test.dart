@@ -181,7 +181,8 @@ void main() {
           find.byWidgetPredicate(
             (w) =>
                 w is CustomPaint &&
-                (w.painter as UsaMapPainter?)?.showLabels == true,
+                w.painter is UsaMapPainter &&
+                (w.painter! as UsaMapPainter).showLabels == true,
           ),
           findsAtLeastNWidgets(1),
         );
@@ -203,7 +204,8 @@ void main() {
           find.byWidgetPredicate(
             (w) =>
                 w is CustomPaint &&
-                (w.painter as UsaMapPainter?)?.showLabels == false,
+                w.painter is UsaMapPainter &&
+                (w.painter! as UsaMapPainter).showLabels == false,
           ),
           findsAtLeastNWidgets(1),
         );
@@ -225,7 +227,8 @@ void main() {
           find.byWidgetPredicate(
             (w) =>
                 w is CustomPaint &&
-                (w.painter as UsaMapPainter?)?.showLabels == true,
+                w.painter is UsaMapPainter &&
+                (w.painter! as UsaMapPainter).showLabels == true,
           ),
           findsAtLeastNWidgets(1),
         );
@@ -247,7 +250,8 @@ void main() {
           find.byWidgetPredicate(
             (w) =>
                 w is CustomPaint &&
-                (w.painter as UsaMapPainter?)?.showLabels == false,
+                w.painter is UsaMapPainter &&
+                (w.painter! as UsaMapPainter).showLabels == false,
           ),
           findsAtLeastNWidgets(1),
         );
