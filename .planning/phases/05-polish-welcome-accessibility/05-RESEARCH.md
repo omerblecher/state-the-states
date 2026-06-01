@@ -693,21 +693,24 @@ testWidgets('A11Y-01: all tap targets meet 48dp Android guideline', (tester) asy
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Should `playAnthem()` be replaced by `fadeInAnthem()`, or should `playAnthem()` remain and `fadeInAnthem()` be added as a separate interface method?**
    - What we know: `StubAudioService` currently implements `playAnthem()` and `stopAnthem()`. Replacing them breaks the existing interface test.
    - What's unclear: Whether the planner wants a clean rename (two new methods, remove two old) or an additive approach (keep old methods, add new fade variants).
    - Recommendation: Replace `playAnthem()` → `fadeInAnthem()` and `stopAnthem()` → `fadeOutAnthem()` in a single interface update. The existing `audio_service_test.dart` test calls both; update it in the same task. This is cleaner than having duplicate methods.
+   - **RESOLVED: Replace both methods (`playAnthem` → `fadeInAnthem`, `stopAnthem` → `fadeOutAnthem`) atomically across audio_service.dart, real_audio_service.dart, stub_audio_service.dart, and audio_service_test.dart in plan 05-02.**
 
 2. **Should `SessionRestoreCard`'s "Continue" button use `restoreGame()` + navigate, or navigate and let `MapScreen.initState` detect the session?**
    - What we know: `GameSessionNotifier.restoreGame()` exists and puts the session in `GamePhase.paused`. `MapScreen._startSequence()` is called from `_buildMapStack`, not `initState`, so a pre-loaded session would need different initialization logic.
    - What's unclear: Whether the current `MapScreen._startSequence()` can be short-circuited for a restored session.
    - Recommendation: Call `restoreGame(session, hintPenalty)` on the notifier from `HomeScreen` before navigating, then `MapScreen` detects `GamePhase.paused` and skips re-shuffling. This matches how Phase 2 designed the restore flow.
+   - **RESOLVED: HomeScreen's FutureBuilder onContinue callback calls `ref.read(gameSessionProvider.notifier).restoreGame(session, hintPenalty: hintPenalty)` then `context.go('/play', extra: session.mode)`. SessionRestoreCard receives a plain VoidCallback `onContinue`.**
 
 3. **What file name should replace `anthem_placeholder.wav`?**
    - Options: Keep `anthem_placeholder.wav` (no code change needed) vs. rename to `anthem.wav` (cleaner but requires code update).
    - Recommendation: Rename to `anthem.wav` to remove the "placeholder" ambiguity. Update `RealAudioService.init()` `setAsset()` call in the same task.
+   - **RESOLVED: Rename to `anthem.wav`. Plan 05-01 Task 2 renames the file; plan 05-02 updates the `setAsset('assets/audio/anthem.wav')` call in RealAudioService.init().**
 
 ---
 
