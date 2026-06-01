@@ -158,7 +158,27 @@ Plans:
   4. A 4-step skippable tutorial runs exactly once on first launch and never repeats; a second cold launch skips it entirely.
   5. Every interactive control (HUD buttons, mode cards, tray token) is at least 48×48dp and carries a `Semantics` label; correct/incorrect outcomes are signaled by haptic + audio + visual change — never by color alone; final `aapt dump badging` confirms no `AD_ID` permission.
 
-**Plans**: TBD
+**Plans**: 7 plans
+Plans:
+**Wave 0** *(off-device, no Flutter dependency)*
+
+- [ ] 05-01-PLAN.md — Anthem rendering: FluidSynth + GeneralUser GS SF2 → assets/audio/anthem.wav; LICENSES provenance update
+
+**Wave 1** *(parallel — 05-02 and 05-03 share no files)*
+
+- [ ] 05-02-PLAN.md — Audio service refactor: playAnthem/stopAnthem → fadeInAnthem/fadeOutAnthem (Timer.periodic, 500ms/800ms); anthem.wav path wired in RealAudioService
+- [ ] 05-03-PLAN.md — app.dart routing + WelcomeScreen: /welcome initial route, /tutorial stub route, stagger USA silhouette CustomPainter, anthem fade-in/out CTA
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 05-04-PLAN.md — TutorialScreen: 4-slide PageView, _completeTutorial() shared by Skip + Done, setTutorialSeen wired; tutorial_screen_test skip/done paths
+- [ ] 05-05-PLAN.md — Hint animation: MapScreen _hintZoomController + Matrix4Tween, _computeHintMatrix, _onHintPressed; UsaMapPainter hintPostal glow
+- [ ] 05-06-PLAN.md — Session restore card: SessionRestoreCard widget + HomeScreen FutureBuilder; home_screen_test HOME-03 coverage
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 05-07-PLAN.md — Accessibility audit: Semantics labels on all Phase 5 controls, androidTapTargetGuideline tests, aapt dump badging COMP-01/02 re-verification
+
 **UI hint**: yes
 
 ## Progress
@@ -172,4 +192,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. State Machine & Repositories | 4/4 | Complete   | 2026-05-31 |
 | 3. Map Render + Coordinate Transform Spike | 5/5 | Complete   | 2026-05-31 |
 | 4. Full Play Loop | 6/6 | Complete   | 2026-06-01 |
-| 5. Polish, Welcome & Accessibility | 0/TBD | Not started | - |
+| 5. Polish, Welcome & Accessibility | 0/7 | Not started | - |
