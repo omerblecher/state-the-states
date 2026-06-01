@@ -1,7 +1,8 @@
 ---
 phase: 4
 slug: full-play-loop
-status: draft
+status: approved
+reviewed_at: 2026-06-01
 shadcn_initialized: false
 preset: none
 created: 2026-06-01
@@ -61,17 +62,13 @@ All values in logical pixels (sp). Flutter uses `sp` for font sizes; these are d
 
 | Role | Size | Weight | Line Height | Usage |
 |------|------|--------|-------------|-------|
-| Display | 28sp | w800 | 1.2 | Home screen title "State the States" (port from Phase 1 placeholder) |
-| Heading | 22sp | w800 | 1.2 | Home screen section heading; completion screen mode name in AppBar |
-| Body | 17sp | w700 (bold) | 1.4 | Mode card name label; token face abbreviation large text |
-| Body small | 14sp | w400 | 1.5 | Token face full state name (States Master mode); stat row labels in completion screen |
-| Label | 12sp | w400 | 1.4 | Mode card description; HUD score/timer text; tray name beneath card |
-| Caption | 11sp | w400 | 1.4 | Mode card "Best: N" / "Not played" secondary text; privacy footer |
-| Token large | 28sp | w700 | 1.0 | State token abbreviation (Learn, Geographical Master modes) — large face text |
-| Token name | 17sp | w600 | 1.0 | State name on card face (States Master mode) — may shrink to fit 90dp width |
+| Display/Heading | 28sp | w700 | 1.2 | Home screen title "State the States"; completion screen mode name in AppBar; pause overlay title "Paused"; countdown overlay seconds; completion screen "Well done!" title |
+| Body | 17sp | w700 | 1.4 | Mode card name label; token face abbreviation large text; State token abbreviation (Learn, Geographical Master modes) |
+| Body small | 14sp | w400 | 1.5 | Token face full state name (States Master mode); stat row labels in completion screen; "Choose a mode" subtitle |
+| Label/Caption | 12sp | w400 | 1.4 | Mode card description; HUD score/timer text; tray name beneath card; mode card "Best: N" / "Not played" secondary text; privacy footer |
 
 **Notes:**
-- Two weights in regular use: w400 (regular) and w700 (bold). w600 and w800 appear only in specific roles listed above.
+- Two weights in regular use: w400 (regular) and w700 (bold). No other weights used.
 - Token face text must fit within 90dp card width. Use `TextOverflow.ellipsis` + `maxLines: 1` for state names. Abbreviations (2 chars) never overflow.
 - HUD uses `FontFeature.tabularFigures()` on the elapsed timer so digits don't shift width during play (port from Flags `game_hud.dart` line 68).
 
@@ -135,11 +132,13 @@ Unfilled stars: `Colors.white.withValues(alpha: 0.4)` on mode cards (dark gradie
 
 **Widget:** `HomeScreen` extends `ConsumerStatefulWidget` — replaces Phase 1 placeholder body.
 
+**Focal point:** The mode card list — the 4 full-width gradient cards are the primary visual anchor.
+
 **Layout:** `Scaffold(backgroundColor: #F0F4F8)` → `SafeArea` → `Column`:
-1. **Header row** (padding: fromLTRB(20, 20, 12, 4)): map/USA icon (28dp, color `#1565C0`) + app title text 22sp w800 color `#0D2E6B` + `info_outline` IconButton (48dp tap target).
-2. **Section subtitle** (padding: left 20, bottom 12): "Choose a mode" 14sp grey w500.
+1. **Header row** (padding: fromLTRB(20, 20, 12, 4)): map/USA icon (28dp, color `#1565C0`) + app title text 28sp w700 color `#0D2E6B` + `info_outline` IconButton (48dp tap target).
+2. **Section subtitle** (padding: left 20, bottom 12): "Choose a mode" 14sp grey w400.
 3. **Expanded ListView** (horizontal padding 16dp): 4 `_ModeCard` widgets separated by 12dp `SizedBox` gaps.
-4. **Privacy footer** (bottom 8dp): centered TextButton "Privacy Policy" 11sp grey.
+4. **Privacy footer** (bottom 8dp): centered TextButton "Privacy Policy" 12sp grey.
 
 **Source:** Direct port of `FlagsRoundTheWorld/lib/features/home/home_screen.dart`. Omit: ad banner slot, `_checkSavedSession` / continue dialog (Phase 5 HOME-03), `url_launcher` About dialog (Phase 5).
 
@@ -158,10 +157,10 @@ Unfilled stars: `Colors.white.withValues(alpha: 0.4)` on mode cards (dark gradie
 
 **Internal layout (Row, padding: all(16)):**
 - Icon container: 52×52dp, `BorderRadius.circular(12)`, `Colors.white.withValues(alpha: 0.2)` background. Icon: 28dp, white, mode-specific (Learn: `Icons.explore`, States Master: `Icons.flag`, Geographical Master: `Icons.compass_calibration`, Grand Master: `Icons.emoji_events`).
-- 14dp gap.
+- 12dp gap.
 - `Expanded` Column: mode name 17sp w700 white + 4dp gap + description 12sp white alpha 0.8.
 - 8dp gap.
-- `FutureBuilder<int?>` Column: 3-star row (18dp `Icons.star_rounded` / `Icons.star_outline_rounded`, amber / white alpha 0.4) + 4dp gap + "Best: N" 11sp or "Not played" 11sp (white alpha 0.5).
+- `FutureBuilder<int?>` Column: 3-star row (18dp `Icons.star_rounded` / `Icons.star_outline_rounded`, amber / white alpha 0.4) + 4dp gap + "Best: N" 12sp or "Not played" 12sp (white alpha 0.5).
 
 **Empty state (never played):** "Not played" label, 0 stars shown as 3 outline stars in white alpha 0.4.
 
@@ -172,6 +171,8 @@ Unfilled stars: `Colors.white.withValues(alpha: 0.4)` on mode cards (dark gradie
 ### 3. Game Screen (MapScreen extension)
 
 **Widget:** `MapScreen` (`ConsumerStatefulWidget`) — Phase 4 extends Phase 3's production widget.
+
+**Focal point:** The USA map canvas (InteractiveViewer child) — the entire center column draws the eye; HUD and tray are deliberately lower-contrast to keep focus on map placement.
 
 **Overall layout:** `Scaffold` → `Stack`:
 1. `GameHud` (top, 48dp height, full width) — positioned before or via `Column`.
@@ -187,7 +188,7 @@ Unfilled stars: `Colors.white.withValues(alpha: 0.4)` on mode cards (dark gradie
 
 **kPinAnchor:** `const Offset(45, 70)` — copied from Flags `FlagTray.kPinAnchor`. The drop coordinate is `DragTargetDetails.offset + kPinAnchor`. This recovers the pin tip (bottom-centre of the 90dp wide, 60dp tall card + 10dp triangle). Document in `StateTray` as a named constant.
 
-**Countdown overlay:** Full-screen semi-transparent overlay (`Colors.black54`) shown during `GamePhase.countdown`. Displays remaining seconds as large centered text (64sp w800 white). "GO!" displayed on the final tick before `GamePhase.playing`. Dismissed automatically when phase transitions to `playing`. No user interaction possible during countdown.
+**Countdown overlay:** Full-screen semi-transparent overlay (`Colors.black54`) shown during `GamePhase.countdown`. Displays remaining seconds as large centered text (28sp w700 white). The full-screen overlay context makes the number visually prominent without requiring a larger size class. "GO!" displayed on the final tick before `GamePhase.playing`. Dismissed automatically when phase transitions to `playing`. No user interaction possible during countdown.
 
 **Correct drop sequence:**
 1. `UsaMapPainter` receives updated `matchedPostals` — state fills grey `#AAAAAA`.
@@ -224,8 +225,8 @@ Unfilled stars: `Colors.white.withValues(alpha: 0.4)` on mode cards (dark gradie
 
 | Mode | Card face | Label beneath card |
 |------|-----------|-------------------|
-| Learn (MODE-01) | State abbreviation, 28sp w700 centered | Full state name, 10sp, `TextOverflow.ellipsis` |
-| States Master (MODE-02) | Full state name, 17sp w600 centered, overflow ellipsis | Full state name, 10sp (mirrors Flags two-layer pattern) |
+| Learn (MODE-01) | State abbreviation, 28sp w700 centered | Full state name, 12sp w400, `TextOverflow.ellipsis` |
+| States Master (MODE-02) | Full state name, 17sp w700 centered, overflow ellipsis | Full state name, 12sp w400 (mirrors Flags two-layer pattern) |
 | Geographical Master (MODE-03) | State abbreviation, 28sp w700 centered | No label (`showName: false`) |
 | Grand Master (MODE-04) | Solid palette color fill, no text | No label (`showName: false`) |
 
@@ -272,7 +273,7 @@ Unfilled stars: `Colors.white.withValues(alpha: 0.4)` on mode cards (dark gradie
 
 **Layout:** `Positioned.fill` → `GestureDetector(onTap: () {})` (consumes pass-through taps) → `Container(color: Colors.black54)` → `Center` → `Card(margin: symmetric(horizontal: 40))` → `Padding(symmetric(vertical: 24, horizontal: 32))` → `Column(mainAxisSize: min)`:
 
-1. Title "Paused" — 22sp w700.
+1. Title "Paused" — 28sp w700.
 2. 24dp gap.
 3. **Resume** — `ElevatedButton`, full width, height 48dp. Label: "Resume". Semantics: button, "Resume game".
 4. 12dp gap.
@@ -298,12 +299,12 @@ No confirmation dialog for "End Game" in Phase 4 — the 5-second pause before t
 
 1. **Star row:** 3 `Icon` widgets, `Icons.star_rounded` / `Icons.star_outline_rounded`, 56dp, amber / `Colors.grey.shade400`. Horizontal padding 4dp each.
 2. 8dp gap.
-3. **Completion title:** "Well done!" — 32sp w700, mode color.
-4. **Personal-best badge** (shown only when `_isNewPb`): 8dp gap + `Container(padding: symmetric(h:16, v:6), decoration: BorderRadius.circular(20), color: Colors.amber.shade700)` + "New Personal Best!" 14sp w700 white.
+3. **Completion title:** "Well done!" — 28sp w700, mode color.
+4. **Personal-best badge** (shown only when `_isNewPb`): 8dp gap + `Container(padding: symmetric(h:16, v:8), decoration: BorderRadius.circular(20), color: Colors.amber.shade700)` + "New Personal Best!" 14sp w700 white.
 5. 32dp gap.
 6. **Score card** (`RepaintBoundary` for future share; white card, BorderRadius 16, boxShadow black12 blur 8 offset (0,4), padding 24): four `_StatRow` rows (Score / Time / Mode / Previous Best) separated by `Divider(height: 24)`. "Previous Best" row hidden when `previousBest == null`.
 7. 32dp gap.
-8. **Primary CTA "Back to Menu"** — `ElevatedButton.icon`, full width, height 56dp, `BorderRadius.circular(14)`, icon `Icons.home`, backgroundColor = mode color, foregroundColor white, 16sp w700.
+8. **Primary CTA "Back to Menu"** — `ElevatedButton.icon`, full width, height 56dp, `BorderRadius.circular(14)`, icon `Icons.home`, backgroundColor = mode color, foregroundColor white, 17sp w700.
 9. 12dp gap.
 10. **Secondary CTA "Play Again"** — `OutlinedButton.icon`, full width, height 48dp, `BorderRadius.circular(14)`, icon `Icons.replay`, foregroundColor = mode color, borderSide = mode color.
 
@@ -424,14 +425,14 @@ Not applicable. Flutter/Material project. All widgets are:
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** approved 2026-06-01
 
 ---
 
