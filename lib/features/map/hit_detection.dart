@@ -19,29 +19,29 @@ const double _kMinScreenArea = 2304.0;
 ///
 /// [scale] is the current InteractiveViewer scale (scene→screen factor).
 ///
-/// Algorithm:
-/// 1. Exact-path candidates: states whose SVG path contains the point.
-/// 2. Bbox-expansion candidates: states whose scale-aware expanded bbox
-///    contains the point (catches drops near small states).
-/// 3. Fallback: expanded bbox for ALL states (catches ocean drops near coasts).
-/// 4. Tiebreaker: closest *effective centroid* to the drop point.
-///    — For candidates with an exact path match, the effective centroid is the
-///      bbox centre of the MATCHING POLYGON, not the state centroid.  This
-///      correctly handles multi-polygon states (e.g. Hawaii: state centroid is
-///      on a different island than where the user dropped).
-///    — For bbox-only candidates (small states), the state centroid is used.
+/// Three-tier lookup — each tier is only consulted when the one above is empty:
+/// 1. Exact-path: states whose SVG polygon contains the point.
+/// 2. Bbox-expansion: states whose scale-aware expanded bbox contains the point
+///    (accessibility guarantee for small states — ACCS-03).
+/// 3. Tiebreaker: closest effective centroid (handles border overlaps).
+///
+/// Exact-path candidates are kept strictly separate from bbox candidates so
+/// that a nearby state's bbox can never outrank a state whose polygon actually
+/// contains the drop point (e.g. OK bbox overlapping TX panhandle territory).
 String? stateHitTest(Offset scenePoint, List<StateData> states,
     {double scale = 1.0}) {
   final minSceneDiag = _kMinScreenDiagonal / scale;
 
-  // 1 & 2. Collect candidates from exact path OR expanded bbox.
-  final candidates = states
-      .where((s) => _primaryContains(s, scenePoint, minSceneDiag, scale: scale))
+  // 1. Exact-path candidates: polygon contains the drop point.
+  final exactHits = states
+      .where((s) => s.paths.any((p) => p.contains(scenePoint)))
       .toList();
 
-  // 3. Fallback to expanded bbox for all states when nothing hit above.
-  final pool = candidates.isNotEmpty
-      ? candidates
+  // 2. Bbox-expansion candidates: only consulted when no exact hit exists.
+  //    Ensures small states (RI, DC) remain hittable at low zoom and catches
+  //    drops that land just outside a coastline polygon.
+  final pool = exactHits.isNotEmpty
+      ? exactHits
       : states
           .where((s) => _expandedBbox(s, minSceneDiag, scale: scale).contains(scenePoint))
           .toList();
@@ -49,7 +49,8 @@ String? stateHitTest(Offset scenePoint, List<StateData> states,
   if (pool.isEmpty) return null;
   if (pool.length == 1) return pool.first.postal;
 
-  // 4. Tiebreaker: closest effective centroid wins.
+  // 3. Tiebreaker: closest effective centroid wins.
+  //    Needed when two states share a border and both paths contain the point.
   pool.sort((a, b) {
     final aDist =
         (_effectiveCentroid(a, scenePoint) - scenePoint).distanceSquared;
@@ -81,11 +82,6 @@ Offset _effectiveCentroid(StateData state, Offset point) {
     }
   }
   return state.centroid;
-}
-
-bool _primaryContains(StateData state, Offset point, double minSceneDiag, {double scale = 1.0}) {
-  if (state.paths.any((p) => p.contains(point))) return true;
-  return _expandedBbox(state, minSceneDiag, scale: scale).contains(point);
 }
 
 Rect _expandedBbox(StateData state, double minSceneDiag, {double scale = 1.0}) {
