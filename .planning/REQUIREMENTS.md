@@ -59,8 +59,8 @@ Golf-style scoring (lowest wins). Canonical entity set = **50 states** (no D.C.)
 
 ### Hints
 
-- [ ] **HINT-01**: The player has 2 hints per round; using one animates a zoom to the target state's centroid with a ~3-second highlight glow.
-- [ ] **HINT-02**: Each hint used adds a +5 score penalty (no rewarded-ad refill in v1).
+- [x] **HINT-01**: The player has 2 hints per round; using one animates a zoom to the target state's centroid with a ~3-second highlight glow.
+- [x] **HINT-02**: Each hint used adds a +5 score penalty (no rewarded-ad refill in v1).
 
 ### Session & Lifecycle
 
@@ -140,8 +140,8 @@ Golf-style scoring (lowest wins). Canonical entity set = **50 states** (no D.C.)
 | WEL-01 | Phase 5 | Complete |
 | WEL-02 | Phase 5 | Complete |
 | WEL-03 | Phase 5 | Complete |
-| HINT-01 | Phase 5 | Pending |
-| HINT-02 | Phase 5 | Pending |
+| HINT-01 | Phase 5 | Complete |
+| HINT-02 | Phase 5 | Complete |
 | SESS-04 | Phase 5 | Pending |
 | HOME-03 | Phase 5 | Pending |
 | A11Y-01 | Phase 5 | Pending |
