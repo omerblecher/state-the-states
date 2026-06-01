@@ -2,9 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:state_states/core/data/game_state_repository.dart';
 import 'package:state_states/core/data/high_score_repository.dart';
 import 'package:state_states/features/game/game_mode.dart';
+import 'package:state_states/features/game/game_session.dart';
+import 'package:state_states/features/game/game_session_notifier.dart';
 import 'package:state_states/features/map/completion_screen.dart';
+import 'session_restore_card.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -33,6 +37,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Session restore card (HOME-03): shown when a saved session exists.
+        FutureBuilder<({GameSession session, int hintPenalty})?>(
+          future: ref
+              .read(gameStateRepositoryProvider.future)
+              .then((r) => r.loadSession()),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData || snapshot.data == null) {
+              return const SizedBox.shrink();
+            }
+            final saved = snapshot.data!;
+            return SessionRestoreCard(
+              session: saved.session,
+              hintPenalty: saved.hintPenalty,
+              onContinue: () {
+                ref
+                    .read(gameSessionProvider.notifier)
+                    .restoreGame(saved.session, hintPenalty: saved.hintPenalty);
+                context.go('/play', extra: saved.session.mode);
+              },
+              onDismiss: () async {
+                final r =
+                    await ref.read(gameStateRepositoryProvider.future);
+                await r.clearSession();
+                if (mounted) setState(() {});
+              },
+            );
+          },
+        ),
         // Header
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 20, 12, 4),

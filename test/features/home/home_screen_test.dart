@@ -20,15 +20,14 @@ Widget buildHomeScreen(
   MockHighScoreRepository mockRepo, {
   MockGameStateRepository? mockGameStateRepo,
 }) {
-  final overrides = <Override>[
-    highScoreRepositoryProvider.overrideWith((_) async => mockRepo),
-    if (mockGameStateRepo != null)
-      gameStateRepositoryProvider.overrideWith(
-        (_) async => mockGameStateRepo,
-      ),
-  ];
   return ProviderScope(
-    overrides: overrides,
+    overrides: [
+      highScoreRepositoryProvider.overrideWith((_) async => mockRepo),
+      if (mockGameStateRepo != null)
+        gameStateRepositoryProvider.overrideWith(
+          (_) async => mockGameStateRepo,
+        ),
+    ],
     child: const MaterialApp(home: HomeScreen()),
   );
 }
