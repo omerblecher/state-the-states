@@ -38,11 +38,11 @@ class StateTray extends StatefulWidget {
   static void _noOp() {}
 
   /// The point within the feedback widget that sits at the pointer during drag.
-  /// Width 90 → centre x = 45; card height 60 + triangle height 10 → tip y = 70.
+  /// Centre of the 90×60 card: x=45, y=30. Kids aim the card center at the state.
   /// DragTargetDetails.offset = pointer_global − kPinAnchor, so callers must
   /// add this back to recover the actual drop coordinate.
   // ignore: constant_identifier_names
-  static const kPinAnchor = Offset(45, 70);
+  static const kPinAnchor = Offset(45, 30);
 
   @override
   State<StateTray> createState() => StateTrayState();
@@ -155,8 +155,8 @@ class StateTrayState extends State<StateTray>
     );
   }
 
-  // Anchor point = tip of the pin triangle = kPinAnchor within the feedback.
-  // Width 90 → centre x = 45; card height 60 + triangle height 10 → tip y = 70.
+  // Anchor point = centre of the card = kPinAnchor within the feedback.
+  // Kids drag the centre of the card over the target state — more natural than a pin tip.
   static Offset _pinAnchorStrategy(
     Draggable<Object> draggable,
     BuildContext context,

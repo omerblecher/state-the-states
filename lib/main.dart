@@ -1,5 +1,3 @@
-import 'dart:async' show unawaited;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -10,11 +8,11 @@ import 'core/audio/real_audio_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // COPPA init: child-directed flags are set BEFORE MobileAds.initialize()
-  // inside initializeAds() (plan 01-01). v1 ships zero real ads (StubAdService
-  // walled garden), so a failed/slow ad-SDK init must NOT block app launch —
-  // especially on low-end child hardware. Guard it; the app is fully functional
-  // without the SDK initialized.
+  // Pre-init audio so anthem is ready before WelcomeScreen's first frame fires
+  // fadeInAnthem(). RealAudioService.init() is fast (asset load from bundle).
+  final audioSvc = RealAudioService();
+  await audioSvc.init();
+
   try {
     await initializeAds();
   } catch (e) {
@@ -28,10 +26,8 @@ Future<void> main() async {
         // ref.onDispose ties the three AudioPlayer natives to the ProviderScope
         // lifecycle so dispose() actually runs (no leaked players).
         audioServiceProvider.overrideWith((ref) {
-          final svc = RealAudioService();
-          unawaited(svc.init());
-          ref.onDispose(svc.dispose);
-          return svc;
+          ref.onDispose(audioSvc.dispose);
+          return audioSvc;
         }),
       ],
       child: const App(),

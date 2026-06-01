@@ -356,8 +356,7 @@ class _MapScreenState extends ConsumerState<MapScreen>
     if (session?.phase != GamePhase.playing) return; // Risk 5: phase guard
     if (_currentPostal.isEmpty) return; // Risk 4: uninitialized guard
 
-    // StateTray.kPinAnchor = Offset(45, 70): tip of the draggable pin token.
-    final rawScene = _toSceneFromGlobal(details.offset + const Offset(45, 70));
+    final rawScene = _toSceneFromGlobal(details.offset + StateTray.kPinAnchor);
     if (rawScene == null) return;
 
     final scale = _controller.value.getMaxScaleOnAxis();
