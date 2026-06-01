@@ -252,7 +252,8 @@ class _MapScreenState extends ConsumerState<MapScreen>
     });
     if (_remainingPostals.isEmpty) {
       // Game complete — read score before completeGame() mutates state.
-      final sessionBeforeComplete = ref.read(gameSessionProvider).value!;
+      final sessionBeforeComplete = ref.read(gameSessionProvider).value;
+      if (sessionBeforeComplete == null) return;
       final repo = await ref.read(highScoreRepositoryProvider.future);
       final previousBest = await repo.getBestScore(sessionBeforeComplete.mode);
       await ref.read(gameSessionProvider.notifier).completeGame();

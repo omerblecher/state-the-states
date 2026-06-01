@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:state_states/core/data/high_score_repository.dart';
 import 'package:state_states/features/game/game_mode.dart';
+import 'package:state_states/features/map/completion_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -186,9 +187,9 @@ class _ModeCardState extends State<_ModeCard>
 
   int _starsForScore(int? score) {
     if (score == null) return 0;
-    if (score <= 80) return 3;
-    if (score <= 150) return 2;
-    return 1;
+    // Use the same D-11 formula as CompletionScreen. A stored best score is by
+    // definition a personal best (previousBest=null), so it always earns 3 stars.
+    return computeStarCount(score, null);
   }
 
   Widget _buildCard() {

@@ -102,6 +102,26 @@ class UsaMapPainter extends CustomPainter {
       canvas.drawRect(frameRect, framePaint);
     }
 
-    // Phase 4: label pass (showLabels / mode) goes here
+    // Step 4: Label pass — postal abbreviations at state centroids.
+    if (showLabels) {
+      final fontSize = (11.0 / viewScale).clamp(7.0, 14.0);
+      for (final state in states) {
+        if (!state.isPlaceable) continue;
+        if (matchedPostals.contains(state.postal)) continue;
+        final tp = TextPainter(
+          text: TextSpan(
+            text: state.postal,
+            style: TextStyle(
+              fontSize: fontSize,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFFFFFFFF),
+              shadows: const [Shadow(color: Color(0x88000000), blurRadius: 2)],
+            ),
+          ),
+          textDirection: TextDirection.ltr,
+        )..layout();
+        tp.paint(canvas, state.centroid - Offset(tp.width / 2, tp.height / 2));
+      }
+    }
   }
 }
