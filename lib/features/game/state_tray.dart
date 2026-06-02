@@ -10,8 +10,9 @@ import 'package:state_states/features/game/game_mode.dart';
 /// validated by the Phase 3 spike.
 ///
 /// Critical invariants:
-/// - [kPinAnchor] == Offset(45, 30) — DO NOT CHANGE. Matches MapScreen drop math.
-///   The feedback is the bare card (90×60); the card centre sits under the finger.
+/// - [kPinAnchor] == Offset(45, 70) — DO NOT CHANGE. Matches MapScreen drop math.
+///   Width 90 → centre x=45; card 60 + triangle 10 → tip y=70. The pointer sits
+///   at the pin tip during drag, so the drop fires exactly where the user aims.
 /// - [cardKey] is assigned ONLY to Draggable.child. Never to feedback or
 ///   childWhenDragging — sharing a GlobalKey causes a duplicate-key crash during drag.
 class StateTray extends StatefulWidget {
@@ -38,11 +39,11 @@ class StateTray extends StatefulWidget {
   });
 
   /// The point within the feedback widget that sits at the pointer during drag.
-  /// Centre of the 90×60 card: x=45, y=30. Kids aim the card center at the state.
+  /// Tip of the pin triangle: x=45 (centre of 90px card), y=70 (card 60 + tip 10).
   /// DragTargetDetails.offset = pointer_global − kPinAnchor, so callers must
   /// add this back to recover the actual drop coordinate.
   // ignore: constant_identifier_names
-  static const kPinAnchor = Offset(45, 30);
+  static const kPinAnchor = Offset(45, 70);
 
   @override
   State<StateTray> createState() => StateTrayState();
@@ -166,14 +167,27 @@ class StateTrayState extends State<StateTray>
       StateTray.kPinAnchor;
 
   Widget _buildFeedback() {
-    // Bare card — no pin below. The card centre is kPinAnchor (45,30) and sits
-    // exactly under the user's finger, so the drop point matches what they see.
-    // A pin tip was removed: it sat 40px below the actual hit point and caused
-    // users to aim at the wrong position (especially for thin states like NC).
-    return Material(
-      elevation: 6,
-      borderRadius: BorderRadius.circular(8),
-      child: _cardShell(),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Material(
+          elevation: 6,
+          borderRadius: BorderRadius.circular(8),
+          child: _cardShell(),
+        ),
+        // Pin tip — the actual drop-registration point (y=70 from feedback top).
+        // The player aims this triangle at the target state; the pointer sits at
+        // the tip so the hit test fires exactly where it points.
+        ClipPath(
+          clipper: const _DownTriangle(),
+          child: Container(
+            width: 20,
+            height: 10,
+            color: const Color(0xFFFF6600),
+          ),
+        ),
+      ],
     );
   }
 
@@ -237,5 +251,20 @@ class StateTrayState extends State<StateTray>
         );
     }
   }
+}
+
+/// Downward-pointing triangle clipper for the pin tip.
+class _DownTriangle extends CustomClipper<Path> {
+  const _DownTriangle();
+
+  @override
+  Path getClip(Size size) => Path()
+    ..moveTo(0, 0)
+    ..lineTo(size.width, 0)
+    ..lineTo(size.width / 2, size.height)
+    ..close();
+
+  @override
+  bool shouldReclip(_DownTriangle old) => false;
 }
 
