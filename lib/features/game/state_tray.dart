@@ -10,7 +10,8 @@ import 'package:state_states/features/game/game_mode.dart';
 /// validated by the Phase 3 spike.
 ///
 /// Critical invariants:
-/// - [kPinAnchor] == Offset(45, 70) — DO NOT CHANGE. Matches MapScreen drop math.
+/// - [kPinAnchor] == Offset(45, 30) — DO NOT CHANGE. Matches MapScreen drop math.
+///   The feedback is the bare card (90×60); the card centre sits under the finger.
 /// - [cardKey] is assigned ONLY to Draggable.child. Never to feedback or
 ///   childWhenDragging — sharing a GlobalKey causes a duplicate-key crash during drag.
 class StateTray extends StatefulWidget {
@@ -157,8 +158,6 @@ class StateTrayState extends State<StateTray>
     );
   }
 
-  // Anchor point = centre of the card = kPinAnchor within the feedback.
-  // Kids drag the centre of the card over the target state — more natural than a pin tip.
   static Offset _pinAnchorStrategy(
     Draggable<Object> draggable,
     BuildContext context,
@@ -167,25 +166,14 @@ class StateTrayState extends State<StateTray>
       StateTray.kPinAnchor;
 
   Widget _buildFeedback() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Material(
-          elevation: 6,
-          borderRadius: BorderRadius.circular(8),
-          child: _cardShell(),
-        ),
-        // Pin tip — the actual drop-registration point.
-        ClipPath(
-          clipper: const _DownTriangle(),
-          child: Container(
-            width: 20,
-            height: 10,
-            color: const Color(0xFFFF6600),
-          ),
-        ),
-      ],
+    // Bare card — no pin below. The card centre is kPinAnchor (45,30) and sits
+    // exactly under the user's finger, so the drop point matches what they see.
+    // A pin tip was removed: it sat 40px below the actual hit point and caused
+    // users to aim at the wrong position (especially for thin states like NC).
+    return Material(
+      elevation: 6,
+      borderRadius: BorderRadius.circular(8),
+      child: _cardShell(),
     );
   }
 
@@ -251,17 +239,3 @@ class StateTrayState extends State<StateTray>
   }
 }
 
-/// Downward-pointing triangle clipper for the pin tip.
-class _DownTriangle extends CustomClipper<Path> {
-  const _DownTriangle();
-
-  @override
-  Path getClip(Size size) => Path()
-    ..moveTo(0, 0)
-    ..lineTo(size.width, 0)
-    ..lineTo(size.width / 2, size.height)
-    ..close();
-
-  @override
-  bool shouldReclip(_DownTriangle old) => false;
-}
