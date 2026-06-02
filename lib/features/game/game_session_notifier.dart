@@ -230,4 +230,28 @@ class GameSessionNotifier extends AsyncNotifier<GameSession> {
     // a finished game.
     await _gameStateRepository?.clearSession();
   }
+
+  /// Resets the session to idle so the next [_maybeStartGame] can auto-start.
+  ///
+  /// Called from "End Game" in the pause overlay and from "Dismiss" on the
+  /// session restore card. Without this, the provider stays in [GamePhase.paused]
+  /// and [_maybeStartGame] refuses to start any subsequent game.
+  void endGame() {
+    _stopwatch.stop();
+    _ticker.stop();
+    _hintPenalty = 0;
+    _countdownTick = 0;
+    _restoredOffset = 0;
+    _remainingPostals = [];
+    state = const AsyncData(GameSession(
+      phase: GamePhase.idle,
+      mode: GameMode.learn,
+      score: 0,
+      elapsed: Duration.zero,
+      errorCount: 0,
+      activePostal: null,
+      hintsRemaining: 2,
+    ));
+    _gameStateRepository?.clearSession();
+  }
 }

@@ -576,7 +576,10 @@ class _MapScreenState extends ConsumerState<MapScreen>
                     width: double.infinity,
                     height: 48,
                     child: TextButton(
-                      onPressed: () => context.go('/'),
+                      onPressed: () {
+                        ref.read(gameSessionProvider.notifier).endGame();
+                        context.go('/');
+                      },
                       child: const Text('End Game',
                           style: TextStyle(color: Colors.red)),
                     ),

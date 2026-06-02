@@ -56,10 +56,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     .restoreGame(saved.session, hintPenalty: saved.hintPenalty);
                 context.go('/play', extra: saved.session.mode);
               },
-              onDismiss: () async {
-                final r =
-                    await ref.read(gameStateRepositoryProvider.future);
-                await r.clearSession();
+              onDismiss: () {
+                ref.read(gameSessionProvider.notifier).endGame();
                 if (mounted) setState(() {});
               },
             );
