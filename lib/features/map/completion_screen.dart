@@ -122,7 +122,7 @@ class _CompletionScreenState extends ConsumerState<CompletionScreen>
       appBar: AppBar(
         backgroundColor: _modeColor(widget.session.mode),
         foregroundColor: Colors.white,
-        title: Text(widget.session.mode.name),
+        title: Text(widget.session.mode.displayName),
         leading: IconButton(
           icon: const Icon(Icons.home),
           tooltip: 'Back to menu',
@@ -232,7 +232,7 @@ class _CompletionScreenState extends ConsumerState<CompletionScreen>
                     const Divider(height: 24),
                     _StatRow(
                       label: 'Mode',
-                      value: widget.session.mode.name,
+                      value: widget.session.mode.displayName,
                     ),
                     if (widget.previousBest != null) ...[
                       const Divider(height: 24),
@@ -273,8 +273,12 @@ class _CompletionScreenState extends ConsumerState<CompletionScreen>
             width: double.infinity,
             height: 48,
             child: OutlinedButton.icon(
-              onPressed: () =>
-                  context.go('/play', extra: widget.session.mode),
+              onPressed: () {
+                final route = widget.session.mode == GameMode.speedTyping
+                    ? '/type'
+                    : '/play';
+                context.go(route, extra: widget.session.mode);
+              },
               style: OutlinedButton.styleFrom(
                 foregroundColor: modeColor,
                 side: BorderSide(color: modeColor),
