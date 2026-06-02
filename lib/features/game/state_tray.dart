@@ -198,15 +198,6 @@ class StateTrayState extends State<StateTray>
     );
   }
 
-  // Palette for Grand Master — order matches UsaMapPainter palette colors.
-  static const _palette = [
-    Color(0xFF8DB87F),
-    Color(0xFFD4B483),
-    Color(0xFFE8A055),
-    Color(0xFFE89090),
-    Color(0xFFA07EC8),
-    Color(0xFFE8D870),
-  ];
 
   /// Card shell — optionally keyed. Content is always the mode-driven card face.
   /// Separating key from content prevents the GlobalKey from appearing in
@@ -235,28 +226,11 @@ class StateTrayState extends State<StateTray>
     );
   }
 
-  Widget _cardFace() {
-    switch (widget.mode) {
-      case GameMode.grandMaster:
-        // No visual hint in the hardest mode — many flags carry the state name.
-        return Container(color: _palette[widget.sequenceIndex % 6]);
-      case GameMode.statesMaster:
-        return Center(
-          child: Text(
-            widget.stateName,
-            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
-            overflow: TextOverflow.ellipsis,
-            maxLines: 1,
-          ),
-        );
-      case GameMode.learn:
-      case GameMode.geographicalMaster:
-        return _buildFlagCard();
-    }
-  }
+  Widget _cardFace() => _buildFlagCard();
 
-  /// Loads the real state flag SVG. Shows the state silhouette while the SVG
-  /// is being decoded; falls back to the abbreviation if stateData is absent.
+  /// Loads the real state flag SVG for the card face in all game modes.
+  /// Explicit 90×60 dimensions prevent zero-size rendering inside ClipRRect.
+  /// Shows the state silhouette as placeholder while the SVG decodes.
   Widget _buildFlagCard() {
     final sd = widget.stateData;
     final placeholder = sd != null
@@ -265,12 +239,14 @@ class StateTrayState extends State<StateTray>
           )
         : Center(
             child: Text(widget.postal,
-                style:
-                    const TextStyle(fontSize: 28, fontWeight: FontWeight.w700)),
+                style: const TextStyle(
+                    fontSize: 28, fontWeight: FontWeight.w700)),
           );
 
     return SvgPicture.asset(
       'assets/flags/${widget.postal.toLowerCase()}.svg',
+      width: 90,
+      height: 60,
       fit: BoxFit.contain,
       placeholderBuilder: (_) => placeholder,
     );
