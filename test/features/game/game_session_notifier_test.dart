@@ -528,4 +528,109 @@ void main() {
       verify(() => mockGameRepo.clearSession()).called(1);
     });
   });
+
+  // ── submitTyping() + skipCountdown ────────────────────────────────────────
+  group('submitTyping', () {
+    /// Helper: start a game with skipCountdown:true → immediate playing phase.
+    Future<GameSessionNotifier> startTypingGame() async {
+      final notifier = container.read(gameSessionProvider.notifier);
+      await container.read(gameSessionProvider.future);
+      notifier.startGame(GameMode.speedTyping, skipCountdown: true);
+      return notifier;
+    }
+
+    // Test 1: skipCountdown:true → immediate GamePhase.playing (no countdown ticks needed)
+    test('startGame with skipCountdown:true → phase is playing immediately', () async {
+      final notifier = container.read(gameSessionProvider.notifier);
+      await container.read(gameSessionProvider.future);
+      notifier.startGame(GameMode.speedTyping, skipCountdown: true);
+      final session = container.read(gameSessionProvider).value!;
+      expect(session.phase, GamePhase.playing);
+    });
+
+    // Test 2: full name match → true, matchedPostals contains 'GA', errorCount unchanged
+    test("submitTyping('GEORGIA', stateFixture()) → true, matchedPostals has 'GA'", () async {
+      final notifier = await startTypingGame();
+      final result = notifier.submitTyping('GEORGIA', stateFixture());
+      expect(result, isTrue);
+      final session = container.read(gameSessionProvider).value!;
+      expect(session.matchedPostals, contains('GA'));
+      expect(session.errorCount, 0);
+    });
+
+    // Test 3: postal code match → true
+    test("submitTyping('GA', stateFixture()) → true (postal match)", () async {
+      final notifier = await startTypingGame();
+      final result = notifier.submitTyping('GA', stateFixture());
+      expect(result, isTrue);
+      final session = container.read(gameSessionProvider).value!;
+      expect(session.matchedPostals, contains('GA'));
+    });
+
+    // Test 4: invalid string → false, errorCount+1, score==5
+    test("submitTyping('NOTASTATE', stateFixture()) → false, errorCount+1, score==5", () async {
+      final notifier = await startTypingGame();
+      final result = notifier.submitTyping('NOTASTATE', stateFixture());
+      expect(result, isFalse);
+      final session = container.read(gameSessionProvider).value!;
+      expect(session.errorCount, 1);
+      // Score = (0 ~/ 10) + (1 * 5) + 0 = 5 (elapsed is ~0s)
+      expect(session.score, 5);
+    });
+
+    // Test 5: partial name alias → false (D-01: no aliases)
+    test("submitTyping('MASS', stateFixture()) → false (no alias match)", () async {
+      final notifier = await startTypingGame();
+      final result = notifier.submitTyping('MASS', stateFixture());
+      expect(result, isFalse);
+    });
+
+    // Test 6: missing space in multi-word name → false (D-02)
+    test("submitTyping('NEWYORK', stateFixture()) → false (space required)", () async {
+      final notifier = await startTypingGame();
+      final result = notifier.submitTyping('NEWYORK', stateFixture());
+      expect(result, isFalse);
+      // Verify 'NEW YORK' would match (confirming space is the issue)
+      final result2 = notifier.submitTyping('NEW YORK', stateFixture());
+      expect(result2, isTrue);
+    });
+
+    // Test 7: duplicate submission → false, errorCount incremented
+    test('duplicate submission → false, errorCount incremented', () async {
+      final notifier = await startTypingGame();
+      notifier.submitTyping('GEORGIA', stateFixture()); // first: hit
+      final after1 = container.read(gameSessionProvider).value!;
+      expect(after1.errorCount, 0); // no error on first
+      final result2 = notifier.submitTyping('GEORGIA', stateFixture()); // second: duplicate
+      expect(result2, isFalse);
+      final after2 = container.read(gameSessionProvider).value!;
+      expect(after2.errorCount, 1); // duplicate counts as error
+    });
+
+    // Test 8: submitTyping when phase==idle → false, state unchanged
+    test('submitTyping when phase==idle → false, state unchanged', () async {
+      final notifier = container.read(gameSessionProvider.notifier);
+      await container.read(gameSessionProvider.future);
+      // phase is idle (no startGame called)
+      final result = notifier.submitTyping('GEORGIA', stateFixture());
+      expect(result, isFalse);
+      final session = container.read(gameSessionProvider).value!;
+      expect(session.phase, GamePhase.idle);
+      expect(session.errorCount, 0);
+    });
+
+    // Test 9: 50-state game-end — use 5-state fixture; submit all 5 → phase completed
+    test('submitting all states in fixture → phase transitions to completed', () async {
+      final notifier = await startTypingGame();
+      final states = stateFixture(); // 5 states: GA, CA, NY, TX, AK
+      for (final s in states) {
+        notifier.submitTyping(s.postal, states);
+      }
+      // Allow completeGame() async work to complete
+      await Future.delayed(Duration.zero);
+      final session = container.read(gameSessionProvider).value!;
+      // matchedPostals.length == states.length (5) → triggers completeGame()
+      expect(session.phase, GamePhase.completed);
+    });
+  });
 }

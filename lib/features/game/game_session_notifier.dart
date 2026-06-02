@@ -9,6 +9,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:state_states/core/data/game_state_repository.dart';
 import 'package:state_states/core/data/high_score_repository.dart';
+import 'package:state_states/core/models/state_data.dart';
 import 'package:state_states/core/ticker.dart';
 import 'package:state_states/features/game/game_mode.dart';
 import 'package:state_states/features/game/game_phase.dart';
@@ -72,7 +73,7 @@ class GameSessionNotifier extends AsyncNotifier<GameSession> {
     );
   }
 
-  void startGame(GameMode mode) {
+  void startGame(GameMode mode, {bool skipCountdown = false}) {
     final current = state.value;
     if (current == null) return; // Provider still loading.
     // D-02: reset Stopwatch; it does NOT start until countdown → playing.
@@ -93,6 +94,17 @@ class GameSessionNotifier extends AsyncNotifier<GameSession> {
         countdownSecondsRemaining: 5,
       ),
     );
+    if (skipCountdown) {
+      // Skip the 5-second countdown (e.g. Speed Typing mode has no map to prepare).
+      // Start the Stopwatch and go straight to playing.
+      _stopwatch.start();
+      state = AsyncData(state.value!.copyWith(
+        phase: GamePhase.playing,
+        countdownSecondsRemaining: 0,
+      ));
+      _ticker.start(_onTick);
+      return;
+    }
     _ticker.start(_onTick);
   }
 
@@ -167,6 +179,81 @@ class GameSessionNotifier extends AsyncNotifier<GameSession> {
     // D-09: restore to paused — player taps Resume to start the clock.
     state = AsyncData(restoredSession.copyWith(phase: GamePhase.paused));
     // Stopwatch is NOT started here — stays stopped until resumeGame().
+  }
+
+  /// Processes a typed state name or postal code submission.
+  ///
+  /// Compares [input] (after trim()) against each [StateData] in [states]:
+  ///  - Full name match: `s.name.toUpperCase() == normalized`
+  ///  - Postal code match: `s.postal == normalized`
+  ///
+  /// Returns `true` on a new hit (correct, unseen state). Returns `false` on:
+  ///  - No match (miss) → errorCount+1, score recalculated
+  ///  - Duplicate (already in matchedPostals) → treated as miss
+  ///  - Phase not playing → no-op
+  ///
+  /// Triggers [completeGame()] fire-and-forget when all placeable states are found
+  /// (matchedPostals.length == states.length). Uses an explicit for-loop to
+  /// avoid package:collection dependency.
+  ///
+  /// WALLED-GARDEN RULE: Zero ad imports. No import from the ads module.
+  bool submitTyping(String input, List<StateData> states) {
+    final current = state.value;
+    if (current == null || current.phase != GamePhase.playing) return false;
+
+    final normalized = input.trim();
+    if (normalized.isEmpty) return false;
+
+    // Explicit for-loop — no package:collection firstWhereOrNull needed.
+    StateData? match;
+    for (final s in states) {
+      if (!s.isPlaceable) continue;
+      if (s.name.toUpperCase() == normalized || s.postal == normalized) {
+        match = s;
+        break;
+      }
+    }
+
+    // Miss: no matching state
+    if (match == null) {
+      final newErrorCount = current.errorCount + 1;
+      final elapsedSecs = _restoredOffset + _stopwatch.elapsed.inSeconds;
+      final newScore =
+          (elapsedSecs ~/ 10) + (newErrorCount * 5) + _hintPenalty;
+      state = AsyncData(current.copyWith(
+        errorCount: newErrorCount,
+        score: newScore,
+      ));
+      return false;
+    }
+
+    // Duplicate: already in matchedPostals — treat as miss (D-04: duplicate penalty)
+    if (current.matchedPostals.contains(match.postal)) {
+      final newErrorCount = current.errorCount + 1;
+      final elapsedSecs = _restoredOffset + _stopwatch.elapsed.inSeconds;
+      final newScore =
+          (elapsedSecs ~/ 10) + (newErrorCount * 5) + _hintPenalty;
+      state = AsyncData(current.copyWith(
+        errorCount: newErrorCount,
+        score: newScore,
+      ));
+      return false;
+    }
+
+    // Hit: new state matched
+    final updated = current.copyWith(
+      matchedPostals: [...current.matchedPostals, match.postal],
+    );
+    state = AsyncData(updated);
+    _gameStateRepository?.saveSession(updated, hintPenalty: _hintPenalty);
+
+    // Game-end condition: all placeable states found.
+    // In production, states.length == 50. In tests, states.length is the fixture size.
+    if (updated.matchedPostals.length == states.length) {
+      completeGame(); // async — fire-and-forget (same pattern as MapScreen)
+    }
+
+    return true;
   }
 
   void recordDrop(String postal, {required bool isCorrect}) {
