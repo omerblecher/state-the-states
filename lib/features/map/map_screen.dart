@@ -73,6 +73,8 @@ class _MapScreenState extends ConsumerState<MapScreen>
   List<String> _remainingPostals = [];
   Set<String> _matchedPostals = {};
   bool _sequenceInitialized = false;
+  // Guards against duplicate startGame() calls across rebuilds (race fix).
+  bool _gameStartRequested = false;
 
   // Tray keys — re-created on each advance (AnimatedSwitcher trigger, Risk 3)
   // _trayKey typed as GlobalKey<StateTrayState> so MapScreen can call triggerBounce().
@@ -280,9 +282,26 @@ class _MapScreenState extends ConsumerState<MapScreen>
     _remainingPostals = playable;
     if (_remainingPostals.isNotEmpty) _currentPostal = _remainingPostals.first;
     _stateIndex = {for (final s in states) s.postal: s};
+    // _fitMapToScreen only; startGame is deferred to _maybeStartGame so that
+    // the race between stateDataProvider and gameSessionProvider is safe.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _fitMapToScreen());
+  }
+
+  /// Starts a fresh game as soon as both (a) state data is loaded
+  /// (_sequenceInitialized) and (b) the session is in idle or completed phase.
+  ///
+  /// Called on every build pass from _buildMapStack.  The _gameStartRequested
+  /// flag prevents duplicate calls when the phase transitions through states.
+  void _maybeStartGame(GameSession? session) {
+    if (!_sequenceInitialized || _gameStartRequested) return;
+    final phase = session?.phase;
+    // idle   → app just launched or navigated from home for the first time.
+    // completed → user finished a game and came back via the router for another.
+    // paused → restoreGame() was called; do NOT override it with startGame().
+    if (phase != GamePhase.idle && phase != GamePhase.completed) return;
+    _gameStartRequested = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _fitMapToScreen();
-      ref.read(gameSessionProvider.notifier).startGame(widget.mode);
+      if (mounted) ref.read(gameSessionProvider.notifier).startGame(widget.mode);
     });
   }
 
@@ -621,9 +640,10 @@ class _MapScreenState extends ConsumerState<MapScreen>
     List<Rect> insetFrameRects,
     GameSession? session,
   ) {
-    // Store states for _handleDrop; call _startSequence once.
+    // Store states for _handleDrop; call _startSequence once, then try startGame.
     _states = states;
     _startSequence(states);
+    _maybeStartGame(session);
 
     // Mode → showLabels / showName matrix (per plan spec)
     final bool showLabels;
