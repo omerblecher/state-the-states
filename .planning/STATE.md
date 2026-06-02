@@ -6,7 +6,7 @@ status: planning
 last_updated: "2026-06-02T00:00:00.000Z"
 last_activity: 2026-06-02
 progress:
-  total_phases: 0
+  total_phases: 3
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -17,17 +17,17 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-05-30)
+See: .planning/PROJECT.md (updated 2026-06-02)
 
 **Core value:** A child can drag a state onto its correct place on the U.S. map and immediately feel they got it right — the interactive map placement loop must be smooth, forgiving, and rewarding above everything else.
-**Current focus:** v2.0 — Monetization & Speed Mode
+**Current focus:** v2.0 — Monetization & Speed Mode (Phases 6–8)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: Phase 6 (Speed Typing Mode) — not yet started
 Plan: —
-Status: Defining requirements
-Last activity: 2026-06-02 — Milestone v2.0 started
+Status: Roadmap defined; ready to plan Phase 6
+Last activity: 2026-06-02 — v2.0 roadmap created (Phases 6, 7, 8)
 
 Progress: [          ] 0%
 
@@ -108,6 +108,11 @@ Recent decisions affecting current work:
 - [Phase ?]: .planning/phases/05-polish-welcome-accessibility/05-05-SUMMARY.md
 - [Phase ?]: 05-04: GoRouter wrapper in widget tests required when testing context.go('/') — use MaterialApp.router(routerConfig: GoRouter(...))
 - [Phase ?]: 05-06: SessionRestoreCard StatelessWidget — Riverpod reads in HomeScreen; card receives callbacks
+- Roadmap v2: Mode 5 wrong-submission penalty = +5 (matches golf scoring contract across all modes; RESOLVED)
+- Roadmap v2: AppLovin permanently disabled (kAppLovinEnabled = false) — AppLovin SDK 13.0+ refuses child-directed init
+- Roadmap v2: Rewarded hint refill must call refillHints() inside onUserEarnedReward only — never onAdDismissedFullScreenContent
+- Roadmap v2: path_provider ^2.1.5 added in Phase 7 for screenshot-to-XFile pipeline (temp file write)
+- Roadmap v2: GameSessionNotifier walled-garden rule preserved throughout Phase 8 — zero ad imports
 
 ### Pending Todos
 
@@ -115,21 +120,22 @@ None yet.
 
 ### Blockers/Concerns
 
-- **Phase 3 (MEDIUM):** Coordinate-transform spike is highest technical risk; do not parallelize Phase 4 until spike passes.
-- **Phase 5 (MEDIUM):** FluidSynth + SF2 anthem rendering toolchain not in Flags reference; verify before committing Phase 5 timing.
-- **General:** Natural Earth shapefile field names (adm0_a3, postal) are MEDIUM confidence — verify against actual shapefile on first download before writing pipeline filter logic.
+- **Phase 5 (MEDIUM):** 05-07-PLAN.md accessibility audit still pending — Phase 6 can begin in parallel but v1 is not fully complete until 05-07 ships.
+- **Phase 8 (HIGH):** Production ad unit IDs required — app must be registered in AdMob console with app ID com.otis.brooke.state.the.state before Phase 8 validation.
+- **Phase 8 (MEDIUM):** Mediation SDK COPPA method signatures rated MEDIUM confidence — confirm GmaMediationUnity.setGDPRConsent / GmaMediationIronsource().setDoNotSell signatures from installed package source after flutter pub get.
+- **Phase 8 (MEDIUM):** AD_ID manifest merge risk — inspect build/intermediates/merged_manifests after each mediation adapter AAR is added.
 
 ## Deferred Items
 
 | Category | Item | Status | Deferred At |
 |----------|------|--------|-------------|
-| v2 | Full AdMob + mediation (Phase 6) | Deferred | Roadmap creation |
-| v2 | Mode 5 — Speed Typing Challenge | Deferred | Roadmap creation |
-| v2 | Gated social sharing (parental math gate + share_plus) | Deferred | Roadmap creation |
-| v2 | Rewarded-ad hint refill | Deferred | Roadmap creation |
+| v2 | Full AdMob + mediation (Phase 8) | Active — Phase 8 | Roadmap v2 creation |
+| v2 | Mode 5 — Speed Typing Challenge | Active — Phase 6 | Roadmap v2 creation |
+| v2 | Gated social sharing (parental math gate + share_plus) | Active — Phase 7 | Roadmap v2 creation |
+| v2 | Rewarded-ad hint refill | Active — Phase 8 | Roadmap v2 creation |
 
 ## Session Continuity
 
-Last session: 2026-06-01T19:12:58.353Z
-Stopped at: context exhaustion at 81% (2026-06-01)
+Last session: 2026-06-02T00:00:00.000Z
+Stopped at: v2.0 roadmap created
 Resume file: None

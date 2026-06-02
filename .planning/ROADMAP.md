@@ -4,6 +4,8 @@
 
 State States is built in five phases driven by two hard dependencies: the Python build-time pipeline must produce valid pre-transformed state path data before any rendering or hit-test code is written, and the coordinate-transform spike must pass before any game-mode logic is built. Phase 1 lays the COPPA-compliant foundation and pipeline. Phase 2 builds the pure-Dart game logic (testable in isolation). Phase 3 renders the map and gates all drag-drop work behind a mandatory spike. Phase 4 wires everything into a fully playable four-mode game. Phase 5 adds the welcome screen, anthem, hints, tutorial, session restore, and a COPPA audit — delivering a shippable v1 core.
 
+v2 (Phases 6–8) extends the game with three independent feature groups: Mode 5 Speed Typing Challenge (pure Dart, zero external SDK), gated screenshot sharing (surgical CompletionScreen changes), and the full AdMob monetization layer with mediation and rewarded hint refill. Phases are sequenced to keep the highest-compliance-risk work last and to ensure each phase is independently shippable.
+
 ## Phases
 
 **Phase Numbering:**
@@ -18,6 +20,9 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Map Render + Coordinate Transform Spike** - CustomPainter map + mandatory toScene() spike gate (completed 2026-05-31)
 - [x] **Phase 4: Full Play Loop** - Four game modes end-to-end: tray, drag-drop, HUD, completion, home screen (completed 2026-06-01)
 - [ ] **Phase 5: Polish, Welcome & Accessibility** - Welcome screen, anthem, hints, tutorial, session restore, a11y audit
+- [ ] **Phase 6: Speed Typing Mode** - Mode 5 end-to-end: SpeedTypingScreen, UPPERCASE input, found-states grid, golf scoring, local best score
+- [ ] **Phase 7: Gated Sharing Completion** - PB-only Share button, screenshot capture, multiplication math gate
+- [ ] **Phase 8: Full AdMob Layer** - Banner/interstitial/rewarded/App Open + mediation COPPA init + rewarded hint refill
 
 ## Phase Details
 
@@ -181,10 +186,56 @@ Plans:
 
 **UI hint**: yes
 
+### Phase 6: Speed Typing Mode
+
+**Goal**: Players can select Mode 5 (Speed Typing) from the home screen and name all 50 states — by full name or postal code — before the golf score timer penalizes them, with the best score stored locally.
+**Depends on**: Phase 5
+**Requirements**: TYPING-01, TYPING-02, TYPING-03, TYPING-04, TYPING-05, TYPING-06, TYPING-07, TYPING-08, TYPING-09
+**Success Criteria** (what must be TRUE):
+
+  1. The home screen shows a Mode 5 card; tapping it navigates to `SpeedTypingScreen` where the player sees a UPPERCASE text field and an empty found-states grid.
+  2. Typing a valid state name or its 2-letter postal code (case-insensitive, deduplicated) and pressing Enter plays a success SFX, adds a green chip to the found-states grid, and clears the field; the same state cannot be added twice.
+  3. Typing a non-matching string and pressing Enter adds +5 to the golf score with no chip added; backspace corrections before pressing Enter carry no penalty.
+  4. The game ends automatically when all 50 states are found; the completion screen appears with the final golf score (elapsed ÷ 10 + wrong-submissions × 5).
+  5. The best (lowest) score for Mode 5 is stored via `SharedPreferences` and displayed on the Mode 5 home-screen card on all subsequent launches.
+
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 7: Gated Sharing Completion
+
+**Goal**: Players who beat their personal best can share a screenshot of their score card through an adult-verified math gate — completing the v1 stub with PB-gating, screenshot capture, and an upgraded parental challenge.
+**Depends on**: Phase 5 (Phase 6 recommended but not blocking)
+**Requirements**: SHARE-01, SHARE-02, SHARE-03, SHARE-04
+**Success Criteria** (what must be TRUE):
+
+  1. The Share button on `CompletionScreen` is visible only when the player has set a new personal best (`_isNewPb == true`); it is absent on non-PB completions.
+  2. Tapping Share presents a 2-digit × 1-digit multiplication math gate; entering the wrong answer dismisses the dialog without sharing; entering the correct answer proceeds.
+  3. After passing the math gate, the app captures the score card widget as a PNG via `RenderRepaintBoundary.toImage()`, writes it to a temp file, and attaches it as an `XFile` to the native share sheet.
+  4. The share message reads "New lowest score in [Mode Name]! Score: [N] — State the States 🇺🇸" with the screenshot attached; the temp file is deleted in a `finally` block after the share sheet returns.
+
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 8: Full AdMob Layer
+
+**Goal**: The app is fully monetized with banner, interstitial, rewarded, and App Open ads across all mediation partners — with COPPA initialization order correct, rewarded hint refill wired, and `AD_ID` still blocked after all mediation AARs merge.
+**Depends on**: Phase 5 (Phases 6 and 7 recommended but not blocking)
+**Requirements**: AD-01, AD-02, AD-03, AD-04, AD-05, AD-06, HINT-03, HINT-04, HINT-05
+**Success Criteria** (what must be TRUE):
+
+  1. COPPA `RequestConfiguration` (`tagForChildDirectedTreatment: yes`, `maxAdContentRating: g`) is set before `MobileAds.instance.initialize()`; Unity, ironSource, and InMobi per-SDK COPPA flags are set before that call; AppLovin initialization is permanently disabled (`kAppLovinEnabled = false`).
+  2. A banner ad loads and displays at the bottom of `HomeScreen`; an interstitial fires once on `CompletionScreen.initState()` (1-second delay) for all modes; an App Open ad shows on cold app launch and is suppressed when `GamePhase.playing` or `GamePhase.paused`.
+  3. When `hintsRemaining == 0` and the player taps the hint button, a "Watch an ad for 2 more hints?" prompt appears; watching the rewarded ad to completion triggers `refillHints()` inside `onUserEarnedReward` only — never inside `onAdDismissedFullScreenContent`; the hint is immediately consumed after refill.
+  4. `GameSessionNotifier` has zero imports from the ads module (walled-garden rule preserved); all ad calls originate from the widget layer (`CompletionScreen`, `MapScreen`/`SpeedTypingScreen`, `app.dart`).
+  5. `aapt dump badging app-release.apk` confirms the `AD_ID` permission is absent after all three mediation adapter AARs are included in the merged manifest.
+
+**Plans**: TBD
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -193,3 +244,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 3. Map Render + Coordinate Transform Spike | 5/5 | Complete   | 2026-05-31 |
 | 4. Full Play Loop | 6/6 | Complete   | 2026-06-01 |
 | 5. Polish, Welcome & Accessibility | 6/7 | In Progress|  |
+| 6. Speed Typing Mode | 0/? | Not started | - |
+| 7. Gated Sharing Completion | 0/? | Not started | - |
+| 8. Full AdMob Layer | 0/? | Not started | - |
