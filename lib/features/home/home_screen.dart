@@ -54,7 +54,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ref
                     .read(gameSessionProvider.notifier)
                     .restoreGame(saved.session, hintPenalty: saved.hintPenalty);
-                context.go('/play', extra: saved.session.mode);
+                final route = saved.session.mode == GameMode.speedTyping
+                    ? '/type'
+                    : '/play';
+                context.go(route, extra: saved.session.mode);
               },
               onDismiss: () {
                 ref.read(gameSessionProvider.notifier).endGame();
@@ -141,6 +144,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 bestScoreFuture: repo.getBestScore(GameMode.grandMaster),
                 onTap: () =>
                     context.go('/play', extra: GameMode.grandMaster),
+              ),
+              const SizedBox(height: 12),
+              _ModeCard(
+                mode: GameMode.speedTyping,
+                name: 'Speed Typing',
+                description: 'Name all 50 states by typing — beat the clock.',
+                icon: Icons.keyboard,
+                cardColor: const Color(0xFF00695C),
+                bestScoreFuture: repo.getBestScore(GameMode.speedTyping),
+                onTap: () => context.go('/type'),
               ),
               const SizedBox(height: 12),
             ],

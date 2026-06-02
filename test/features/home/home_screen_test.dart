@@ -12,7 +12,6 @@ import 'package:state_states/features/game/game_phase.dart';
 import 'package:state_states/features/game/game_session.dart';
 import 'package:state_states/features/home/home_screen.dart';
 import 'package:state_states/features/home/session_restore_card.dart';
-import 'package:state_states/features/typing/speed_typing_screen.dart';
 
 class MockHighScoreRepository extends Mock implements HighScoreRepository {}
 
@@ -64,13 +63,19 @@ void main() {
       expect(find.text('States Master'), findsAtLeastNWidgets(1));
       expect(find.text('Geographical Master'), findsAtLeastNWidgets(1));
       expect(find.text('Grand Master'), findsAtLeastNWidgets(1));
-      expect(find.text('Speed Typing'), findsOneWidget);
+      // Speed Typing card may be below the viewport; skipOffstage: false
+      // finds widgets rendered but clipped by the ListView's scroll view.
+      expect(find.text('Speed Typing', skipOffstage: false), findsOneWidget);
     });
 
-    testWidgets('Speed Typing card navigates to /type', (tester) async {
+    testWidgets('Speed Typing card navigates to /type (TYPING-02)',
+        (tester) async {
       final mockRepo = MockHighScoreRepository();
       when(() => mockRepo.getBestScore(any())).thenAnswer((_) async => null);
 
+      // Use a stub for /type to avoid loading SpeedTypingScreen providers in
+      // this integration test. The goal is to verify navigation, not the screen.
+      const stubKey = ValueKey('speed-typing-route-stub');
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
@@ -86,7 +91,10 @@ void main() {
                 ),
                 GoRoute(
                   path: '/type',
-                  builder: (context, state) => const SpeedTypingScreen(),
+                  builder: (context, state) => const Scaffold(
+                    key: stubKey,
+                    body: Center(child: Text('SpeedTypingStub')),
+                  ),
                 ),
                 GoRoute(
                   path: '/play',
@@ -100,12 +108,20 @@ void main() {
       await tester.pump();
       await tester.pump();
 
-      // Tap the Speed Typing mode card
-      await tester.tap(find.bySemanticsLabel('Speed Typing mode'));
+      // Speed Typing card may be below the fold; scroll until visible.
+      await tester.scrollUntilVisible(
+        find.text('Speed Typing', skipOffstage: false),
+        100,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.pump();
+
+      // Tap the Speed Typing mode card (now in viewport after scrolling)
+      await tester.tap(find.text('Speed Typing'));
       await tester.pumpAndSettle();
 
-      // SpeedTypingScreen should now be in the tree
-      expect(find.byType(SpeedTypingScreen), findsOneWidget);
+      // Stub screen confirms /type was navigated to (TYPING-02)
+      expect(find.text('SpeedTypingStub'), findsOneWidget);
     });
 
     testWidgets('shows Not played when no score stored', (tester) async {
@@ -128,6 +144,8 @@ void main() {
       when(() => mockRepo.getBestScore(GameMode.geographicalMaster))
           .thenAnswer((_) async => null);
       when(() => mockRepo.getBestScore(GameMode.grandMaster))
+          .thenAnswer((_) async => null);
+      when(() => mockRepo.getBestScore(GameMode.speedTyping))
           .thenAnswer((_) async => null);
 
       await tester.pumpWidget(buildHomeScreen(mockRepo));
