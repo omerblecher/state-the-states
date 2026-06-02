@@ -1,8 +1,8 @@
 # Stack Research
 
 **Domain:** Cross-platform Flutter educational map game (USA states, ages 8+, offline, COPPA/Families-compliant)
-**Researched:** 2026-05-30
-**Confidence:** HIGH — all versions verified against pub.dev; pipeline design verified against live Flags codebase
+**Researched:** 2026-05-30 (v1) · updated 2026-06-02 (v2 — AdMob activation, screenshot sharing, Mode 5)
+**Confidence:** HIGH — all versions verified against pub.dev; API patterns verified against Flags codebase and official Google Developers documentation
 
 ---
 
@@ -17,10 +17,29 @@ Flags pubspec.yaml (environment):
   flutter: '>=3.32.0'
 ```
 
-Flutter 3.44.0 (Dart 3.10) is current stable as of 2026-05-30.
+Flutter 3.44.0 (Dart 3.10) is current stable as of 2026-06-02.
 The `>=3.32.0` lower-bound from Flags is compatible; raise the constraint to `>=3.44.0` for
 State States to track the latest stable and pick up performance improvements to
 `CustomPainter` and `InteractiveViewer`.
+
+---
+
+## v2 Stack Changes
+
+The v1 `pubspec.yaml` is already correct. **One new package is needed for v2:**
+
+| Package | v1 | v2 | Reason |
+|---------|----|----|--------|
+| `path_provider` | not present | `^2.1.5` | Required for screenshot-to-temp-file before `share_plus` sharing. `XFile.fromData()` works without it on most platforms, but writing to a temp file with a proper filename is the reliable Android path. |
+| `gma_mediation_unity` | declared, not initialized | declared + initialized | See init sequence below. |
+| `gma_mediation_ironsource` | declared, not initialized | declared + initialized | See init sequence below. |
+| `gma_mediation_inmobi` | declared, not initialized | declared + initialized | No Dart-side COPPA call needed — adapter auto-forwards `tagForChildDirectedTreatment` from `RequestConfiguration`. |
+| `gma_mediation_applovin` | declared, disabled | remains disabled | AppLovin SDK 13.0+ cannot be initialized in COPPA/child-directed apps. `kAppLovinEnabled = false` gate stays. Remove the package from pubspec only when AppLovin re-enters the Families Self-Certified Ads SDK Program. |
+
+Add to `pubspec.yaml` dependencies:
+```yaml
+  path_provider: ^2.1.5
+```
 
 ---
 
@@ -41,27 +60,158 @@ State States to track the latest stable and pick up performance improvements to
 | `just_audio` | `^0.10.5` | `^0.10.5` | Audio playback | Flags' `RealAudioService` uses `just_audio` with `setAsset()` / `stop()` / `seek()` / `play()` / `setVolume()` pattern. State States needs: (1) correct/error SFX (same pattern), (2) anthem loop on welcome screen with fade-out on transition. 0.10.5 is current stable. **Do not use `audioplayers`** — PROJECT.md explicitly supersedes that mention. |
 | `intl` | `^0.20.2` | `^0.20.2` | i18n runtime + `flutter gen-l10n` | ARB-based UI strings. 0.20.2 is current stable (dart.dev publisher). |
 
-### Ads Layer (deferred to v2 — stub in v1)
+### Ads Layer — v2 Activation
 
-Per PROJECT.md, the full AdMob + mediation layer is a v2 concern. In v1 the `AdService` interface stubs as `AdLoadState.failed` (identical to Flags Phases 1–5 pattern). The packages are listed here for completeness and to confirm versions for v2 planning.
+All four packages were declared in v1 `pubspec.yaml` but only `google_mobile_ads` had its
+`initializeAds()` call completed. In v2 the mediation adapters are also initialized. The
+packages remain at the same versions as Flags — no delta required.
 
-| Library | Flags Version | Current Stable | Purpose | COPPA Note |
-|---------|--------------|---------------|---------|-----------|
-| `google_mobile_ads` | `^8.0.0` | `8.0.0` | AdMob banner / interstitial / rewarded | Must call `tagForChildDirectedTreatment(true)` before `MobileAds.initialize()`. |
-| `gma_mediation_unity` | `^1.8.0` | `1.8.0` | Unity Ads mediation | Must set child-directed flag on its own SDK independently. |
-| `gma_mediation_ironsource` | `^2.4.1` | `2.4.1` | IronSource mediation | Same independent child-directed requirement. |
-| `gma_mediation_inmobi` | `^2.1.0` | `2.1.0` | InMobi mediation | Same. |
-| `gma_mediation_applovin` | `^2.6.1` | `2.6.1` | AppLovin MAX mediation | Same. |
+| Library | Version | Purpose | COPPA Status |
+|---------|---------|---------|-------------|
+| `google_mobile_ads` | `^8.0.0` | AdMob banner / interstitial / rewarded / App Open | `tagForChildDirectedTreatment(yes)` + `maxAdContentRating(g)` set via `RequestConfiguration` BEFORE `initialize()`. Already done in `ads_initializer.dart`. |
+| `gma_mediation_unity` | `^1.8.0` | Unity Ads mediation | Call `GmaMediationUnity.setGDPRConsent(false)` and `GmaMediationUnity.setCCPAConsent(false)` before `MobileAds.instance.initialize()`. COPPA forwarding (tagForChildDirectedTreatment) is automatic via `RequestConfiguration`. |
+| `gma_mediation_ironsource` | `^2.4.1` | ironSource/LevelPlay mediation | Call `GmaMediationIronsource().setDoNotSell(true)` before `MobileAds.instance.initialize()`. COPPA value is auto-forwarded via `RequestConfiguration`. |
+| `gma_mediation_inmobi` | `^2.1.0` | InMobi mediation | `GmaMediationInMobi` is an empty Dart class (no Dart-side COPPA call needed). The adapter reads `tagForChildDirectedTreatment` from `RequestConfiguration` and forwards it to the InMobi SDK natively. |
+| `gma_mediation_applovin` | `^2.6.1` | AppLovin MAX mediation | **Disabled** (`kAppLovinEnabled = false`). AppLovin SDK 13.0+ refuses to initialize in apps classified as children's content under COPPA/Families Policy. Keep package declared but do not initialize until AppLovin re-enters Families Self-Certified Ads SDK Program. |
 
-All four mediation packages are at the same version as Flags. No delta required.
+#### AdMob + Mediation COPPA Init Sequence
 
-### Supporting Libraries
+The correct order (already implemented in `lib/core/ads/ads_initializer.dart` in the Flags
+codebase and partially in State States' stub initializer) is:
 
-| Library | Flags Version | State States Version | Purpose | When to Use |
-|---------|--------------|---------------------|---------|-------------|
-| `share_plus` | `^10.0.0` | `^13.1.0` | Native share sheet | Deferred to v2 (gated social sharing behind math parental challenge). **Delta:** latest stable is 13.1.0; upgrade from ^10.0.0. API is stable — `SharePlus.instance.share(params)` unchanged between 10→13. Breaking change in 13.0.0 was Dart/Flutter minimum version bump only. |
-| `url_launcher` | `^6.3.0` | `^6.3.2` | Open URLs (privacy policy, store links) | Used in Flags for external links. Minor version bump to 6.3.2 (flutter.dev publisher). |
-| `flutter_localizations` | SDK | SDK | Localization support | Required for `flutter gen-l10n` / ARB pipeline. |
+```dart
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:gma_mediation_ironsource/gma_mediation_ironsource.dart';
+import 'package:gma_mediation_unity/gma_mediation_unity.dart';
+
+Future<void> initializeAds() async {
+  // Step 1: AdMob child-directed flags — MUST precede initialize().
+  // Do NOT set both tagForChildDirectedTreatment AND tagForUnderAgeOfConsent
+  // to yes simultaneously — child-directed covers UCPA; dual-flag not recommended.
+  MobileAds.instance.updateRequestConfiguration(
+    RequestConfiguration(
+      tagForChildDirectedTreatment: TagForChildDirectedTreatment.yes,
+      maxAdContentRating: MaxAdContentRating.g,
+    ),
+  );
+
+  // Step 2: ironSource — setDoNotSell for CCPA/CPRA belt-and-suspenders.
+  // COPPA tagForChildDirectedTreatment is auto-forwarded by the adapter.
+  GmaMediationIronsource().setDoNotSell(true);
+
+  // Step 3: Unity — withhold consent (child-directed: no consent, no selling).
+  // These are STATIC calls on GmaMediationUnity.
+  GmaMediationUnity.setGDPRConsent(false);
+  GmaMediationUnity.setCCPAConsent(false);
+  // COPPA tagForChildDirectedTreatment is auto-forwarded by the adapter.
+
+  // Step 4: InMobi — no Dart call needed.
+  // GmaMediationInMobi is an empty class; the native adapter reads COPPA from
+  // RequestConfiguration directly.
+
+  // Step 5: AppLovin — disabled. SDK 13.0+ cannot init in child-directed apps.
+  if (kAppLovinEnabled) {
+    // Activation path documented here; do not remove.
+    // Requires: AppLovin account approval + Families Program re-entry confirmed.
+  }
+
+  // Step 6: Initialize GMA SDK — LAST, after all child-directed flags are set.
+  await MobileAds.instance.initialize();
+}
+```
+
+**Critical:** Steps 1–5 must complete before Step 6. Google's documentation is explicit that
+`updateRequestConfiguration` and mediation SDK privacy calls must precede `initialize()`.
+
+**Call site:** `initializeAds()` is called in `main()` before `runApp()`, as shown in the
+Flags `main.dart` pattern.
+
+**AndroidManifest.xml (already correct in v1):**
+- `APPLICATION_ID` meta-data entry is present (required to prevent RuntimeException)
+- `AD_ID` permission is stripped via `tools:node="remove"`
+- Android Privacy Sandbox permissions (`ACCESS_ADSERVICES_*`) are stripped
+
+**Android minSdk (already correct):** `minSdk = 24` in `android/app/build.gradle.kts`.
+`google_mobile_ads` 8.0.0 declares `minSdkVersion 24` in its manifest; this is already
+accounted for and documented in the build file comments.
+
+#### AdMob Ad Unit ID Activation
+
+`lib/core/ads/ad_constants.dart` in v1 has empty string ad unit IDs — these must be
+replaced with production IDs from AdMob console before v2 goes live. Test IDs for
+development are the standard Google test ad unit IDs:
+
+```dart
+// Development/test IDs (replace before Play Store submission):
+const String kBannerAdUnitId       = 'ca-app-pub-3940256099942544/6300978111';
+const String kInterstitialAdUnitId = 'ca-app-pub-3940256099942544/1033173712';
+const String kRewardedAdUnitId     = 'ca-app-pub-3940256099942544/5224354917';
+const String kAppOpenAdUnitId      = 'ca-app-pub-3940256099942544/9257395921';
+```
+
+The `AdMobAdService` implementation exists in full in
+`C:\code\Claude\FlagsRoundTheWorld\lib\core\ads\admob_ad_service.dart` and is a direct
+port target for v2 — it implements Banner (anchored adaptive), Interstitial (preload +
+show with reload), Rewarded (Completer<bool> pattern), and App Open (4-hour expiry +
+gameplay suppression). The `adServiceProvider` in `ad_service_provider.dart` must be
+switched from `StubAdService()` to `AdMobAdService(ref)` as part of v2 activation.
+
+### Supporting Libraries (v2 additions)
+
+| Library | Version | Purpose | When to Use |
+|---------|---------|---------|-------------|
+| `share_plus` | `^13.1.0` | Native share sheet | Already declared. v2 upgrades the `_onSharePressed` in `CompletionScreen` from text-only to screenshot + text. API: `SharePlus.instance.share(ShareParams(files: [xfile], text: '...'))`. |
+| `path_provider` | `^2.1.5` | Filesystem paths | NEW in v2. Needed to write the PNG screenshot to a temp file before passing to `share_plus` as an `XFile`. `getTemporaryDirectory()` is the right call — temp storage is app-scoped, auto-cleaned, no permissions needed on Android 10+. |
+| `url_launcher` | `^6.3.2` | Open URLs | Already declared. No change for v2. |
+| `flutter_localizations` | SDK | Localization support | No change. |
+
+#### Screenshot Capture → Share Pattern
+
+The score card in `CompletionScreen` already has a `RepaintBoundary` widget wrapping it.
+The v2 upgrade assigns a `GlobalKey` to that boundary and captures it as a PNG:
+
+```dart
+final _scoreCardKey = GlobalKey();
+
+// In build():
+RepaintBoundary(
+  key: _scoreCardKey,
+  child: Card(...),
+)
+
+// In _onSharePressed() — after math gate passes:
+Future<XFile> _captureScoreCard() async {
+  final boundary = _scoreCardKey.currentContext!
+      .findRenderObject() as RenderRepaintBoundary;
+  final image = await boundary.toImage(pixelRatio: 2.0);
+  final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+  final pngBytes = byteData!.buffer.asUint8List();
+
+  // Write to temp file with a meaningful filename for the share sheet.
+  final tempDir = await getTemporaryDirectory();
+  final file = File('${tempDir.path}/state_the_states_result.png');
+  await file.writeAsBytes(pngBytes);
+  return XFile(file.path, mimeType: 'image/png');
+}
+
+// Share:
+final xfile = await _captureScoreCard();
+await SharePlus.instance.share(ShareParams(
+  files: [xfile],
+  text: 'New personal best in $_modeName! Score: $_score — State the States',
+));
+```
+
+**pixelRatio: 2.0** — doubles resolution for crisp social-media sharing without
+significant memory impact (the score card widget is small).
+
+**XFile.fromData() alternative:** `XFile.fromData(pngBytes, mimeType: 'image/png')` works
+on Android without writing a temp file, but some share targets (e.g. Gmail) require an
+actual file path. The temp-file approach is the reliable Android-first path.
+
+**PB-gating:** The share button should only be offered / enabled when `_isNewPb == true`
+(or always offered but the share text changes to reflect no-PB). The math gate already
+exists; v2 adds PB-aware messaging.
 
 ### Development Tools
 
@@ -173,7 +323,7 @@ Install: `pip install geopandas shapely`
 ## Installation
 
 ```yaml
-# pubspec.yaml — State States
+# pubspec.yaml — State States v2
 
 environment:
   sdk: '>=3.10.0 <4.0.0'
@@ -192,15 +342,16 @@ dependencies:
   shared_preferences: ^2.5.5
   intl: ^0.20.2
   just_audio: ^0.10.5
-  # Ads — declare now for v2 wiring; stub in v1
+  # Ads — active in v2
   google_mobile_ads: ^8.0.0
   gma_mediation_unity: ^1.8.0
   gma_mediation_ironsource: ^2.4.1
   gma_mediation_inmobi: ^2.1.0
-  gma_mediation_applovin: ^2.6.1
-  # v2 features — declare now to match Flags baseline
+  gma_mediation_applovin: ^2.6.1   # declared but disabled; kAppLovinEnabled=false
+  # Sharing — v2 screenshot path
   url_launcher: ^6.3.2
   share_plus: ^13.1.0
+  path_provider: ^2.1.5            # NEW in v2 — temp file for screenshot sharing
 
 dev_dependencies:
   flutter_test:
@@ -229,6 +380,8 @@ dev_dependencies:
 | Audio | `just_audio` | `audioplayers` | PROJECT.md explicitly supersedes the `audioplayers` mention: "Standardize audio on `just_audio`." `just_audio` is already in the Flags lockfile and its service pattern is directly portable. |
 | Analytics | Android Vitals (no package) | Firebase Analytics | Firebase Analytics captures a persistent App Instance ID — a persistent identifier prohibited by COPPA for child-directed apps. Locked decision in both Flags CLAUDE.md and PROJECT.md. |
 | Crash reporting | Android Vitals (no package) | Firebase Crashlytics | Crashlytics assigns a persistent UUID per install — same COPPA prohibition. |
+| Screenshot sharing | `RepaintBoundary` + temp file | `screenshot` package | The `screenshot` package is a thin wrapper around the same Flutter rendering API. No benefit over direct `RenderRepaintBoundary.toImage()` — adds a dependency for code that is 10 lines. |
+| AppLovin mediation | disabled | enabled | AppLovin SDK 13.0+ explicitly prohibits initialization in child-directed / COPPA apps. Enabling it would violate Families Policy. Re-enable only if AppLovin provides a COPPA-safe SDK variant and re-enters the Families Self-Certified Ads SDK Program. |
 
 ---
 
@@ -242,6 +395,8 @@ dev_dependencies:
 | `audioplayers` | Superseded by `just_audio` for this project. Two audio stacks would diverge from the Flags baseline. | `just_audio`. |
 | Runtime SVG parsing for the map | Parsing SVG at runtime is slow (blocks frame budget), prevents pre-computing centroids and bounding boxes, and loses the structured JSON schema needed for hit-testing. | Build-time Python pipeline → bundled `usa_states_paths.json`. |
 | Any online/cloud storage SDK | App is fully offline by design. Accounts and cloud sync are explicitly out of scope. | `shared_preferences` for all local persistence. |
+| Initializing AppLovin MAX in v2 | AppLovin SDK 13.0+ refuses to initialize in apps classified as children's content under COPPA/Google Play Families Ads Policy. | Keep `kAppLovinEnabled = false`. Revenue loss is acceptable; policy violation is not. |
+| `tagForChildDirectedTreatment` + `tagForUnderAgeOfConsent` both set to `yes` | Google documentation explicitly advises against setting both simultaneously — child-directed treatment already covers UCPA/under-age scenarios. Dual-flag is undefined behavior. | Set only `tagForChildDirectedTreatment: TagForChildDirectedTreatment.yes`. |
 
 ---
 
@@ -251,11 +406,12 @@ dev_dependencies:
 |---------|-------|-------------|-----------|-------|
 | Flutter SDK constraint | `>=3.32.0` | `>=3.44.0` | Bump lower-bound | Track current stable; no breaking changes. |
 | Dart SDK constraint | `>=3.7.0` | `>=3.10.0` | Bump lower-bound | Matches Flutter 3.44 / Dart 3.10. |
-| `share_plus` | `^10.0.0` | `^13.1.0` | Minor version bump | 13.1.0 is current stable; API unchanged (no breaking API changes between 10→13, only platform minimum bumps in 13.0.0). Deferred to v2 anyway. |
+| `share_plus` | `^10.0.0` | `^13.1.0` | Minor version bump | 13.1.0 is current stable; API unchanged (no breaking API changes between 10→13, only platform minimum bumps in 13.0.0). |
 | `url_launcher` | `^6.3.0` | `^6.3.2` | Patch bump | No behavior change. |
 | `flutter_lints` | `^5.0.0` | `^6.0.0` | Minor version bump | 6.0.0 is current stable; new lint rules added but none removed. |
 | `flutter_launcher_icons` | `^0.14.3` | `^0.14.4` | Patch bump | No API change. |
 | `riverpod_generator` | `^4.0.3` (dev) | same | Unchanged | Current stable is 4.0.3. |
+| `path_provider` | not present | `^2.1.5` | New addition (v2) | Required for screenshot temp-file → share_plus path. |
 
 All other packages are at identical versions to Flags.
 
@@ -267,9 +423,11 @@ All other packages are at identical versions to Flags.
 |---------|--------|-------|
 | `flutter_riverpod` 3.3.1 + `riverpod_annotation` 4.0.2 + `riverpod_generator` 4.0.3 | Compatible | These three packages share the Riverpod 3.x generation and are designed to move in lock-step. Verified via pub.dev dependency constraints. |
 | `path_drawing` 1.0.1 + `flutter_svg` 2.3.0 | Compatible | `path_drawing` is a standalone SVG path parser; it does not depend on `flutter_svg` at runtime. Both are used in Flags without conflict. |
-| `google_mobile_ads` 8.0.0 + four `gma_mediation_*` packages | Compatible | All four mediation adapters are google.dev published and designed for the gma 8.x API. Identical to Flags lockfile. |
-| `just_audio` 0.10.5 + Android minSdk 21 | Compatible | `just_audio` supports Android API 21+. Flags sets `min_sdk_android: 21` in `pubspec.yaml` / `flutter_launcher_icons` config. Carry this forward. |
-| `share_plus` 13.1.0 minimum Flutter | Compatible | 13.1.0 lowered the requirement to Flutter 3.38.1 / Dart 3.10. Our `>=3.44.0` constraint satisfies this. |
+| `google_mobile_ads` 8.0.0 + four `gma_mediation_*` packages | Compatible | All four mediation adapters are google.dev published and designed for the gma 8.x API. Identical to Flags lockfile. Note: `gma_mediation_applovin` is compatible but its underlying SDK cannot be used in child-directed apps. |
+| `just_audio` 0.10.5 + Android minSdk 24 | Compatible | `just_audio` supports Android API 21+; our minSdk 24 is a superset of that requirement. |
+| `share_plus` 13.1.0 minimum Flutter | Compatible | 13.1.0 requires Flutter 3.38.1 / Dart 3.10. Our `>=3.44.0` constraint satisfies this. |
+| `path_provider` 2.1.5 + Android minSdk 24 | Compatible | `path_provider` supports Android API 16+; our minSdk 24 satisfies this. |
+| `google_mobile_ads` 8.0.0 + Android minSdk | Required: minSdk 24 | GMA 8.0.0 wraps the native Android GMA SDK which requires minSdkVersion 24. This is already enforced in `android/app/build.gradle.kts` (`val appMinSdk = 24`). |
 
 ---
 
@@ -278,28 +436,34 @@ All other packages are at identical versions to Flags.
 - `C:\code\Claude\FlagsRoundTheWorld\pubspec.yaml` — Flags lockfile (direct read, authoritative baseline)
 - `C:\code\Claude\FlagsRoundTheWorld\pubspec.lock` — Resolved dependency graph (confirmed versions)
 - `C:\code\Claude\FlagsRoundTheWorld\CLAUDE.md` — Locked architecture decisions (CustomPainter, no Firebase, no flutter_map, no Syncfusion)
-- `C:\code\Claude\FlagsRoundTheWorld\scripts\generate_map.py` — Python pipeline design (direct read, authoritative)
-- `C:\code\Claude\FlagsRoundTheWorld\lib\core\models\country_data.dart` — JSON schema design (direct read)
-- `C:\code\Claude\FlagsRoundTheWorld\lib\core\data\country_data_service.dart` — Background-isolate load pattern (direct read)
-- `C:\code\Claude\FlagsRoundTheWorld\lib\core\audio\real_audio_service.dart` — `just_audio` service pattern (direct read)
-- `C:\code\Claude\FlagsRoundTheWorld\lib\features\map\hit_detection.dart` — Proximity-snap and centroid hit-test algorithm (direct read)
+- `C:\code\Claude\FlagsRoundTheWorld\lib\core\ads\admob_ad_service.dart` — Full AdMobAdService implementation (direct read; port target for v2)
+- `C:\code\Claude\FlagsRoundTheWorld\lib\core\ads\ads_initializer.dart` — Flags init sequence with ironSource + Unity mediation calls (direct read, authoritative)
+- `C:\code\Claude\StateTheStates\lib\core\ads\ads_initializer.dart` — v1 partial init (no mediation); v2 completes it
+- `C:\code\Claude\StateTheStates\android\app\build.gradle.kts` — minSdk 24 confirmed, with inline comment explaining why (direct read)
+- `C:\code\Claude\StateTheStates\android\app\src\main\AndroidManifest.xml` — AD_ID + AdServices permissions stripped (direct read)
+- https://developers.google.com/admob/flutter/mediation/unity — GmaMediationUnity.setGDPRConsent / setCCPAConsent (static methods, call before initialize) (MEDIUM confidence — Google Developers page, WebSearch verified)
+- https://developers.google.com/admob/flutter/mediation/ironsource — GmaMediationIronsource().setDoNotSell(true) (instance method) (MEDIUM confidence — Google Developers page, WebSearch verified)
+- https://developers.is.com/ironsource-mobile/flutter/regulation-advanced-settings/ — ironSource regulation settings guide (MEDIUM confidence)
+- https://developers.is.com/ironsource-mobile/general/ironsource-mobile-child-directed-apps/ — ironSource COPPA child-directed API (MEDIUM confidence)
+- https://pub.dev/packages/gma_mediation_inmobi — "GmaMediationInMobi is an empty class needed to allow correct compatibility analysis" — no Dart-side COPPA call required (HIGH confidence — pub.dev official)
+- https://developers.google.com/admob/android/mediation/inmobi — InMobi adapter auto-forwards COPPA from RequestConfiguration (MEDIUM confidence)
+- https://support.axon.ai/en/max/flutter/overview/privacy/ — AppLovin SDK 13.0+ cannot be initialized in child-directed apps (HIGH confidence — AppLovin official docs)
+- https://www.kidoz.net/blog/navigating-the-applovin-decision-a-guide-for-developers-with-kids-and-mixed-audiences — AppLovin 13.0 child-directed prohibition (MEDIUM confidence, corroborating source)
+- https://api.flutter.dev/flutter/rendering/RenderRepaintBoundary/toImage.html — `toImage(pixelRatio: double)` method signature (HIGH confidence — Flutter official API docs)
+- https://pub.dev/documentation/cross_file/latest/cross_file/XFile-class.html — `XFile.fromData()` and `XFile(path)` constructors (HIGH confidence — official Dart API docs)
+- https://pub.dev/packages/path_provider — `getTemporaryDirectory()` confirmed; version ~2.1.x (HIGH confidence — pub.dev official)
 - https://pub.dev/packages/flutter_riverpod — Version 3.3.1 confirmed current stable (HIGH confidence)
 - https://pub.dev/packages/go_router — Version 17.2.3 confirmed current stable (HIGH confidence)
 - https://pub.dev/packages/flutter_svg — Version 2.3.0 confirmed current stable (HIGH confidence)
 - https://pub.dev/packages/just_audio — Version 0.10.5 confirmed current stable (HIGH confidence)
 - https://pub.dev/packages/google_mobile_ads — Version 8.0.0 confirmed current stable (HIGH confidence)
-- https://pub.dev/packages/share_plus — Version 13.1.0 confirmed current stable; changelog confirms no API breaking changes vs 10.x (HIGH confidence)
+- https://pub.dev/packages/share_plus — Version 13.1.0 confirmed current stable (HIGH confidence)
 - https://pub.dev/packages/shared_preferences — Version 2.5.5 confirmed (HIGH confidence)
 - https://pub.dev/packages/intl — Version 0.20.2 confirmed (HIGH confidence)
-- https://pub.dev/packages/riverpod_annotation — Version 4.0.2 confirmed stable (HIGH confidence)
-- https://pub.dev/packages/riverpod_generator — Version 4.0.3 confirmed stable (HIGH confidence)
-- https://pub.dev/packages/path_drawing — Version 1.0.1 confirmed (HIGH confidence)
-- https://pub.dev/packages/build_runner — Version 2.15.0 confirmed (HIGH confidence)
-- https://pub.dev/packages/flutter_lints — Version 6.0.0 confirmed current stable (HIGH confidence)
 - https://docs.flutter.dev/release/release-notes/release-notes-3.44.0 — Flutter 3.44.0 bundles Dart 3.10 (HIGH confidence)
 - https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-admin-1-states-provinces/ — NE admin-1 10m v5.1.1, public domain license confirmed (HIGH confidence)
 - Community usage patterns confirming `adm0_a3`, `postal`, `name`, `iso_3166_2` field names (MEDIUM confidence — field names confirmed via community examples; definitive names should be verified when downloading the shapefile for the first time)
 
 ---
 *Stack research for: State States — Flutter educational USA geography game*
-*Researched: 2026-05-30*
+*v1 researched: 2026-05-30 | v2 updated: 2026-06-02*

@@ -620,3 +620,309 @@ This limits painter repaints to scale changes larger than 0.5%, which is imperce
 ---
 *Architecture research for: State States — Flutter USA states drag-and-drop map game*
 *Researched: 2026-05-30*
+
+---
+
+## v2 Architecture Changes
+
+*Added: 2026-06-02 — v2.0 milestone (Speed Typing, AdMob activation, rewarded hint refill, screenshot share)*
+
+### 1. SpeedTypingScreen — Location and Reuse
+
+**File:** `lib/features/typing/speed_typing_screen.dart`
+
+Create `lib/features/typing/` as a new feature directory. The screen is a new mode with no map, no `InteractiveViewer`, and no `StateTray` — it is structurally closer to `HomeScreen` than to `MapScreen`.
+
+**What it reuses from existing code:**
+
+| Reused component | How |
+|-----------------|-----|
+| `gameSessionProvider` / `GameSessionNotifier` | Reads `session.phase`, `session.score`, `session.hintsRemaining`, `session.elapsed`. Calls `startGame(GameMode.speedTyping)`, `recordTypingGuess()`, `completeGame()`, `pauseGame()`, `resumeGame()`. |
+| `GameHud` | Identical widget, same props. Score, elapsed, progress bar, pause + mute buttons all apply unchanged. |
+| `audioServiceProvider` | `playCorrect()` / `playError()` on each guess. Same call site pattern as `MapScreen`. |
+| `adServiceProvider` | `showInterstitialAd()` in `initState` after game completes (same pattern as `CompletionScreen`). `showRewardedAd()` for hint refill (see section 6). |
+| `HighScoreRepository` | No change. `completeGame()` already writes to it. |
+| `GameStateRepository` | No change. `recordTypingGuess()` calls `saveSession()` on correct guess; same pattern as `recordDrop()`. |
+
+**What it adds (net-new):**
+
+- `TextField` with `textCapitalization: TextCapitalization.characters` for UPPERCASE input
+- Auto-submit on exact match (no Submit button; compare on every `onChanged`)
+- Scrolling `GridView` or `Wrap` of found-states chips (renders matched postals)
+- `_inputController = TextEditingController()` — clears on each correct guess
+- No map, no `InteractiveViewer`, no `TransformationController`, no `hitTest()`
+
+**Route:** Add `/typing` to `app.dart` GoRouter, parallel to `/play`. Both accept `GameMode` as `extra`. `HomeScreen` gains a Mode 5 card that pushes `/typing` with `GameMode.speedTyping`.
+
+---
+
+### 2. GameMode Enum Extension
+
+`lib/features/game/game_mode.dart` — single-line change:
+
+```dart
+// Before
+enum GameMode { learn, statesMaster, geographicalMaster, grandMaster }
+
+// After
+enum GameMode { learn, statesMaster, geographicalMaster, grandMaster, speedTyping }
+```
+
+**Downstream impact is narrow.** The existing code has exactly two switch/if-chain sites that need updating:
+
+1. `CompletionScreen._modeColor()` — add a case for `speedTyping` (pick a color; suggest `Color(0xFF00695C)` teal).
+2. `HomeScreen` mode-card builder — add the Mode 5 card. All other mode-card logic is driven off the enum value passed as `extra`, not an exhaustive switch.
+
+`GameSessionNotifier` has no mode-specific branching; it is mode-agnostic by design. `HighScoreRepository` keys are `mode.name` strings (`"speedTyping"` is a valid new key, no collision). `GameStateRepository` serializes `mode.name`; restoring a `speedTyping` session works without any repository changes provided the enum value exists before any save is made.
+
+**Label/tray logic in `MapScreen._buildMap()`:** The existing mode → `showLabels`/`showName` dispatch is only called for map modes. `SpeedTypingScreen` never calls `_buildMap()`, so no change needed there.
+
+---
+
+### 3. GameSessionNotifier: `recordTypingGuess()`
+
+Add one method. No existing method changes. No state machine changes.
+
+```dart
+// In game_session_notifier.dart — add after recordDrop()
+
+/// Records a typed state name guess.
+///
+/// [postal] is the 2-letter abbreviation that the UI resolved from the
+/// typed name. Returns true if the guess was correct and not already matched;
+/// false otherwise (wrong or duplicate — caller plays error SFX).
+///
+/// Correct: appends to matchedPostals, flushes snapshot, returns true.
+/// Incorrect: increments errorCount, recomputes score, returns false.
+/// Duplicate (already matched): no-op, returns false.
+bool recordTypingGuess(String postal) {
+  final current = state.value;
+  if (current == null || current.phase != GamePhase.playing) return false;
+  if (current.matchedPostals.contains(postal)) return false;
+
+  final elapsedSecs = _restoredOffset + _stopwatch.elapsed.inSeconds;
+
+  // Correct guess
+  final updated = current.copyWith(
+    matchedPostals: [...current.matchedPostals, postal],
+  );
+  state = AsyncData(updated);
+  _gameStateRepository?.saveSession(updated, hintPenalty: _hintPenalty);
+  return true;
+  // NOTE: incorrect branch omitted — SpeedTypingScreen ignores wrong guesses
+  // (user just keeps typing; there is no error penalty for misspellings).
+  // Add errorCount increment here if the product spec changes.
+}
+```
+
+**Why no existing method changes:** `recordDrop()` is map-only; it is never called by `SpeedTypingScreen`. The notifier's phase state machine (`idle → countdown → playing → paused → completed`) applies identically to both modes. `completeGame()`, `pauseGame()`, `resumeGame()`, `useHint()` are all mode-agnostic and work unchanged.
+
+**Zero imports from ads preserved.** `recordTypingGuess()` has no ad-layer dependency.
+
+---
+
+### 4. AdMobAdService Provider Swap
+
+The swap is a single-line change in `lib/core/ads/ad_service_provider.dart`:
+
+```dart
+// Before (v1)
+final adServiceProvider = Provider<AdService>((ref) => const StubAdService());
+
+// After (v2)
+final adServiceProvider = Provider<AdService>((ref) => AdMobAdService());
+```
+
+No callers change. All screens that call `ref.read(adServiceProvider)` continue to import only `core/ads/ad_service.dart` (the abstract interface). The concrete type is invisible to them.
+
+**`AdMobAdService` must be implemented in `core/ads/admob_ad_service.dart`** (the file is already scaffolded in the v1 structure as a placeholder). It implements the existing four-method `AdService` interface:
+
+| Method | v2 behavior |
+|--------|------------|
+| `getBannerWidget()` | Returns a loaded `AdWidget` sized to `AdSize.banner`; returns `SizedBox.shrink()` while loading |
+| `showInterstitialAd()` | Shows preloaded `InterstitialAd`; preloads next ad after show |
+| `showRewardedAd()` | Shows preloaded `RewardedAd`; completes with `true` if `onUserEarnedReward` fires before dismiss |
+| `showAppOpenAd()` | Shows preloaded `AppOpenAd` if not expired (4-hour window) and gameplay is not suppressed |
+
+**COPPA configuration** happens in `ads_initializer.dart` (called once from `main.dart` before `runApp`), not inside `AdMobAdService`. The initializer calls `MobileAds.instance.updateRequestConfiguration(RequestConfiguration(tagForChildDirectedTreatment: TagForChildDirectedTreatment.yes))` and `MobileAds.instance.initialize()`. Each mediation SDK (Unity, ironSource, InMobi, AppLovin) requires its own child-directed flag call in the initializer; `AdMobAdService` itself is unaware of these per-SDK calls.
+
+**Ad unit IDs** live in `core/ads/ad_constants.dart` (already scaffolded). v1 has empty strings; v2 fills in the real IDs. The constants file is the only place IDs appear.
+
+---
+
+### 5. CompletionScreen Screenshot Capture
+
+The existing `RepaintBoundary` at line 201 of `completion_screen.dart` wraps the score `Card`. It is anonymous. Promoting it to a keyed boundary requires a `GlobalKey<RenderObjectState>` (specifically `GlobalKey`) held as `_scoreCardKey`.
+
+**Minimal surgical change to `_CompletionScreenState`:**
+
+```dart
+// Add to _CompletionScreenState fields
+final GlobalKey _scoreCardKey = GlobalKey();
+
+// Change the RepaintBoundary at line 201 from:
+RepaintBoundary(
+  child: Card(...),
+)
+
+// To:
+RepaintBoundary(
+  key: _scoreCardKey,
+  child: Card(...),
+)
+```
+
+**Screenshot capture method (add to `_CompletionScreenState`):**
+
+```dart
+Future<Uint8List?> _captureScoreCard() async {
+  final boundary = _scoreCardKey.currentContext?.findRenderObject()
+      as RenderRepaintBoundary?;
+  if (boundary == null) return null;
+  final image = await boundary.toImage(pixelRatio: 3.0);
+  final byteData = await image.toByteData(format: ImageByteFormat.png);
+  return byteData?.buffer.asUint8List();
+}
+```
+
+**No structural refactor required.** The `RepaintBoundary` already exists; it only needs a key. The `toImage()` / `toByteData()` call is standard Flutter; no new packages needed. `share_plus` `ShareParams` accepts `XFile` for image sharing — convert `Uint8List` to `XFile` via `XFile.fromData(bytes, mimeType: 'image/png')`.
+
+**Updated `_onSharePressed()` for v2:**
+
+```dart
+Future<void> _onSharePressed() async {
+  // Gate: PB only (v2 spec: "New lowest score" gating)
+  if (!_isNewPb) return;  // button is hidden unless PB; guard here too
+
+  final passed = await showDialog<bool>(
+    context: context,
+    builder: (_) => const _MathChallengeDialog(),
+  );
+  if (passed != true || !mounted) return;
+
+  final imageBytes = await _captureScoreCard();
+  final elapsed = _formatTime(widget.session.elapsed);
+  final modeName = widget.session.mode.name;
+  final score = widget.session.score;
+
+  if (imageBytes != null) {
+    final file = XFile.fromData(imageBytes,
+        name: 'state_the_states_result.png', mimeType: 'image/png');
+    await SharePlus.instance.share(ShareParams(
+      text: 'New lowest score in $modeName mode! '
+            '$score points in $elapsed — State the States',
+      files: [file],
+    ));
+  } else {
+    // Fallback: text-only if capture fails
+    await SharePlus.instance.share(ShareParams(
+      text: 'New lowest score in $modeName mode! '
+            '$score points in $elapsed — State the States',
+    ));
+  }
+}
+```
+
+**Math gate upgrade (v2 spec: 2-digit × 1-digit):** The existing `_MathChallengeDialog` uses addition (`_a + _b`). Change to multiplication: `_a` = random 2-digit (12–49), `_b` = random 1-digit (3–9), expected answer = `_a * _b`. No structural change to the dialog — just the number ranges, operator display string, and answer check.
+
+---
+
+### 6. Rewarded Hint Refill Flow
+
+The walled-garden rule is preserved: `GameSessionNotifier` never sees the ad service. The flow is owned entirely by the widget layer.
+
+**Flow:**
+
+```
+User taps hint button in GameHud with hintsRemaining == 0
+    ↓
+MapScreen (or SpeedTypingScreen) detects hintsRemaining == 0
+    → does NOT call notifier.useHint()
+    → instead: calls _offerRewardedHint()
+        ↓
+  ref.read(adServiceProvider).showRewardedAd()
+    → awaits Future<bool>
+        ↓ true (user watched to completion):
+      ref.read(gameSessionProvider.notifier).refillHints()
+      audioServiceProvider.playCorrect()  // satisfying confirmation SFX
+        ↓ false (dismissed or unavailable):
+      show SnackBar: "Watch an ad to refill hints"
+      (no hint granted)
+```
+
+**New `refillHints()` method on `GameSessionNotifier`:**
+
+```dart
+// Add to game_session_notifier.dart
+
+/// Refills hints to 2 after a completed rewarded ad watch.
+///
+/// Must only be called by the widget layer after [AdService.showRewardedAd]
+/// returns true. The notifier is unaware of the ad that preceded this call.
+/// No penalty is added — the reward is the refill itself.
+void refillHints() {
+  final current = state.value;
+  if (current == null || current.phase != GamePhase.playing) return;
+  state = AsyncData(current.copyWith(hintsRemaining: 2));
+  _gameStateRepository?.saveSession(state.value!, hintPenalty: _hintPenalty);
+}
+```
+
+**Which component calls `adServiceProvider`:** The calling widget is whichever screen is active — `MapScreen` for map modes, `SpeedTypingScreen` for speed typing mode. Neither delegates to `GameSessionNotifier`. The pattern is:
+
+```dart
+// In MapScreen._onHintPressed() (or SpeedTypingScreen equivalent)
+Future<void> _onHintPressed() async {
+  final session = ref.read(gameSessionProvider).value;
+  if (session == null) return;
+
+  if (session.hintsRemaining > 0) {
+    // Normal hint path — unchanged from v1
+    final consumed = ref.read(gameSessionProvider.notifier).useHint();
+    if (consumed) _executeHint();
+    return;
+  }
+
+  // hintsRemaining == 0: offer rewarded ad
+  final earned = await ref.read(adServiceProvider).showRewardedAd();
+  if (!mounted) return;
+  if (earned) {
+    ref.read(gameSessionProvider.notifier).refillHints();
+    // Now call useHint() immediately to consume one of the refilled hints
+    final consumed = ref.read(gameSessionProvider.notifier).useHint();
+    if (consumed) _executeHint();
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Watch an ad to refill hints')),
+    );
+  }
+}
+```
+
+**Why `adServiceProvider` is called in the widget, not the notifier:** This is the same discipline as interstitial triggering (`CompletionScreen.initState()` calls the ad; the notifier only transitions `phase`). Keeping it in the widget preserves unit testability of the notifier and means no AdMob mock is needed to test `refillHints()`.
+
+**`StubAdService.showRewardedAd()` returns `false`** (current implementation). For development testing of the refill flow without a real ad, temporarily return `true` from the stub — or use a `ProviderScope` override in tests. The production code path is unchanged.
+
+---
+
+### v2 New File Summary
+
+| File | Status | Notes |
+|------|--------|-------|
+| `lib/features/typing/speed_typing_screen.dart` | New | Mode 5 screen |
+| `lib/core/ads/admob_ad_service.dart` | Promoted from scaffold to real impl | Was placeholder in v1 |
+| `lib/core/ads/ads_initializer.dart` | Promoted from scaffold to real impl | COPPA + MobileAds.initialize() |
+| `lib/core/ads/ad_constants.dart` | Updated | Fill in real ad unit IDs |
+| `lib/core/ads/ad_service_provider.dart` | Single-line change | Swap StubAdService → AdMobAdService |
+| `lib/features/game/game_mode.dart` | One-word addition | Append `speedTyping` to enum |
+| `lib/features/game/game_session_notifier.dart` | Additive | Add `recordTypingGuess()` + `refillHints()` |
+| `lib/features/map/completion_screen.dart` | Additive | Add `_scoreCardKey`, `_captureScoreCard()`, update `_onSharePressed()`, upgrade math gate to multiplication |
+
+### v2 Invariants Preserved
+
+- `GameSessionNotifier` imports from ads: **zero** (unchanged)
+- `AdService` interface: **unchanged** (four methods; no new methods needed)
+- `GameSession` value object: **unchanged** (no new fields)
+- `HighScoreRepository` / `GameStateRepository` / `UserPrefsRepository`: **unchanged**
+- `MapScreen`, `UsaMapPainter`, `HighlightPainter`, `hitTest()`: **unchanged**
+- COPPA rule: `refillHints()` is triggered by widget after ad completes; notifier remains ad-unaware

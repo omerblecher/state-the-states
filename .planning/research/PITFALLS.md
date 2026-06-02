@@ -420,3 +420,244 @@ Copy the `_zoom()` / `_fitMapToScreen()` / `_animateHintZoom()` helper methods f
 ---
 *Pitfalls research for: Flutter USA states map game (State the States), ages 8+, COPPA/Families compliant*
 *Researched: 2026-05-30*
+
+---
+
+## v2-Specific Pitfalls
+
+*Added: 2026-06-02 — v2.0 milestone (Monetization & Speed Mode)*
+
+---
+
+### v2 Pitfall 1: Mediation adapters re-introduce AD_ID permission — tools:remove survives one SDK but not all
+
+**What goes wrong:**
+The v1 manifest already has `tools:node="remove"` for `com.google.android.gms.permission.AD_ID`. However, each mediation adapter (`gma_mediation_unity`, `gma_mediation_ironsource`, `gma_mediation_inmobi`, `gma_mediation_applovin`) ships its own `AndroidManifest.xml` that may independently declare `AD_ID`, `ACCESS_ADSERVICES_AD_ID`, `ACCESS_ADSERVICES_ATTRIBUTION`, and `ACCESS_ADSERVICES_TOPICS`. The Gradle manifest merger processes each AAR in turn. A `tools:node="remove"` in the app manifest removes declarations that were already merged, but if a downstream AAR is processed *after* the app manifest merge pass, its declaration may survive.
+
+In practice: `tools:node="remove"` in the app manifest reliably strips AD_ID when only `google_mobile_ads` is present (v1). When four additional mediation AARs are added in v2, the merge order becomes non-deterministic. Spot-check passes; release build fails the Play Console child-directed audit.
+
+**Why it happens:**
+Android manifest merger processes AARs in dependency tree order, which is determined by Gradle's dependency resolution algorithm. The app manifest wins for conflicts when `tools:node="remove"` is set — but this requires the app manifest to be the *highest priority* node. Per Android docs, the app manifest is always the highest priority in the merger. The risk is subtler: some mediation SDKs also declare `android.permission.ACCESS_ADSERVICES_*` permissions that are newer than the existing `tools:remove` entries in the v1 manifest. If those `ACCESS_ADSERVICES_*` entries are missing from the app's manifest entirely, the merger cannot remove what it has never seen.
+
+**How to avoid:**
+1. The v1 manifest already removes four permissions (verified in `AndroidManifest.xml`). Before enabling any mediation adapter in v2, verify the complete set of permissions each adapter's AAR declares. Run `./gradlew processDebugManifest` and inspect `build/intermediates/merged_manifests/debug/AndroidManifest.xml` — this is the merged output.
+2. For each permission found in the merged output that should not be present, add an explicit `tools:node="remove"` entry to the app manifest.
+3. After adding all four mediation packages, run the merged manifest check as a CI step: `grep -E "AD_ID|ADSERVICES" build/intermediates/merged_manifests/debug/AndroidManifest.xml` must return nothing.
+4. Run `aapt dump badging app-release.apk | grep -i "ad_id\|adservices"` on the final signed APK before every Play Store submission.
+
+**Current manifest state (v1):** Four `tools:node="remove"` entries are present for `AD_ID`, `ACCESS_ADSERVICES_AD_ID`, `ACCESS_ADSERVICES_ATTRIBUTION`, and `ACCESS_ADSERVICES_TOPICS`. This is the correct baseline; verify it is sufficient after adding each mediation adapter in v2.
+
+**Warning signs:**
+- `aapt dump badging` on a release build shows any `AD_ID` or `ADSERVICES` permission after mediation SDKs are added
+- Play Console pre-launch report flags an advertising identifier permission after v2 submission
+- Merged manifest file contains any `AD_ID` declaration not tagged `tools:node="remove"`
+
+**Phase to address:** v2 Phase 1 (add mediation packages) — run merged manifest check immediately after each adapter is added to pubspec.yaml, not after all four are added.
+
+---
+
+### v2 Pitfall 2: App Open ads are explicitly prohibited in Designed for Families apps
+
+**What goes wrong:**
+The v2 scope includes "App Open × Unity/AppLovin/ironSource/InMobi" in its ad format list. App Open ads are specifically excluded from apps participating in Google Play's Designed for Families program. Submitting an app with App Open ads to the Families program results in rejection. More critically: if the app is already in the Families program and an update adds App Open ads, the update is rejected and may trigger a policy violation flag against the developer account.
+
+**Why it happens:**
+App Open ads display full-screen content when the app comes to the foreground. Google's Families policy prohibits this ad format because it can be disorienting or inappropriate for children who may re-enter the app in the middle of another activity. The prohibition is listed in AdMob's Families compliance documentation: "Apps in the Designed for Families program are not eligible to use app open ads."
+
+**What to do instead:**
+Remove App Open from the v2 ad format scope entirely. The permitted ad formats for Families apps are: banner, interstitial (with restrictions on frequency and placement), and rewarded. Do not implement an App Open ad unit, do not configure it in AdMob console, and do not include it in the `AdService` interface.
+
+**Pre-submission checklist item:**
+Before every Play Store submission where the app participates in Families: verify the app does not present an `AppOpenAd` object at any point in its lifecycle. Code search: `grep -r "AppOpenAd\|app_open" lib/` must return nothing.
+
+**Warning signs:**
+- `AppOpenAd` class referenced anywhere in `lib/`
+- AdMob console shows an active App Open ad unit for this app
+- v2 scope document lists "App Open" in the ad format matrix without a Families exemption note
+
+**Phase to address:** v2 scope definition — remove App Open from the format list before writing a single line of ad integration code. Treat any attempt to implement App Open as a policy blocker.
+
+---
+
+### v2 Pitfall 3: Rewarded ad double-reward — granting hint refill in onAdDismissed instead of onUserEarnedReward
+
+**What goes wrong:**
+The rewarded ad flow for hint refills wires `refillHints()` to an ad callback. If `refillHints()` is called inside `FullScreenContentCallback.onAdDismissedFullScreenContent`, hints are granted every time the ad is dismissed — including when the player closes the ad early without completing it. The player gets a free hint refill without watching the ad.
+
+The converse failure also exists: if `refillHints()` is never called because the developer assumes `onAdDismissedFullScreenContent` fires after `onUserEarnedReward` and de-duplicates, they discover that for some mediation networks the `onUserEarnedReward` callback fires and then `onAdDismissedFullScreenContent` fires separately, resulting in the hint being granted before the dismiss and then `refillHints()` being called a second time in dismiss — double reward.
+
+**Why it happens:**
+The two callbacks have different semantics:
+- `onUserEarnedReward`: fires only when the reward condition is met (video watched to completion, or whatever the network defines). For Google-served ads, this fires before dismiss. For some mediation networks, the order is adapter-defined.
+- `onAdDismissedFullScreenContent`: fires every time the fullscreen ad closes, regardless of whether a reward was earned.
+
+Developers conflate "the ad closed" with "the reward was earned."
+
+**Correct pattern:**
+
+```dart
+rewardedAd.show(
+  onUserEarnedReward: (ad, reward) {
+    // Grant the reward HERE and only here.
+    ref.read(gameSessionProvider.notifier).refillHints();
+    _rewardGranted = true; // guard against mediation double-fire
+  },
+);
+
+rewardedAd.fullScreenContentCallback = FullScreenContentCallback(
+  onAdDismissedFullScreenContent: (ad) {
+    ad.dispose();
+    _loadNextRewardedAd(); // preload for next request
+    // Do NOT call refillHints() here.
+  },
+  onAdFailedToShowFullScreenContent: (ad, error) {
+    ad.dispose();
+    _loadNextRewardedAd();
+  },
+);
+```
+
+The `_rewardGranted` bool guards against mediation adapters that fire `onUserEarnedReward` more than once (rare but documented for some networks).
+
+**Warning signs:**
+- Closing the rewarded ad immediately (before video ends) still grants hints
+- Hints are granted twice per rewarded ad view
+- `refillHints()` appears inside the `onAdDismissedFullScreenContent` callback body
+
+**Phase to address:** v2 rewarded ad implementation — write the callback wiring as the first thing, before testing with test ad units.
+
+---
+
+### v2 Pitfall 4: Screenshot capture crashes in a background isolate — toImage() is UI-thread-only
+
+**What goes wrong:**
+The v2 share flow captures a screenshot of the completion screen (score card + state map) and passes it to `share_plus`. A developer attempting to offload the capture to a `compute()` isolate (to avoid jank on the main thread) will find that `RenderRepaintBoundary.toImage()` throws a `StateError` or produces a blank/black image.
+
+The reason: `toImage()` calls into the Flutter rendering pipeline, which is bound to the UI isolate. Background isolates have no access to the widget tree, render objects, or the GPU texture pipeline. The method signature is async but the work is not isolate-safe.
+
+Separate issue: the temporary PNG written for sharing via `share_plus` using `path_provider`'s `getTemporaryDirectory()` persists after the share sheet is dismissed. If no cleanup is done, repeated share actions accumulate screenshot PNGs in the temp directory. On low-storage devices this can cause the next screenshot capture to fail with a file-write error.
+
+**How to avoid:**
+1. Call `toImage()` on the main isolate only. To avoid jank, defer the capture to the frame after the completion animation finishes using `WidgetsBinding.instance.addPostFrameCallback`. The capture itself is fast (single GPU readback); the jank risk is overstated.
+2. Wrap the repaint boundary key access and `toImage()` call in a try/catch — the boundary must have completed a paint pass (`boundary.debugNeedsPaint == false`) before `toImage()` is valid.
+3. After `share_plus` returns (the `Future` from `SharePlus.instance.share()` resolves), delete the temp file:
+
+```dart
+Future<void> _shareScreenshot(RenderRepaintBoundary boundary) async {
+  final image = await boundary.toImage(pixelRatio: 2.0); // main isolate only
+  final byteData = await image.toByteData(format: ImageByteFormat.png);
+  final tempDir = await getTemporaryDirectory();
+  final file = File('${tempDir.path}/state_states_share.png');
+  await file.writeAsBytes(byteData!.buffer.asUint8List());
+  try {
+    await SharePlus.instance.share(
+      ShareParams(files: [XFile(file.path)]),
+    );
+  } finally {
+    await file.delete(); // always clean up
+  }
+}
+```
+
+4. Do not wrap the `toImage()` call in `compute()` or `Isolate.spawn()`.
+
+**Warning signs:**
+- `StateError: RenderRepaintBoundary.toImage called from non-UI isolate` in logs
+- Screenshot is a solid black image (GPU texture not available in isolate)
+- `getTemporaryDirectory()` accumulates many `state_states_share_*.png` files
+- Share fails with a file-write error on repeated calls (storage full from uncleaned temp files)
+
+**Phase to address:** v2 sharing implementation — establish the single-isolate pattern on first implementation; do not experiment with compute() offload.
+
+---
+
+### v2 Pitfall 5: Mediation SDK native layer auto-initializes at app launch when package is in pubspec — COPPA risk in v1 builds
+
+**What goes wrong:**
+Flutter's plugin system (`GeneratedPluginRegistrant`) registers every plugin listed in `pubspec.yaml` with the Flutter engine at startup, before any Dart code runs. For most plugins this is harmless. For `gma_mediation_ironsource` and `gma_mediation_unity`, the native Android layer includes initialization code that runs when the plugin registers with the engine — before `MobileAds.initialize()` is ever called from Dart.
+
+In practice this means: adding `gma_mediation_ironsource: ^2.4.1` to pubspec in a v1 build (even while the Dart `AdService` is fully stubbed and `LevelPlay.init()` is never called) causes the ironSource native SDK to register itself and potentially read device identifiers. The Dart-level stub is irrelevant — the native AAR has already run.
+
+**Why it happens:**
+`FlutterPlugin.onAttachedToEngine()` is called for every registered plugin by `FlutterEngine` initialization. The mediation adapter plugins use this hook to register themselves with the Google Mobile Ads mediation framework at the native layer. This is by design for the mediation adapters; the problem is the COPPA timing.
+
+ironSource's own COPPA documentation states: "COPPA API required to be set **before initializing the SDK**." If the native SDK initializes automatically via plugin registration (before any Dart COPPA configuration runs), this requirement is violated.
+
+**How to avoid:**
+1. Do not add any mediation adapter package (`gma_mediation_ironsource`, `gma_mediation_unity`, `gma_mediation_inmobi`, `gma_mediation_applovin`) to `pubspec.yaml` until the v2 AdMob phase is actively being implemented. This is a hard rule: the packages must not be present in v1 builds even as inactive dependencies.
+2. When adding mediation packages in v2, set COPPA flags at the earliest possible point in `main()`, before `runApp()` if possible, and before `MobileAds.initialize()`. For ironSource specifically, use the `IronSource.setMetaData('is_coppa', ['1'])` call (or the equivalent LevelPlay API) as the first thing in the ad service initialization sequence.
+3. Verify the timing by placing a `debugPrint('COPPA flags set')` log immediately before the COPPA API calls and a `debugPrint('MobileAds.initialize called')` after — confirm the COPPA log appears first in every cold launch.
+
+**Current state:** The v1 `pubspec.yaml` lists `google_mobile_ads: ^8.0.0` with a stub service, but the four mediation packages are not present. This is correct. The risk is in v2 when they are added.
+
+**Warning signs:**
+- Any of the four `gma_mediation_*` packages appear in `pubspec.yaml` or `pubspec.lock` before the v2 AdMob phase begins
+- ironSource or Unity SDK logs appear in logcat before the app's Dart `main()` COPPA configuration runs
+- `adb logcat | grep -i "ironsource\|unity ads\|applovin\|inmobi"` shows SDK activity before the Dart AdService is initialized
+
+**Phase to address:** v2 Phase 1 (add mediation packages) — add one package at a time, verify COPPA flag ordering after each addition before adding the next.
+
+---
+
+### v2 Pitfall 6: Speed Typing scoring — wrong-guess penalty must be explicitly specified before implementation
+
+**What goes wrong:**
+Mode 5 (Speed Typing Challenge) uses the same golf-style scoring as Modes 1–4: lower score is better, time penalty accumulates. In map modes, a wrong drop is unambiguous: the token lands on the wrong state, the error SFX plays, and the penalty is +5 (or whatever the spec defines). In Speed Typing there is no "drop" — the player types a state name and submits. Two ambiguous cases arise:
+
+**Case A — Typo correction before submission:** The player types "Alabam" and backspaces to type "Alabama". No guess was submitted. Should backspace actions carry any penalty? If not, a player who types slowly and corrects often pays no penalty; a player who types quickly and submits wrong guesses does. This is a fairness and design question that has no natural answer — it must be decided before building.
+
+**Case B — Wrong submission:** The player types "Albama" and presses Enter (or the on-screen submit button). This is a wrong guess. Golf scoring for map modes charges +5 for a wrong drop. Does Mode 5 charge the same +5? Or does it charge +0 (wrong guesses are "free" and only time matters)? Or does it charge +1 per wrong submission (softer penalty)?
+
+If the penalty is not specified before implementation, the first implementation will make an implicit choice (likely +0, because that is the path of least resistance), and changing it after the leaderboard logic is wired requires refactoring the GameSession notifier and re-testing all score persistence paths.
+
+**Why it happens:**
+The scoring spec for v1 was defined for drag-and-drop semantics. Mode 5 is text-input, and the spec does not address the wrong-submission penalty. The developer implements the feature, discovers the ambiguity mid-implementation, makes an arbitrary choice, and ships it. The choice then becomes load-bearing for the high-score comparison logic (`newScore < bestScore`), and changing it invalidates stored scores for existing users.
+
+**Recommended resolution (make this decision before writing any Mode 5 code):**
+- Backspace/typo correction: no penalty. The player has not submitted a guess; only submissions count.
+- Wrong submission: +5 penalty, same as a wrong drop in map modes. Rationale: consistent with the golf scoring contract across all modes; skill expression comes from both typing accuracy and speed.
+- Document this decision in PROJECT.md Key Decisions before v2 implementation begins.
+
+**Warning signs:**
+- Mode 5 is implemented without a wrong-submission penalty entry in the scoring spec
+- `GameSessionNotifier` for Mode 5 does not increment penalty score on wrong submission
+- The spec says "golf scoring" for Mode 5 but does not define what a "stroke" means in a text-input context
+
+**Phase to address:** v2 scope definition — add "Mode 5 wrong-submission penalty = +5 (same as wrong drop)" to the Key Decisions table in PROJECT.md before any Mode 5 code is written.
+
+---
+
+## v2 Integration Gotchas
+
+| Integration | Common Mistake | Correct Approach |
+|-------------|----------------|------------------|
+| Rewarded ad hint refill | Call `refillHints()` in `onAdDismissedFullScreenContent` | Call `refillHints()` only in `onUserEarnedReward`; dismiss callback only disposes the ad and preloads the next |
+| Screenshot for share | Wrap `boundary.toImage()` in `compute()` | Call `toImage()` on main isolate in a `postFrameCallback`; `compute()` has no UI access |
+| Temp file from screenshot | Leave PNG in `getTemporaryDirectory()` | Delete the file in a `finally` block after `share_plus` returns |
+| Mediation adapter COPPA | Add package to pubspec; set COPPA flags later | Never add mediation packages before COPPA flags are configured; set flags before `MobileAds.initialize()` |
+| App Open ad format | Include in mediation ad unit config | Remove entirely; prohibited for Families apps |
+| Manifest AD_ID after mediation | Assume v1 `tools:remove` entries cover new adapters | Inspect `build/intermediates/merged_manifests/debug/AndroidManifest.xml` after every adapter addition |
+
+---
+
+## v2 Pre-Submission Checklist (additional items)
+
+- [ ] **No App Open ads:** `grep -r "AppOpenAd\|app_open" lib/` returns nothing.
+- [ ] **Rewarded callback correct:** `refillHints()` appears only inside `onUserEarnedReward`, never inside `onAdDismissedFullScreenContent`.
+- [ ] **Merged manifest clean after mediation:** `grep -E "AD_ID|ADSERVICES" build/intermediates/merged_manifests/debug/AndroidManifest.xml` returns nothing.
+- [ ] **COPPA before init:** logcat confirms COPPA flag log appears before `MobileAds.initialize` log on cold launch.
+- [ ] **Screenshot cleanup:** share flow deletes temp PNG file after `share_plus` returns (check via `ls -la $(adb shell run-as com.otis.brooke.state.the.state ls /data/data/.../cache/)` before and after share).
+- [ ] **Mode 5 penalty spec recorded:** PROJECT.md Key Decisions includes the wrong-submission penalty value before Mode 5 is implemented.
+
+---
+
+## v2 Sources
+
+- Google AdMob Families compliance — App Open ad format prohibited: https://support.google.com/admob/answer/6223431 (HIGH confidence — search result summary confirms "Apps in the Designed for Families program are not eligible to use app open ads")
+- Google AdMob Flutter rewarded ads — callback semantics: https://developers.google.com/admob/flutter/rewarded (HIGH confidence)
+- Flutter `RenderRepaintBoundary.toImage()` — main isolate only: https://api.flutter.dev/flutter/rendering/RenderRepaintBoundary/toImage.html (HIGH confidence)
+- Flutter concurrency and isolates — UI operations not available in background isolates: https://docs.flutter.dev/perf/isolates (HIGH confidence)
+- ironSource COPPA settings — must be set before SDK init: https://developers.is.com/ironsource-mobile/general/ironsource-mobile-child-directed-apps/ (HIGH confidence)
+- Android manifest merger priority — app manifest is highest priority: https://docs.flutter.dev/release/breaking-changes/plugin-api-migration (MEDIUM confidence — general plugin lifecycle)
+- Flutter `GeneratedPluginRegistrant` auto-registers all plugins at engine start: https://docs.flutter.dev/release/breaking-changes/plugin-api-migration (HIGH confidence)
+- `path_provider` `getTemporaryDirectory` — OS may clear but not guaranteed immediately: https://pub.dev/documentation/path_provider/latest/path_provider/getTemporaryDirectory.html (HIGH confidence)

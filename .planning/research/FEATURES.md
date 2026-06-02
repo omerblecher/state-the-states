@@ -1,8 +1,11 @@
-# Feature Research
+# Feature Research — v2 New Capabilities
 
-**Domain:** U.S. Geography Educational Drag-and-Drop Map Game (Ages 8+, COPPA/Families)
-**Researched:** 2026-05-30
-**Confidence:** HIGH (reference codebase read directly; competitor feature sets verified via multiple sources)
+**Domain:** U.S. Geography Educational Mobile Game — v2 Monetization & Speed Mode
+**Researched:** 2026-06-02
+**Confidence:** HIGH (existing codebase read directly; ad platform policies verified via Google official docs; patterns verified from Flags reference implementation)
+
+> This file supersedes the v1 FEATURES.md (2026-05-30) and focuses exclusively on the
+> four v2 feature groups. Existing v1 features are not re-researched here.
 
 ---
 
@@ -10,260 +13,229 @@
 
 ### Table Stakes (Users Expect These)
 
-Features that parents and children assume exist. Missing any of these and the product feels incomplete or broken for the genre.
+Features users assume exist for each v2 capability area. Missing these = feature feels half-baked.
 
-| Feature | Why Expected | Complexity | v1 / v2 | Notes |
-|---------|--------------|------------|---------|-------|
-| Interactive USA vector map (mainland + AK/HI insets) | Core mechanic; no map = no game | HIGH | v1 | Pan/zoom via InteractiveViewer; pre-processed JSON paths (locked from Flags) |
-| Drag-and-drop state token onto map | The primary interaction loop — the entire UX premise | HIGH | v1 | Tray outside IV, DragTargets inside, `toScene()` coordinate transform |
-| Correct-drop confirmation (visual + audio + haptic) | Players need instant, unambiguous "got it" signal | MEDIUM | v1 | Light haptic + success sound + fly-to-centroid animation (direct port from Flags) |
-| Wrong-drop feedback (visual + audio + haptic) | Players need to know immediately when they mis-drop | LOW | v1 | Medium haptic + error sound + snackbar "not quite" + token bounce (Flags pattern) |
-| Proximity-snapping hit-box for micro-states | Rhode Island / Delaware finger-target frustration is a known UX failure mode for this genre | MEDIUM | v1 | 48dp radial centroid snap; PROJECT.md requirement; prevents "I dropped it right there!" rage quits |
-| Progress indicator during round (states placed / 50) | Children need to see how far they've come — no indicator = feels like a never-ending chore | LOW | v1 | Linear progress bar in HUD; already in Flags' `GameHud` |
-| Elapsed-time display in HUD | Supports golf-style scoring comprehension | LOW | v1 | MM:SS counter in HUD; already in Flags |
-| Golf-style score display in HUD | Players must understand lower = better during play | LOW | v1 | Score: +1/10s elapsed + 5/error; already modelled in `GameSessionNotifier` |
-| Four progressive difficulty modes | The stated product spec; "Learn → Grand Master" is the core educational arc | HIGH | v1 | Learn, States Master, Geographical Master, Grand Master |
-| Local best-score record per mode | Kids track personal progress; parents check improvement; no record = no replayability | LOW | v1 | `shared_preferences` via `HighScoreRepository` (direct Flags port) |
-| Pause / resume game | Children are interrupted constantly (parents, siblings, school bell) | LOW | v1 | Pause overlay with Resume / Mute / End Game; auto-pause on app background (Flags pattern) |
-| "Continue saved game" on relaunch | Children quit mid-game routinely; losing progress is demoralising | MEDIUM | v1 | `GameStateRepository` session persistence (Flags port); shown on `HomeScreen` on load |
-| Mute toggle (in-game and on pause screen) | Required for classroom use; also for children who play without headphones | LOW | v1 | `UserPrefsRepository` persists mute preference (Flags port) |
-| Mode selection home screen with best scores visible | Players choose difficulty and see their records without navigating away | LOW | v1 | Mode cards showing stars + best score; adapts Flags' `HomeScreen._ModeCard` |
-| Completion / results screen | Every round needs a definitive end — score, time, star rating, play-again CTA | MEDIUM | v1 | Stars (1-3), personal-best banner, confetti overlay on PB; adapts Flags' `CompletionScreen` |
-| Zoom in / out buttons on map | Touch-only pan/zoom is unintuitive for ages 8; explicit buttons are expected | LOW | v1 | Fixed FAB zoom +/- outside InteractiveViewer (Flags pattern) |
-| Audio on/off (anthem and SFX) | Children use in school/library; parents want control | LOW | v1 | Single mute flag covers all audio via `just_audio` service |
-| Offline play | Families app users expect no-WiFi playability; also COPPA best practice | LOW | v1 | All assets bundled; `shared_preferences` for scores; no network dependency |
-| First-launch tutorial overlay | Ages 8 do not read app store instructions; they need in-app guidance | MEDIUM | v1 | 4-step skippable tutorial; `UserPrefsRepository.tutorialSeen` flag (Flags port) |
+| Feature | Why Expected | Complexity | Notes |
+|---------|--------------|------------|-------|
+| **Speed Typing — case-insensitive input** | Every typing quiz on every platform (Sporcle, JetPunk, etc.) normalises case; forcing exact-case is a UX defect, not a challenge | LOW | Normalise to uppercase internally; display input as typed but compare `.toUpperCase()` |
+| **Speed Typing — accept 2-letter postal abbreviation as valid answer** | Players who know "AL" instead of "Alabama" should not be penalised; both represent the same geographic knowledge | LOW | Maintain a `Set<String>` of both full names and postal codes; single `.contains()` check |
+| **Speed Typing — deduplicate already-found states** | Typing "Alabama" again after already finding it must not count twice | LOW | Check against `matchedPostals` set before accepting |
+| **Speed Typing — live found-states grid** | Players need to see accumulating progress; a bare text box with no grid feels like a black hole | MEDIUM | Scrollable grid of state chips sorted by found-order; green checkmark chip per match; updates on each valid new entry |
+| **Speed Typing — success SFX on new match** | Every typing quiz genre expectation; silence on correct answer breaks the reward loop | LOW | Same `playCorrect()` audio service call used in drag modes |
+| **Speed Typing — clear field on valid new match** | If the field is not cleared the player must manually delete before typing the next state | LOW | `TextEditingController.clear()` in the match handler |
+| **Speed Typing — wrong-guess score penalty** | Matches the golf-scoring contract already established across all modes | LOW | `+5` per wrong entry, identical to drag-mode error penalty |
+| **Speed Typing — ends when all 50 found** | The end condition must be unambiguous; no "submit" button | LOW | `matchedPostals.length == 50` triggers `completeGame()` |
+| **Speed Typing — golf scoring (time-based + wrong penalty)** | Players expect the same scoring contract as Modes 1–4 | LOW | Same formula: `(elapsedSeconds ~/ 10) + (wrongGuessCount × 5)` |
+| **Banner ad on home screen** | Standard mobile game expectation; bottom-of-screen is the de-facto placement | LOW | Adaptive banner below mode-card list; `getBannerWidget()` slot already in `AdService` interface |
+| **Interstitial shown at natural transition (game end → completion)** | Players accept full-screen ads between rounds; mid-game interruption is a policy violation | MEDIUM | Show from `CompletionScreen.initState()` (same pattern as Flags `admob_ad_service.dart`) |
+| **Rewarded ad consent UX before ad plays** | Google's rewarded interstitial policy mandates a pre-ad intro screen; missing it is a policy violation | MEDIUM | Intro dialog with reward description + "Skip" option; required for rewarded interstitial format |
+| **Rewarded hint refill: clear reward messaging** | "Watch ad for X" — vague mystery rewards have lower opt-in rates | LOW | Dialog copy: "Watch a short video to get 2 more hints" — explicit, no ambiguity |
+| **Rewarded hint refill: no prompt if ad not loaded** | Offering a reward that isn't available creates trust damage | LOW | Check `adService.isRewardedAdLoaded` (or equivalent) before showing prompt; silently skip if unavailable |
+| **Gated sharing: screenshot of score card** | Text-only share is low-signal; screenshot of the score card (stars, score, time, mode) is the expected share artifact for mobile game results | MEDIUM | `RepaintBoundary` already wraps the score card in `CompletionScreen`; needs `GlobalKey` + `toImage()` + `XFile.fromData()` path |
+| **Gated sharing: parental math gate** | COPPA / Google Play Families Policy requires a parental gate before any outbound device intent from a child-directed app | MEDIUM | Existing `_MathChallengeDialog` in `CompletionScreen` implements this; v2 upgrades from addition to 2-digit × 1-digit multiplication |
+| **Gated sharing: only available on personal best** | Showing a share button on every run devalues the action; "beat PB" is the moment that creates genuine share desire | LOW | Button visible only when `_isNewPb == true` in `CompletionScreen` |
+| **App Open ad on cold launch** | Standard format for apps that have a loading moment; accepted expectation for ad-supported apps | MEDIUM | Triggered via `AppStateEventNotifier` in `app.dart`; already modelled in Flags `admob_ad_service.dart`; must suppress when `GamePhase.playing` or `GamePhase.paused` |
+| **All mediation SDKs call `tagForChildDirectedTreatment` independently** | Each SDK has its own COPPA flag; setting only AdMob's flag does not propagate to mediation adapters | HIGH | Unity, IronSource, InMobi each require independent calls; `ads_initializer.dart` must be extended |
 
 ---
 
 ### Differentiators (Competitive Advantage)
 
-Features that distinguish this product from Seterra, Stack the States, and Sheppard Software. Not assumed, but valued when discovered.
+Features that distinguish the v2 implementation from generic "typing quiz" or "ad-supported kids game" patterns.
 
-| Feature | Value Proposition | Complexity | v1 / v2 | Notes |
-|---------|-------------------|------------|---------|-------|
-| Patriotic welcome screen + self-rendered Star-Spangled Banner | Emotionally primes the learning context; strong first-impression differentiator for U.S. audience | MEDIUM | v1 | Vector USA silhouette; anthem self-rendered from PD score (PROJECT.md requirement); fades out into menu |
-| Progressive label-hiding across 4 modes (abbreviations → full name → abbrev-on-map → total blackout) | Industry-standard in concept (Sheppard Software does 7 difficulty tiers) but this four-mode structure is clean and teachable; mode names are memorable | MEDIUM | v1 | Learn / States Master / Geographical Master / Grand Master; label visibility matrix drives HUD and tray rendering |
-| Font scales with InteractiveViewer zoom (abbreviations stay readable at all zoom levels) | Competitor web games use static labels that become illegible when zoomed out on mobile | HIGH | v1 (Learn + Geo Master modes) | `viewScale` passed to `WorldMapPainter` via `TransformationController` listener; already implemented in Flags' `WorldMapPainter` |
-| Centroid proximity-snapping specifically for small-state frustration | Seterra and Sheppard Software have notoriously mis-registering Rhode Island / Delaware clicks; explicit 48dp centroid snap solves this definitively | MEDIUM | v1 | `hitTest()` with scale-aware proximity radius; PROJECT.md explicit requirement |
-| Hint-with-zoom: uses one hint charge to animate zoom to state centroid + 3s highlight | More immersive than text-only "here's a clue"; spatial memory reinforcement | MEDIUM | v1 | `_animateHintZoom()` + `HighlightPainter` hint glow; direct port from Flags |
-| Personal-best confetti + PB badge on completion screen | Immediate recognition of improvement; children remember the confetti moment | LOW | v1 | `_ConfettiPainter` custom painter; PB overlay from `CompletionScreen` (Flags port) |
-| Star rating (1-3) on completion screen tied to PB comparison | Maps to universal mobile game vocabulary children already know from other games | LOW | v1 | `computeStarCount()` logic: beat PB = 3 stars, within 20% = 2, else 1 (direct port) |
-| Stars displayed on mode-selection cards | Shows achievement state at a glance; motivates replaying lower-scored modes | LOW | v1 | `_ModeCard` FutureBuilder stars display (Flags port) |
-| Alaska + Hawaii inset projections in dedicated frames | Competitors often omit or awkwardly place these; correct geographic context is an educational differentiator | HIGH | v1 | Pre-processed inset transforms baked into JSON pipeline at build time |
-| Session restore on relaunch with mode/score/elapsed context | No competitor in this genre offers session continuity; children often close apps mid-round | MEDIUM | v1 | Continue dialog shows mode, score, time, states placed (adapts Flags' `HomeScreen._showContinueDialog`) |
-| Fly-to-centroid animation on correct drop | Satisfying visual confirmation that the state "snapped home"; more rewarding than a static green flash | MEDIUM | v1 | Overlay `AnimatedBuilder` scaling token from tray to map centroid (Flags port) |
+| Feature | Value Proposition | Complexity | Notes |
+|---------|-------------------|------------|-------|
+| **Speed Typing accepts both full name AND postal abbreviation** | Rewards two distinct types of state knowledge; neither Sporcle nor JetPunk's UI makes this obvious — it can be surfaced as a UI hint | LOW | One `Set` containing 50 full names + 50 postal codes = 100 entries; O(1) lookup |
+| **Speed Typing UPPERCASE display** | Forced-uppercase visual reinforces the "you're taking a test" register and matches the spec; differs from Sporcle's mixed-case input | LOW | `TextCapitalization.characters` on `TextField`; compare normalised internally |
+| **Speed Typing: green checkmark chip flash (1–2s) before settling into grid** | Flash animation on new match creates a micro-celebration moment before the chip joins the grid; differentiates from static list-append | MEDIUM | `AnimatedContainer` or `ScaleTransition` on chip entry; 150ms expand + 200ms settle |
+| **Speed Typing: sorted found-states grid (insertion order)** | Sporcle sorts alphabetically; insertion order shows the player's journey and feels more personal | LOW | `List<String>` preserves order; grid reads top-left → bottom-right in found sequence |
+| **Rewarded hint refill triggered only on hint exhaustion (contextual)** | Prompting at point of frustration (hints = 0, still needs help) drives opt-in; proactively offering rewarded ads mid-game with hints remaining is bad UX | LOW | Show prompt only when `hintsRemaining == 0` and player taps the hint button again |
+| **Interstitial with 1-second delay after game complete** | Google recommends a brief pause between level-end and interstitial to prevent accidental taps; children tap quickly after seeing the completion screen | LOW | `Future.delayed(const Duration(seconds: 1), adService.showInterstitialAd)` in `CompletionScreen.initState()` |
+| **Gated sharing: "New lowest score in [Level Name]!" watermark text** | Explicit achievement claim on the share image; more meaningful than generic "I played a game" | LOW | Text overlay rendered as part of the score card widget before `toImage()` capture |
+| **Gated sharing: multiplication math gate** | 2-digit × 1-digit is harder than the existing addition gate (3+7 = trivial for children); better adult verification | LOW | Replace `_a + _b` with `_a * _b`; generate: `_a` ∈ [12..19], `_b` ∈ [3..9] |
+| **AdMob `RequestConfiguration` set before `initialize()`** | The existing `ads_initializer.dart` already does this correctly; this is architecturally correct and a common implementation mistake in the wild | LOW | Already correct; v2 extends it to add mediation SDK calls |
 
 ---
 
-### Anti-Features (Deliberately Not Building)
+### Anti-Features (Commonly Requested, Often Problematic)
 
-| Feature | Why Requested | Why Excluded | What We Do Instead |
-|---------|---------------|--------------|-------------------|
-| Washington D.C. as a placeable entity | "Should include the capital!" | PROJECT.md explicit exclusion; canonical entity set = 50 states; D.C. is not a state; complicates the "all 50 states" end condition | Game copy explicitly says "50 states"; no D.C. token, no D.C. snapping target |
-| Firebase Analytics / Crashlytics | Standard "crash reporting" tooling | Collects persistent device identifiers (App Instance ID, Crashlytics UUID) — COPPA-prohibited. PROJECT.md hard constraint. | Android Vitals for crash data; Flutter `FlutterError.onError` for local debug logging |
-| Online leaderboards / cloud sync / accounts | Children want to compare scores | Requires accounts = persistent identifiers = COPPA violation; also conflicts with offline-first design | Local best-score per mode displayed on mode cards |
-| Social sharing (v1) | Parents want to share kids' achievement | Requires parental gate (math challenge) + screenshot watermarking + `share_plus` integration; independent of core loop | Deferred to v2 (PROJECT.md); share infrastructure (`RepaintBoundary` score card) can be back-ported from Flags' `CompletionScreen` |
-| Full AdMob monetization (v1) | Revenue | COPPA-compliant ad config is complex; walled-garden stub keeps v1 scope clean | Ad layer stubbed as `AdLoadState.failed` in v1 (Flags pattern); full mediation in v2 |
-| Mode 5 Speed Typing Challenge (v1) | Natural progression after map mastery | Independent of map engine; text-input driven; separate UX surface | Deferred to v2 (PROJECT.md) |
-| In-app purchases / premium unlock | Monetization | Google Play Families Policy restricts IAP UX patterns for child-directed apps; complex compliance surface | Out of scope for v1 and v2; not in PROJECT.md |
-| Timed countdown before game start (separate UX) | "Get ready" signal | Adds latency before the core loop; children are impatient | Game starts as soon as the tutorial is dismissed or "play" is tapped; timer in HUD is sufficient |
-| State trivia / capitals / flags quiz modes | "More content!" (Stack the States model) | Different product surface; dilutes the clean map-placement focus; adds data and UI complexity not in scope | Out of scope; the four drag-drop modes cover the educational arc without trivia |
-| Real-time multiplayer | "Play with friends" | Requires network, accounts, and server infra; all COPPA risk surfaces | Fully offline by design |
-| Parental controls / time-limiting | "Limit screen time" | Out of product scope; OS-level controls (Android Digital Wellbeing) serve this | Documented in privacy policy; not in-app |
-| Rewarded ads to refill hints (v1) | Revenue + hint loop | Ad layer is stubbed in v1; rewarded ad callback (`refillHints()`) already exists in notifier for v2 | Hints limited to 2 per round in v1; no refill mechanic surfaced to user |
+| Feature | Why Requested | Why Problematic | Alternative |
+|---------|---------------|-----------------|-------------|
+| **Speed Typing: autocomplete / typeahead suggestions** | "Make it easier for kids" | Removes the challenge entirely; the mode is a recall test, not a recognition test; autocomplete converts it to a scroll-select picker which is a different product | No autocomplete; accept abbreviations to give partial-credit to players who know codes but not full names |
+| **Speed Typing: partial-name matching ("New" matching "New York", "New Jersey", "New Mexico", "New Hampshire")** | "Flexible input" | Ambiguous; creates a UX problem when "New" is valid for 4 states simultaneously; requires disambiguation UI that adds complexity | Require full name or exact 2-letter postal code; no partial matching |
+| **Speed Typing: skip/pass button** | "I'm stuck" | Undermines the challenge; reduces the achievement value of completing all 50 | Hint system already provides zoom-to-centroid in map modes; Speed Typing has no hint (it is a pure recall test) |
+| **Speed Typing: time limit / countdown** | "Add pressure" | The spec defines no time limit; a countdown creates a game-over condition separate from "found all 50"; complicates the end-state machine | Golf scoring already creates natural time pressure — slower = higher score |
+| **Rewarded ad: auto-play without user action** | Higher ad revenue | Rewarded ads require explicit user opt-in; auto-playing them is a policy violation for child-directed apps and a bad UX pattern | Always prompt with a consent dialog; `AdService.showRewardedAd()` already models this correctly |
+| **Interstitial mid-gameplay** | "Maximise impressions" | Policy violation: Google's interstitial ad guidance explicitly prohibits mid-gameplay interruption; will trigger policy enforcement on Play Store | Show only at `CompletionScreen` entry — a natural transition point |
+| **Banner ad inside `InteractiveViewer` / on map canvas** | "More placements" | Covers map; degraded gameplay; accidental clicks inflate CTR metrics (detectable as policy violation) | Banner only on home screen bottom; no ads in any active-gameplay screen |
+| **App Open ad on every foreground event** | Maximise impressions | Google policy: suppress App Open when `GamePhase.playing` or `GamePhase.paused`; showing during gameplay is a guideline violation; the existing Flags `admob_ad_service.dart` already suppresses this | Already modelled correctly in Flags reference; carry forward the `GamePhase` check |
+| **AppLovin MAX mediation** | One of the four mediation adapters in the original plan | AppLovin SDK 13.0+ explicitly prohibits use in child-directed apps (COPPA / Google Play Families); it left the Families Self-Certified Ads SDK Program; `ad_constants.dart` already has `kAppLovinEnabled = false` | Use Unity Ads, IronSource, InMobi only (all three are on the Families Self-Certified list as of research date; verify current list before v2 submission) |
+| **Screenshot sharing without parental gate** | "Simplify the flow" | COPPA + Google Play Families Policy require an adult gate before any outbound device intent (sharing) from a child-directed app; omitting the gate is a compliance violation | The existing `_MathChallengeDialog` (currently addition) must be upgraded to multiplication; it cannot be removed |
+| **Share button visible on non-PB runs** | "Always let players share" | Devalues the achievement; increases spurious share attempts with low engagement on social platforms; also creates awkward copy ("I got a score of 147 with no context") | Gate on `_isNewPb == true`; the PB condition already exists in `CompletionScreen` |
 
 ---
 
 ## Feature Dependencies
 
 ```
-Welcome Screen + Anthem
-    └──plays on──> App Launch
-                       └──fades into──> Home Screen
+Speed Typing Mode (Mode 5)
+    └──reuses──> GameSessionNotifier
+        └──requires──> new GameMode.speedTyping enum value
+        └──requires──> recordTypingGuess(String input) method (new)
+        └──requires──> completeGame() (existing, unchanged)
+    └──reuses──> GameHud (score, elapsed, progress bar, pause, mute)
+    └──requires──> SpeedTypingScreen (new Widget — no map, no InteractiveViewer)
+        └──contains──> TextField (UPPERCASE, TextCapitalization.characters)
+        └──contains──> FoundStatesGrid (scrollable chip grid)
+    └──reuses──> HighScoreRepository (best score per mode — Mode 5 gets its own key)
+    └──reuses──> just_audio playCorrect() / playError() (existing audio service)
+    └──does NOT require──> usa_states_paths.json (no map rendering)
+    └──does NOT require──> InteractiveViewer, HitDetection, DragTargets
 
-Home Screen
-    └──requires──> HighScoreRepository (best scores per mode on mode cards)
-    └──requires──> GameStateRepository (continue-game dialog on load)
-    └──triggers──> Mode Selection → Map Screen
+Full AdMob Layer
+    └──requires──> AdMobAdService (new — already modelled in Flags; replace StubAdService)
+        └──preloadAll() called from ads_initializer.dart after initialize()
+        └──loadBannerForWidth() called from HomeScreen.didChangeDependencies()
+        └──showInterstitialAd() called from CompletionScreen.initState()
+        └──showRewardedAd() called from hint-exhaustion prompt
+        └──showAppOpenAd() called from AppStateEventNotifier in app.dart
+    └──requires──> mediation SDK COPPA calls in ads_initializer.dart
+        └──Unity: UnityAds.setCOPPAMetaData() (via gma_mediation_unity)
+        └──IronSource: IronSource.setMetaData("is_child_directed", ["true"]) (via gma_mediation_ironsource)
+        └──InMobi: InMobiSdk.setIsAgeRestricted(true) (via gma_mediation_inmobi)
+    └──requires──> production ad unit IDs in ad_constants.dart (currently empty strings)
+    └──requires──> AppStateEventNotifier subscription in app.dart (cold/warm launch App Open)
 
-Map Screen
-    └──requires──> USA States JSON (centroids, paths, inset transforms)
-    └──requires──> InteractiveViewer + TransformationController (pan/zoom/coordinate transform)
-    └──requires──> GameSessionNotifier (score, elapsed, phase, matchedIsoCodes)
-        └──requires──> Ticker (1-second heartbeat for score/time updates)
-    └──requires──> FlagTray (token display; pin-anchor drag strategy)
-    └──requires──> GameHud (score, time, progress bar, mute, pause)
-    └──requires──> HitDetection (proximity snap for micro-states)
-        └──requires──> Centroid data in USA States JSON
+Rewarded Hint Refill
+    └──requires──> Full AdMob Layer (AdMobAdService.showRewardedAd())
+    └──requires──> GameSessionNotifier.refillHints() (new method — adds 2 to hintsRemaining)
+    └──requires──> HintButton or hint-depleted state to surface prompt
+        └──triggered when: hintsRemaining == 0 AND player taps hint button
+        └──prompt: AlertDialog with reward description + "Watch Ad" + "Cancel"
+        └──on reward earned: refillHints() → hintsRemaining += 2
+        └──on dismissed or failed: no refill, no penalty
+    └──does NOT refill if ad not loaded (silent no-op; no error state shown to user)
 
-Hint System
-    └──requires──> GameSessionNotifier.useHint() (deducts hintsRemaining, adds penalty)
-    └──requires──> HighlightPainter (3s hint glow on hinted state)
-    └──requires──> _animateHintZoom() (zoom to centroid on hint use)
-    └──note──> v1: 2 hints/round, no refill. v2: rewarded ad refill via refillHints()
+Gated Sharing (completion)
+    └──requires──> _isNewPb == true (gate condition — already exists in CompletionScreen)
+    └──requires──> RepaintBoundary GlobalKey on score card widget
+        └──note: RepaintBoundary already wraps the Card in CompletionScreen (line 201)
+        └──needs: promote anonymous RepaintBoundary to named GlobalKey field
+    └──requires──> toImage() + ByteData + XFile.fromData() pipeline
+    └──requires──> SharePlus.instance.share(ShareParams(files: [xFile])) (share_plus already imported)
+    └──requires──> _MathChallengeDialog upgrade: addition → 2-digit × 1-digit multiplication
+    └──requires──> score card watermark text: "New lowest score in [Level Name] level!"
+        └──rendered as Text widget inside the RepaintBoundary boundary before capture
+    └──share button: visible only when _isNewPb == true (currently always visible — fix)
 
-Completion Screen
-    └──requires──> GameSessionNotifier.completeGame() (stops ticker, saves best score)
-    └──requires──> HighScoreRepository (previousBest for star calculation)
-    └──contains──> _ConfettiPainter (PB celebration overlay)
-    └──v2 only──> Share button (RepaintBoundary score card + parental gate + share_plus)
-
-Difficulty Modes (label visibility matrix)
-    Learn:                abbrevs ON map + full name in tray
-    States Master:        NO map labels + full name in tray
-    Geographical Master:  abbrevs ON map (scale-adaptive) + NO tray text
-    Grand Master:         NO map labels + NO tray text
-
-    └──drives──> WorldMapPainter(showLabels, viewScale)
-    └──drives──> FlagTray(showName)
-    └──drives──> HighlightPainter(targetIsoCode: only in Learn mode)
-
-Golf Score Formula:
-    score = (elapsedSeconds ~/ 10) + (errorCount × 5) + hintPenalty
-    └──requires──> Ticker (elapsed)
-    └──requires──> recordDrop(isCorrect: false) (errorCount)
-    └──requires──> useHint() (hintPenalty)
+App Open Ad (cold launch)
+    └──requires──> AppStateEventNotifier export from ads/app_state_observer.dart (already exists in Flags)
+    └──requires──> app.dart: WidgetsBindingObserver → didChangeAppLifecycleState
+        └──on AppLifecycleState.resumed: adService.showAppOpenAd()
+    └──suppressed when GamePhase.playing or GamePhase.paused (check gameSessionProvider)
+    └──4-hour expiry guard already in AdMobAdService._isAppOpenAdAvailable
 ```
 
 ### Dependency Notes
 
-- **Map Screen requires USA States JSON**: the entire drag loop cannot be built until the Python data pipeline produces `usa_states_paths.json` with centroids, Path data, and Alaska/Hawaii inset transforms.
-- **HitDetection requires centroid data**: the 48dp proximity-snapping hit-box is computed against centroids baked into the JSON; this is not derivable at runtime.
-- **Difficulty modes drive two separate visibility booleans**: `showLabels` (WorldMapPainter) and `showName` (FlagTray) are independent flags; Grand Master sets both false.
-- **Completion Screen requires GameSessionNotifier.completeGame()** to have already been called before navigation; race conditions here caused bugs in Flags and must be guarded.
-- **Share feature (v2) depends on RepaintBoundary score card**: the `_scoreCardKey` / `RepaintBoundary` scaffold on the completion screen should be built in v1 even though the share button is hidden, so v2 requires no structural refactor of that screen.
+- **Speed Typing requires a new `GameMode` enum value**: `GameMode.speedTyping` must be added; `HighScoreRepository` keys on `GameMode` so it gets a free persistence slot. The home screen needs a new mode card for Mode 5.
+- **Speed Typing shares `GameSessionNotifier` but needs a new input-recording method**: `recordTypingGuess(String input)` must be added to the notifier. It normalises input to uppercase, checks against the full name + postal code set, deduplicates against `matchedPostals`, and either records a match or increments an error counter. The existing `completeGame()` is unchanged.
+- **Rewarded refill requires a `refillHints()` method on the notifier**: The method is referenced in the v1 `REQUIREMENTS.md` as a v2 item; it does not yet exist in `GameSessionNotifier`. It should clamp: `hintsRemaining = min(hintsRemaining + 2, 4)` (no unbounded accumulation).
+- **Gated sharing: the `RepaintBoundary` wrapping the score card already exists** in `CompletionScreen` (line 201) but has no `GlobalKey`. Promoting it to a keyed boundary requires a one-line change; no structural refactor of the screen.
+- **Gated sharing: `share_plus` is already imported** in `CompletionScreen` but the share path currently sends text only. The v2 change adds an image capture step before calling `share_plus`.
+- **Gated sharing: math gate upgrade**: The existing `_MathChallengeDialog` uses addition (`_a + _b`). v2 changes the arithmetic to multiplication (`_a * _b`) with `_a` ∈ [12..19] and `_b` ∈ [3..9]. This requires changing three lines in the dialog.
+- **AdMob mediation: AppLovin is excluded**: `kAppLovinEnabled = false` already set in `ad_constants.dart`. AppLovin SDK ≥13.0 cannot be used in child-directed apps. Do not add `gma_mediation_applovin` to `pubspec.yaml` for v2. The three permitted adapters are Unity, IronSource, InMobi.
+- **AdMob Families: App Open ads**: Google's official guidance states that apps within the Google Play Designed for Families program **cannot use App Open ads**. If the app is submitted to the Families program, App Open must be removed. If submitted to Google Play as a general audience app (with child-directed treatment flag only), App Open is permitted. This is a submission strategy decision — flag for pre-submission review.
+- **Interstitial placement**: Show once per game completion, from `CompletionScreen.initState()`, with a 1-second delay. Never show during `GamePhase.playing` or `GamePhase.countdown`. Frequency cap: consider 1 per session cap in AdMob dashboard to protect retention.
 
 ---
 
 ## MVP Definition
 
-### Launch With (v1)
+### v2 Launch With
 
-These are required for a "playable core" as defined in PROJECT.md.
+Minimum viable v2 — all four features must ship together since AdMob requires production ad unit IDs which require a live app ID submission.
 
-- [x] Welcome screen with patriotic USA silhouette and Star-Spangled Banner anthem (fade-out)
-- [x] Home screen: mode selection cards with best scores/stars
-- [x] Continue-saved-game dialog on home screen relaunch
-- [x] USA vector map: mainland + Alaska/Hawaii insets; pan/zoom via InteractiveViewer
-- [x] State token tray (outside IV) + DragTarget inside IV with `toScene()` coordinate transform
-- [x] 48dp centroid proximity-snapping hit-box for micro-states (RI, DE, CT, NJ, MD, NH, VT)
-- [x] Correct-drop feedback: light haptic + success SFX + fly-to-centroid animation
-- [x] Wrong-drop feedback: medium haptic + error SFX + "not quite" snackbar + token bounce
-- [x] Four game modes with correct label visibility matrix (Learn / States Master / Geo Master / Grand Master)
-- [x] Golf-style scoring formula (+1/10s + 5/error) displayed live in HUD
-- [x] Progress bar (states placed / 50) in HUD
-- [x] Hint system: 2 hints/round; zoom-to-centroid + 3s glow; +5 score penalty per use
-- [x] Pause/resume overlay; auto-pause on app background
-- [x] Mute toggle (HUD + pause screen); preference persisted
-- [x] First-launch skippable tutorial (4 steps)
-- [x] Completion screen: stars (1-3), PB badge, confetti overlay on PB, play-again CTA
-- [x] Best score per mode stored locally via `SharedPreferences`
-- [x] Session persistence (continue game after relaunch)
-- [x] COPPA/Families compliance: no Firebase, no `AD_ID`, no accounts, child-directed AdMob stub
+- [ ] **Mode 5 Speed Typing** — `GameMode.speedTyping`, `SpeedTypingScreen`, `recordTypingGuess()`, found-states grid, UPPERCASE field, success SFX, golf scoring, mode card on home screen
+- [ ] **AdMob Banner** — `AdMobAdService` replacing `StubAdService`; adaptive banner on home screen bottom; `loadBannerForWidth()` from `HomeScreen.didChangeDependencies()`
+- [ ] **AdMob Interstitial** — preloaded at startup; shown from `CompletionScreen.initState()` with 1s delay; Modes 1–5
+- [ ] **AdMob Rewarded** — preloaded; `refillHints()` wired to `showRewardedAd()` callback; hint-exhaustion prompt dialog; Modes 1–4 only (Speed Typing has no hint)
+- [ ] **AdMob App Open** — cold and warm launch; suppressed during `GamePhase.playing`/`paused`; subject to Families program submission strategy (see dependency note above)
+- [ ] **Mediation: Unity, IronSource, InMobi** — COPPA flags called independently in `ads_initializer.dart`
+- [ ] **Gated sharing completion** — PB-gated share button; `GlobalKey` on score card `RepaintBoundary`; `toImage()` → `XFile` → `share_plus`; watermark text; multiplication math gate
 
-### Add After Validation (v1.x)
+### Add After v2 Validation
 
-- [ ] Richer state highlight on correct drop (pulse/glow on map at placed location for 500ms before advancing) — trigger: user feedback that the fly-to animation is too fast to read
-- [ ] Countdown overlay (3-2-1-GO) before game starts — trigger: playtesting reveals children start dragging before the timer runs
-- [ ] State abbreviation flashcard review screen (between home and game) — trigger: Learn mode retention data shows abbreviation unfamiliarity is blocking engagement
+- [ ] **Speed Typing: abbreviation discovery hint** — a subtle UI hint that abbreviations are accepted (e.g., "tip: 2-letter codes also work"); trigger: playtesting shows players don't know abbreviations are valid
+- [ ] **Interstitial frequency cap adjustment** — start at 1/session in AdMob dashboard; adjust based on retention data from Android Vitals; trigger: eCPM vs. D1 retention tradeoff data
+- [ ] **Speed Typing: "states remaining" count** — display `50 - matchedPostals.length` remaining; trigger: playtesting feedback that players want a countdown
+- [ ] **Completion screen: interstitial skip animation** — brief "Ads keep this game free" loading message during the 1s interstitial preload delay; trigger: if user research shows confusion about the pause
 
-### Future Consideration (v2+)
+### Out of Scope for v2
 
-- [ ] Mode 5: Speed Typing Challenge — text-input driven; independent of map engine; PROJECT.md explicit deferral
-- [ ] Gated social sharing — parental math gate + watermarked score card screenshot + `share_plus`; PROJECT.md explicit deferral
-- [ ] Full AdMob + mediation (Banner / Interstitial / Rewarded) — COPPA-compliant ad config; PROJECT.md explicit deferral
-- [ ] Rewarded-ad hint refill — `refillHints()` already in notifier; just needs ad layer wiring
-- [ ] State trivia / capitals quiz — separate product surface, significant data and UI work
+- **AppLovin MAX mediation** — prohibited for child-directed apps (SDK ≥13.0); `kAppLovinEnabled = false` is a hard constraint
+- **App Open ads if submitting to Families program** — policy conflict; resolve at submission strategy time
+- **IAP / premium unlock** — not in PROJECT.md; Families Policy restricts IAP UX for child-directed apps
+- **Speed Typing autocomplete / partial matching** — anti-feature; see Anti-Features section
+- **Rewarded ad for non-hint rewards** (score reduction, time bonus) — scope creep; hint refill is the only rewarded placement
 
 ---
 
 ## Feature Prioritization Matrix
 
-| Feature | User Value | Implementation Cost | Priority |
-|---------|------------|---------------------|----------|
-| Drag-and-drop map placement loop | HIGH | HIGH | P1 |
-| Four progressive difficulty modes | HIGH | MEDIUM | P1 |
-| Correct/wrong feedback (haptic + audio + visual) | HIGH | LOW | P1 |
-| 48dp micro-state proximity snap | HIGH | MEDIUM | P1 |
-| Golf scoring + HUD | HIGH | LOW | P1 |
-| Welcome screen + anthem | HIGH | MEDIUM | P1 |
-| Completion screen with stars + PB | HIGH | LOW | P1 |
-| Local best-score records | MEDIUM | LOW | P1 |
-| Session persistence / continue game | MEDIUM | MEDIUM | P1 |
-| First-launch tutorial | MEDIUM | MEDIUM | P1 |
-| Hint system (zoom + glow + penalty) | MEDIUM | MEDIUM | P1 |
-| Pause/resume + auto-pause | MEDIUM | LOW | P1 |
-| Progress bar in HUD | LOW | LOW | P1 |
-| Font scaling with zoom (Geo Master) | MEDIUM | MEDIUM | P1 |
-| Alaska/Hawaii inset projections | HIGH | HIGH | P1 |
-| Share score (parental gate) | LOW | MEDIUM | P2 (v2) |
-| Speed Typing Challenge (Mode 5) | MEDIUM | MEDIUM | P2 (v2) |
-| Full AdMob monetization | LOW | HIGH | P3 (v2) |
+| Feature | User Value | Implementation Cost | COPPA Risk | Priority |
+|---------|------------|---------------------|-----------|---------|
+| Speed Typing Mode (Mode 5) | HIGH | MEDIUM | NONE | P1 |
+| AdMob Banner (home screen) | MEDIUM | LOW | LOW | P1 |
+| AdMob Interstitial (game end) | MEDIUM | LOW | LOW | P1 |
+| Rewarded hint refill | MEDIUM | LOW | LOW | P1 |
+| Gated sharing (PB + screenshot + math gate) | LOW | MEDIUM | HIGH (math gate required) | P1 |
+| Mediation (Unity, IronSource, InMobi) | HIGH (revenue) | MEDIUM | HIGH (per-SDK COPPA flags required) | P1 |
+| AdMob App Open (cold launch) | LOW | LOW | MEDIUM (Families program constraint) | P2 |
+| Speed Typing abbreviation hint text | LOW | LOW | NONE | P3 |
+| Interstitial frequency tuning | MEDIUM | LOW | NONE | P3 |
 
-**Priority key:** P1 = Must have for v1 launch. P2 = v2 milestone. P3 = v2+ / future.
+**Priority key:** P1 = must ship in v2. P2 = ship in v2 if Families program strategy is resolved. P3 = post-v2 tuning.
 
 ---
 
-## Competitor Feature Analysis
+## COPPA / Families Policy Constraint Summary
 
-| Feature | Sheppard Software (web) | Stack the States (mobile) | Our Approach |
-|---------|------------------------|--------------------------|--------------|
-| Difficulty levels | 7 tiers (label removal + outline removal) | Not explicit tiers; unlockable mini-games | 4 named modes with clear label-hide progression; cleaner UX |
-| Touch target for small states | No snapping; click accuracy a known complaint | Physics-based; small states can be hard to target | 48dp centroid proximity snap; explicit PROJECT.md requirement |
-| Hint system | None | Flash-card study before game | 2 zoom-to-centroid hints per round with score penalty |
-| Scoring | Correct percentage / time | Level-unlock progression | Golf-style (lower is better); personal best per mode |
-| Completion feedback | Score % shown | State collection animation | Stars (1-3) + confetti on PB + fly-to-centroid per placement |
-| Session continuity | None (reload = restart) | None | `SharedPreferences` session persistence; continue dialog on launch |
-| Offline | Yes (web assets cached) | Yes | Yes (fully bundled) |
-| Accounts / cloud | None | 6 local profiles | None (COPPA constraint) |
-| Ads | None (web) | None | Stubbed v1; COPPA-compliant AdMob v2 |
-| Alaska/Hawaii | Included in map | Included | Dedicated inset frames with correct projection |
-| Audio feedback | Browser-based tones | Fun SFX | `just_audio` SFX (correct/error) + anthem on launch |
-| Haptics | None (web) | Not prominent | Light (correct) + medium (incorrect) via `HapticFeedback` |
+This section consolidates compliance requirements that must be verified before v2 Play Store submission.
 
----
-
-## Feedback Pattern Catalogue
-
-This section documents the specific multimodal feedback events the game must produce, mapped to implementation approach.
-
-| Event | Visual | Audio | Haptic | Notes |
-|-------|--------|-------|--------|-------|
-| Correct drop | Fly-to-centroid overlay animation (500ms); matched state fills with "placed" color on map | `playCorrect()` via audio service | `HapticFeedback.lightImpact()` | Direct port from Flags `_handleDrop()` |
-| Wrong drop | Token bounce animation; red snackbar "not quite — try again" (1200ms) | `playError()` via audio service | `HapticFeedback.mediumImpact()` | Direct port from Flags |
-| Hover over target state (Learn mode only) | Target state glows gold via HighlightPainter | None | None | Only current target state glows, not arbitrary hover |
-| Hint used | Animated zoom to state centroid (400ms easeInOut); 3s pulsing glow on hinted state | Snackbar "Locating [State Name]" | None | `_animateHintZoom()` + HighlightPainter `hintIso` |
-| Hint depleted (v2) | Alert dialog offering rewarded ad | None | None | `refillHints()` wired to ad callback in v2 |
-| Personal best on completion | Confetti overlay (2s fade-out); amber "New Personal Best!" badge | None (anthem already faded; no completion fanfare SFX in Flags) | None | Consider adding a distinct "fanfare" SFX in v1 as a differentiator |
-| Game completed (any result) | Completion screen: 1-3 stars, score card, play-again CTA | None (interstitial ad on completion in v2) | None | stars computed by `computeStarCount()` |
-| App backgrounded during play | Pause overlay auto-shown | Ticker stops | None | `didChangeAppLifecycleState` handler |
-| Wrong drop (map hover — non-target country) | No glow on non-target countries | None | None | Prevents confusion; only target country highlighted |
-
----
-
-## Accessibility Notes (Ages 8+ / COPPA Context)
-
-- **Touch targets**: All interactive controls minimum 48×48dp per Android guidelines and PROJECT.md. Micro-state snapping effectively enlarges the logical hit area for small states to 48dp radius around centroid — this is the primary a11y mechanism for the map.
-- **Semantics labels**: All interactive widgets require `Semantics(label: ..., button: true)` wrappers. HUD pause and mute buttons already use this pattern in Flags' `GameHud`.
-- **Font scaling**: Abbreviations on map scale with `viewScale` (from `TransformationController`); minimum legible size must be validated against ~12sp floor.
-- **Color contrast**: Patriotic palette (red/white/blue) must meet WCAG 4.5:1 for text; state fill colors need validation against label colors.
-- **No reliance on color alone**: Correct/wrong states signaled multimodally (haptic + audio + visual animation), not color alone.
-- **Hint text for screen readers**: The snackbar hint message ("Locating [State Name]") is text-based and accessible; the zoom animation is supplementary.
+| Requirement | Status in Codebase | v2 Action |
+|------------|-------------------|-----------|
+| `tagForChildDirectedTreatment(true)` on AdMob | Already set in `ads_initializer.dart` | No change |
+| `maxAdContentRating: MaxAdContentRating.g` | Already set in `ads_initializer.dart` | No change |
+| `AD_ID` permission removed from manifest | Already in v1 `AndroidManifest.xml` | Verify still present after adding mediation packages |
+| Unity Ads COPPA flag | Not present (mediation is v2 scope) | Add to `ads_initializer.dart` |
+| IronSource COPPA flag | Not present | Add to `ads_initializer.dart` |
+| InMobi age restriction flag | Not present | Add to `ads_initializer.dart` |
+| AppLovin: do not add | `kAppLovinEnabled = false` in `ad_constants.dart` | Do not add `gma_mediation_applovin` |
+| App Open ads: Families program restriction | Not applicable in v1 | Decide Families program participation before wiring App Open |
+| Parental gate before outbound sharing | Existing addition-math gate in `CompletionScreen` | Upgrade to multiplication; no removal |
+| No persistent device identifiers | No Firebase anywhere; `AD_ID` blocked | Verify mediation SDKs do not add new identifier collection |
+| Rewarded ad: user opt-in required | `showRewardedAd()` contract returns bool (opted-in) | Wrap with pre-ad intro dialog before `showRewardedAd()` call |
 
 ---
 
 ## Sources
 
-- **Reference codebase (HIGH confidence):** `C:\code\Claude\FlagsRoundTheWorld\lib\features\` — `game_session.dart`, `game_session_notifier.dart`, `completion_screen.dart`, `game_hud.dart`, `flag_tray.dart`, `map_screen.dart`, `home_screen.dart`
-- **PROJECT.md (HIGH confidence):** `C:\code\Claude\StateTheStates\.planning\PROJECT.md` — scope, requirements, out-of-scope decisions
-- **Stack the States review:** [Common Sense Media](https://www.commonsensemedia.org/app-reviews/stack-the-states) — age 8+ target validated; feature set benchmarked
-- **Sheppard Software 50 States (HIGH confidence for competitor difficulty model):** [Level 1](https://www.sheppardsoftware.com/geography/usa/50-states-game-1/) — 7-tier label-removal progression confirms our 4-mode approach is competitive
-- **GeoFlight USA:** [geoflightusa.com](https://www.geoflightusa.com/) — practice/timerace modes; no map drag-drop; not a direct competitor
-- **Children's UX feedback patterns (MEDIUM confidence):** [Ungrammary UX tips](https://www.ungrammary.com/post/designing-for-kids-ux-design-tips-for-children-apps), [Aufait UX](https://www.aufaitux.com/blog/ui-ux-designing-for-children/) — multimodal feedback (audio + haptic + visual) confirmed as expected for ages 8+
-- **WCAG touch target guidance (HIGH confidence):** [All accessible touch target sizes](https://blog.logrocket.com/ux-design/all-accessible-touch-target-sizes/) — 48×48dp Android minimum validated
+- **Codebase (HIGH confidence):** `C:\code\Claude\StateTheStates\lib\` — `ad_service.dart`, `stub_ad_service.dart`, `ads_initializer.dart`, `ad_constants.dart`, `completion_screen.dart`, `game_session_notifier.dart`, `game_session.dart`, `game_hud.dart`, `home_screen.dart`, `app.dart`
+- **Flags reference (HIGH confidence):** `C:\code\Claude\FlagsRoundTheWorld\lib\core\ads\admob_ad_service.dart` — App Open suppression pattern, interstitial/rewarded lifecycle, preloadAll() startup
+- **Google AdMob interstitial guidance (HIGH confidence):** https://support.google.com/admob/answer/6066980 — natural transition points; no mid-gameplay; delay after level end
+- **Google AdMob interstitial implementation (HIGH confidence):** https://developers.google.com/admob/android/interstitial — show from `initState`; preload; 1-session frequency recommendation
+- **Google rewarded interstitial overview (HIGH confidence):** https://support.google.com/admob/answer/9884467 — intro screen requirement; skip option requirement; different from rewarded ad
+- **Google App Open ad guidance (HIGH confidence):** https://support.google.com/admob/answer/9341964 — Families program exclusion; suppress during active gameplay; 4-hour expiry
+- **AppLovin SDK 13.0 child-directed prohibition (HIGH confidence):** https://www.kidoz.net/blog/navigating-the-applovin-decision-a-guide-for-developers-with-kids-and-mixed-audiences — AppLovin left Families Self-Certified Ads SDK Program; SDK 13.0+ bans child-directed use
+- **Google Play Families Self-Certified Ads SDK Program (HIGH confidence):** https://support.google.com/googleplay/android-developer/answer/9900633 — AdMob auto-blocks non-certified adapters; verify current certified list before submission
+- **IronSource child-directed docs (HIGH confidence):** https://developers.is.com/ironsource-mobile/general/ironsource-mobile-child-directed-apps/ — independent SDK flag required
+- **AdMob frequency caps (MEDIUM confidence):** https://support.google.com/admob/answer/6244508 — dashboard-level cap; start low, increase carefully; retention tradeoff
+- **Rewarded ad UX best practices (MEDIUM confidence):** https://appsamurai.com/blog/rewarded-ads-in-mobile-games-strategy-data-and-best-practices/ — contextual trigger at moment of frustration; opt-in rates 15–30% at right moment; explicit reward messaging
+- **Flutter RepaintBoundary screenshot + XFile.fromData() (HIGH confidence):** https://www.freecodecamp.org/news/how-to-save-and-share-flutter-widgets-as-images-a-complete-production-ready-guide/ — no external storage permission needed with XFile.fromData(); pixelRatio from MediaQuery
+- **Sporcle US States quiz (MEDIUM confidence, direct observation):** https://www.sporcle.com/games/g/states — accepts full name only (no abbreviations); types input in list order; 15-minute timer; no autocomplete
 
 ---
 
-*Feature research for: U.S. Geography Educational Drag-and-Drop Map Game*
-*Researched: 2026-05-30*
+*Feature research for: v2 — Speed Typing, AdMob, Rewarded Hints, Gated Sharing*
+*Researched: 2026-06-02*
