@@ -1,17 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: verifying
-stopped_at: context exhaustion at 81% (2026-06-01)
-last_updated: "2026-06-01T19:12:58.363Z"
-last_activity: 2026-06-01
+milestone: v2.0
+milestone_name: Monetization & Speed Mode
+status: planning
+last_updated: "2026-06-02T00:00:00.000Z"
+last_activity: 2026-06-02
 progress:
-  total_phases: 5
-  completed_phases: 4
-  total_plans: 26
-  completed_plans: 25
-  percent: 80
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -21,16 +20,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-30)
 
 **Core value:** A child can drag a state onto its correct place on the U.S. map and immediately feel they got it right — the interactive map placement loop must be smooth, forgiving, and rewarding above everything else.
-**Current focus:** Phase 4 — full play loop
+**Current focus:** v2.0 — Monetization & Speed Mode
 
 ## Current Position
 
-Phase: 4
-Plan: 6 complete (5 of 6)
-Status: Phase complete — ready for verification
-Last activity: 2026-06-01
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-06-02 — Milestone v2.0 started
 
-Progress: [██████████] 96%
+Progress: [          ] 0%
 
 ## Performance Metrics
 

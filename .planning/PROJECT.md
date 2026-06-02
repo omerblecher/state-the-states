@@ -8,6 +8,18 @@ A cross-platform (Flutter), fully-offline, COPPA / Google Play Families-complian
 
 A child can drag a state onto its correct place on the U.S. map and immediately feel they got it right — the interactive map placement loop must be smooth, forgiving, and rewarding above everything else.
 
+## Current Milestone: v2.0 — Monetization & Speed Mode
+
+**Goal:** Ship Mode 5 (Speed Typing), the full AdMob ad layer with mediation, rewarded hint refills, and complete the gated social sharing that was partially built in v1.
+
+**Target features:**
+- Mode 5 — Speed Typing Challenge (text-only, no map)
+- Full AdMob + mediation (Banner/Interstitial/Rewarded/App Open × Unity/AppLovin/ironSource/InMobi, COPPA)
+- Rewarded-ad hint refill (wire `refillHints()` to rewarded ad callback)
+- Complete gated sharing (PB-gating, screenshot capture, "New lowest score" message, multiplication math gate)
+
+---
+
 ## Requirements
 
 ### Validated
@@ -18,35 +30,30 @@ A child can drag a state onto its correct place on the U.S. map and immediately 
 
 ### Active
 
-<!-- v1 milestone: the playable core. All are hypotheses until shipped and validated. -->
+<!-- v2 milestone: monetization layer, speed mode, and sharing completion. -->
 
-**Welcome & Audio**
-- [ ] Premium patriotic opening screen featuring a stylized vector silhouette of the USA (no spinning globe).
-- [ ] Programmatic playback of a self-rendered, rights-clean "Star-Spangled Banner" instrumental on launch, with a seamless fade-out on transition into the menus.
-- [ ] Audio service with safe load / lifecycle / termination controls (baselined from the Flags `just_audio` service).
+**v1 — Playable Core** _(shipped 2026-06)_
+- Welcome screen + self-rendered Star-Spangled Banner anthem
+- All 4 game modes: Learn, States Master, Geographical Master, Grand Master
+- Golf-style scoring + local high scores via `SharedPreferences`
+- 4-step first-launch tutorial + session restore
+- Hint system (zoom-to-centroid glow, 2 hints/round)
+- Basic share flow in CompletionScreen (text share + math gate — v2 completes it)
+- COPPA/Families-compliant: no Firebase, AD_ID blocked, stub ads
 
-**Map Canvas & Interaction**
-- [ ] Vector USA map rendering mainland states plus dedicated inset frame projections for Alaska and Hawaii.
-- [ ] High-performance `InteractiveViewer` pan-and-zoom replicating the Flags setup (tray outside, DragTargets inside, `TransformationController.toScene()` for drop coordinates).
-- [ ] Invisible 48dp radial proximity-snapping hit-box around the calculated centroid of micro-states (e.g., Rhode Island, Delaware) to prevent finger-target frustration.
-
-**Game Modes 1–4 (map drag-and-drop)**
-- [ ] **Learn:** state abbreviations visible on the map; full state name shown beneath the token tray; font scales with the canvas matrix transform.
-- [ ] **States Master:** full state name shown only beneath the tray; map entirely blank (no labels/abbreviations).
-- [ ] **Geographical Master:** abbreviations rendered on the map, scaling with zoom thresholds; tray tokens show no text clues.
-- [ ] **Grand Master:** total blackout — no names in the tray, no labels on the map.
-
-**Scoring & Local Records**
-- [ ] Golf-style scoring (lowest wins): +1 point per 10 seconds elapsed; +5 points for placing a token on an incorrect state path.
-- [ ] Best scores/times for each mode stored locally via `SharedPreferences` (offline, no accounts).
+**v2 — Monetization & Speed Mode**
+- [ ] Mode 5 — Speed Typing Challenge (text-only, no map, UPPERCASE input, scrolling found-states grid)
+- [ ] Full AdMob + mediation (Banner/Interstitial/Rewarded/App Open × Unity/AppLovin/ironSource/InMobi, COPPA)
+- [ ] Rewarded-ad hint refill (`refillHints()` wired to rewarded callback)
+- [ ] Complete gated sharing (PB-gating, screenshot capture, "New lowest score in [Level]" message, 2-digit × 1-digit multiplication gate)
 
 ### Out of Scope
 
 <!-- Explicit boundaries, with reasoning. -->
 
-- **Mode 5 — Speed Typing Challenge** — deferred to v2. Independent of the map engine; lands as its own text-driven phase. (Full production widget code is a v2 execute-phase deliverable.)
-- **Gated social sharing** (math parental gate + watermarked screenshot via `share_plus`) — deferred to v2.
-- **Full AdMob + mediation monetization** (Banner / Interstitial / Rewarded / App Open with Unity, AppLovin, etc.) — deferred to v2; ad layer is stubbed as a walled garden in v1.
+- **Mode 5 — Speed Typing Challenge** — promoted to v2 Active scope.
+- **Gated social sharing** — promoted to v2 Active scope (v1 shipped basic share + math gate; v2 completes with screenshot capture + PB-gating).
+- **Full AdMob + mediation monetization** — promoted to v2 Active scope.
 - **Washington D.C. as a placeable/typeable entity** — excluded. Canonical entity set is the **50 states**; matches the "all 50 states" end condition. Micro-state snapping still applies to small states (RI, DE).
 - **Firebase (Analytics / Crashlytics) — ever** — collects persistent device identifiers; COPPA-prohibited for this app. Use Android Vitals.
 - **Online accounts, cloud sync, leaderboards** — app is fully offline by design.
@@ -101,4 +108,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-30 after initialization*
+*Last updated: 2026-06-02 — v2.0 milestone started*
