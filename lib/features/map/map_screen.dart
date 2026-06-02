@@ -602,7 +602,6 @@ class _MapScreenState extends ConsumerState<MapScreen>
 
     final sessionAsync = ref.watch(gameSessionProvider);
     final session = sessionAsync.value;
-    final notifier = ref.read(gameSessionProvider.notifier);
 
     return PopScope(
       canPop: false,
@@ -622,7 +621,8 @@ class _MapScreenState extends ConsumerState<MapScreen>
                 // Countdown overlay — rendered on top of map during countdown phase
                 if (session?.phase == GamePhase.countdown)
                   Positioned.fill(
-                    child: _buildCountdownOverlay(notifier.countdownSecondsRemaining),
+                    child: _buildCountdownOverlay(
+                        session?.countdownSecondsRemaining ?? 5),
                   ),
                 // Pause overlay — rendered when user pauses or presses back
                 if (_isPauseOverlayVisible)
@@ -763,6 +763,7 @@ class _MapScreenState extends ConsumerState<MapScreen>
                     showName: showName,
                     hintsRemaining: session?.hintsRemaining ?? 2,
                     onHintPressed: session?.phase == GamePhase.playing ? _onHintPressed : null,
+                    stateData: _stateIndex[_currentPostal],
                   ),
           ),
         ],

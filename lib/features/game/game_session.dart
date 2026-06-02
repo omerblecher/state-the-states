@@ -15,6 +15,7 @@ class GameSession {
     this.activePostal,
     required this.hintsRemaining,
     this.matchedPostals = const [],
+    this.countdownSecondsRemaining = 0,
   });
 
   final GamePhase phase;
@@ -25,6 +26,8 @@ class GameSession {
   final String? activePostal;
   final int hintsRemaining;
   final List<String> matchedPostals;
+  /// Counts down from 5 to 1 during the countdown phase; 0 at all other times.
+  final int countdownSecondsRemaining;
 
   static const Object _sentinel = Object();
 
@@ -37,6 +40,7 @@ class GameSession {
     Object? activePostal = _sentinel,
     int? hintsRemaining,
     List<String>? matchedPostals,
+    int? countdownSecondsRemaining,
   }) {
     return GameSession(
       phase: phase ?? this.phase,
@@ -49,6 +53,8 @@ class GameSession {
           : activePostal as String?,
       hintsRemaining: hintsRemaining ?? this.hintsRemaining,
       matchedPostals: matchedPostals ?? this.matchedPostals,
+      countdownSecondsRemaining:
+          countdownSecondsRemaining ?? this.countdownSecondsRemaining,
     );
   }
 
@@ -71,6 +77,7 @@ class GameSession {
           errorCount == other.errorCount &&
           activePostal == other.activePostal &&
           hintsRemaining == other.hintsRemaining &&
+          countdownSecondsRemaining == other.countdownSecondsRemaining &&
           _listEquals(matchedPostals, other.matchedPostals);
 
   @override
@@ -82,6 +89,7 @@ class GameSession {
         errorCount,
         activePostal,
         hintsRemaining,
+        countdownSecondsRemaining,
         Object.hashAll(matchedPostals),
       );
 }

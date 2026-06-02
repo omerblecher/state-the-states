@@ -1,5 +1,8 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
+import 'package:state_states/core/models/state_data.dart';
 import 'package:state_states/features/game/game_mode.dart';
 
 /// StateTray — draggable state token widget.
@@ -25,6 +28,8 @@ class StateTray extends StatefulWidget {
   final int hintsRemaining;
   /// Null during countdown — button is disabled until game phase is playing.
   final VoidCallback? onHintPressed;
+  /// Provides state shape paths for silhouette rendering in learn/geo modes.
+  final StateData? stateData;
 
   const StateTray({
     super.key,
@@ -36,6 +41,7 @@ class StateTray extends StatefulWidget {
     this.showName = true,
     this.hintsRemaining = 2,
     this.onHintPressed,
+    this.stateData,
   });
 
   /// The point within the feedback widget that sits at the pointer during drag.
@@ -243,6 +249,16 @@ class StateTrayState extends State<StateTray>
         );
       case GameMode.learn:
       case GameMode.geographicalMaster:
+        final sd = widget.stateData;
+        if (sd != null) {
+          return CustomPaint(
+            painter: _StateShapePainter(
+              paths: sd.paths,
+              bbox: sd.boundingBox,
+            ),
+          );
+        }
+        // Fallback when stateData not yet available.
         return Center(
           child: Text(
             widget.postal,
@@ -251,6 +267,64 @@ class StateTrayState extends State<StateTray>
         );
     }
   }
+}
+
+/// Renders the state's silhouette centered and scaled to the card bounds.
+/// Paths are in the original map coordinate space; the painter applies a
+/// transform to fit them within the card with 85% coverage for padding.
+class _StateShapePainter extends CustomPainter {
+  const _StateShapePainter({required this.paths, required this.bbox});
+
+  final List<Path> paths;
+  final BoundingBox bbox;
+
+  static const _fillColor = Color(0xFFB8D4E8); // ocean-blue tint
+  static const _strokeColor = Color(0xFF3A6B8A);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (paths.isEmpty || bbox.w == 0 || bbox.h == 0) return;
+
+    const coverage = 0.85;
+    final scale = math.min(
+      size.width * coverage / bbox.w,
+      size.height * coverage / bbox.h,
+    );
+    final tx = (size.width - bbox.w * scale) / 2 - bbox.x * scale;
+    final ty = (size.height - bbox.h * scale) / 2 - bbox.y * scale;
+
+    final m = Matrix4.identity()
+      ..setEntry(0, 0, scale)
+      ..setEntry(1, 1, scale)
+      ..setEntry(2, 2, scale)
+      ..setEntry(0, 3, tx)
+      ..setEntry(1, 3, ty);
+
+    canvas.save();
+    canvas.transform(m.storage);
+
+    final fillPaint = Paint()
+      ..color = _fillColor
+      ..style = PaintingStyle.fill;
+    final strokePaint = Paint()
+      ..color = _strokeColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.8 / scale;
+
+    for (final path in paths) {
+      canvas.drawPath(path, fillPaint);
+      canvas.drawPath(path, strokePaint);
+    }
+
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(_StateShapePainter old) =>
+      old.bbox.x != bbox.x ||
+      old.bbox.y != bbox.y ||
+      old.bbox.w != bbox.w ||
+      old.bbox.h != bbox.h;
 }
 
 /// Downward-pointing triangle clipper for the pin tip.

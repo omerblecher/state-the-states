@@ -72,9 +72,6 @@ class GameSessionNotifier extends AsyncNotifier<GameSession> {
     );
   }
 
-  /// Number of countdown seconds remaining (5 → 4 → … → 1 → 0).
-  int get countdownSecondsRemaining => 5 - _countdownTick;
-
   void startGame(GameMode mode) {
     final current = state.value;
     if (current == null) return; // Provider still loading.
@@ -93,6 +90,7 @@ class GameSessionNotifier extends AsyncNotifier<GameSession> {
         errorCount: 0,
         activePostal: null,
         hintsRemaining: 2,
+        countdownSecondsRemaining: 5,
       ),
     );
     _ticker.start(_onTick);
@@ -109,7 +107,15 @@ class GameSessionNotifier extends AsyncNotifier<GameSession> {
       if (_countdownTick >= 5) {
         // D-01: Stopwatch starts ONLY when leaving countdown → playing.
         _stopwatch.start();
-        state = AsyncData(current.copyWith(phase: GamePhase.playing));
+        state = AsyncData(current.copyWith(
+          phase: GamePhase.playing,
+          countdownSecondsRemaining: 0,
+        ));
+      } else {
+        // Emit a state update each tick so the UI rebuilds with the new countdown value.
+        state = AsyncData(current.copyWith(
+          countdownSecondsRemaining: (5 - _countdownTick).clamp(0, 5),
+        ));
       }
     } else if (current.phase == GamePhase.playing) {
       // D-02: read Stopwatch + offset; never increment a counter.

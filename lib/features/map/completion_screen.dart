@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
 
 import 'package:state_states/features/game/game_mode.dart';
 import 'package:state_states/features/game/game_session.dart';
@@ -83,6 +84,21 @@ class _CompletionScreenState extends ConsumerState<CompletionScreen>
   void dispose() {
     _pbController.dispose();
     super.dispose();
+  }
+
+  Future<void> _onSharePressed() async {
+    final passed = await showDialog<bool>(
+      context: context,
+      builder: (_) => const _MathChallengeDialog(),
+    );
+    if (passed != true || !mounted) return;
+    final elapsed = _formatTime(widget.session.elapsed);
+    final modeName = widget.session.mode.name;
+    final score = widget.session.score;
+    await SharePlus.instance.share(ShareParams(
+      text: 'I placed all 50 US states in $elapsed on $modeName mode!'
+          ' Score: $score — State the States 🇺🇸',
+    ));
   }
 
   Color _modeColor(GameMode mode) => switch (mode) {
@@ -269,7 +285,23 @@ class _CompletionScreenState extends ConsumerState<CompletionScreen>
               label: const Text('Play Again'),
             ),
           ),
-          // NOTE: NO share button (D-13 — v2 only)
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: OutlinedButton.icon(
+              onPressed: _onSharePressed,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.grey.shade700,
+                side: BorderSide(color: Colors.grey.shade400),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              icon: const Icon(Icons.share),
+              label: const Text('Share result'),
+            ),
+          ),
         ],
       ),
     );
@@ -293,6 +325,87 @@ class _CompletionScreenState extends ConsumerState<CompletionScreen>
           ),
         );
       },
+    );
+  }
+}
+
+/// COPPA-required adult verification before sharing.
+/// Shows a simple addition problem; only a grown-up who can do mental arithmetic
+/// can proceed, preventing a child from accidentally sharing.
+class _MathChallengeDialog extends StatefulWidget {
+  const _MathChallengeDialog();
+
+  @override
+  State<_MathChallengeDialog> createState() => _MathChallengeDialogState();
+}
+
+class _MathChallengeDialogState extends State<_MathChallengeDialog> {
+  final _controller = TextEditingController();
+  String? _error;
+  late final int _a;
+  late final int _b;
+
+  @override
+  void initState() {
+    super.initState();
+    final seed = DateTime.now().millisecondsSinceEpoch;
+    _a = 3 + seed % 7; // 3–9
+    _b = 2 + (seed ~/ 13) % 8; // 2–9
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onConfirm() {
+    final entered = int.tryParse(_controller.text.trim());
+    if (entered == _a + _b) {
+      Navigator.of(context).pop(true);
+    } else {
+      setState(() => _error = 'Incorrect — try again');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Grown-up check'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('To share, a grown-up needs to answer:'),
+          const SizedBox(height: 16),
+          Text(
+            'What is $_a + $_b?',
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _controller,
+            keyboardType: TextInputType.number,
+            autofocus: true,
+            decoration: InputDecoration(
+              hintText: 'Answer',
+              errorText: _error,
+              border: const OutlineInputBorder(),
+            ),
+            onSubmitted: (_) => _onConfirm(),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(false),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: _onConfirm,
+          child: const Text('Share'),
+        ),
+      ],
     );
   }
 }
