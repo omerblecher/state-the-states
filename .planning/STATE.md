@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Monetization & Speed Mode
 status: planning
-stopped_at: Phase 6 context gathered
-last_updated: "2026-06-02T11:12:38.057Z"
+stopped_at: Phase 6 UI-SPEC approved
+last_updated: "2026-06-02T17:22:30.566Z"
 last_activity: 2026-06-02 — v2.0 roadmap created (Phases 6, 7, 8)
 progress:
   total_phases: 8
@@ -137,6 +137,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-02T11:12:38.046Z
-Stopped at: Phase 6 context gathered
-Resume file: .planning/phases/06-speed-typing-mode/06-CONTEXT.md
+Last session: 2026-06-02T17:22:30.557Z
+Stopped at: Phase 6 UI-SPEC approved
+Resume file: .planning/phases/06-speed-typing-mode/06-UI-SPEC.md

@@ -199,7 +199,24 @@ Plans:
   4. The game ends automatically when all 50 states are found; the completion screen appears with the final golf score (elapsed ÷ 10 + wrong-submissions × 5).
   5. The best (lowest) score for Mode 5 is stored via `SharedPreferences` and displayed on the Mode 5 home-screen card on all subsequent launches.
 
-**Plans**: TBD
+**Plans**: 4 plans
+Plans:
+**Wave 0** *(parallel with Wave 1)*
+
+- [ ] 06-00-PLAN.md — Test stubs: speed_typing_screen_test.dart stub + stateFixture() helper in game_session_notifier_test.dart
+
+**Wave 1** *(parallel with Wave 0)*
+
+- [ ] 06-01-PLAN.md — Core game logic: GameMode.speedTyping + displayName extension, submitTyping() action + skipCountdown, HighScoreRepository key
+
+**Wave 2** *(blocked on Wave 0 + Wave 1 completion)*
+
+- [ ] 06-02-PLAN.md — SpeedTypingScreen: new ConsumerStatefulWidget + widget tests (TYPING-03, TYPING-06)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 06-03-PLAN.md — Integration: CompletionScreen speedTyping case + displayName, session_restore_card + map_screen compile fixes, HomeScreen Mode 5 card + session restore routing, app.dart /type route
+
 **UI hint**: yes
 
 ### Phase 7: Gated Sharing Completion
@@ -244,6 +261,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 3. Map Render + Coordinate Transform Spike | 5/5 | Complete   | 2026-05-31 |
 | 4. Full Play Loop | 6/6 | Complete   | 2026-06-01 |
 | 5. Polish, Welcome & Accessibility | 6/7 | In Progress|  |
-| 6. Speed Typing Mode | 0/? | Not started | - |
+| 6. Speed Typing Mode | 0/4 | Not started | - |
 | 7. Gated Sharing Completion | 0/? | Not started | - |
 | 8. Full AdMob Layer | 0/? | Not started | - |
