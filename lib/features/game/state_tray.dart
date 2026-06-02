@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:state_states/core/models/state_data.dart';
 import 'package:state_states/features/game/game_mode.dart';
@@ -237,6 +238,7 @@ class StateTrayState extends State<StateTray>
   Widget _cardFace() {
     switch (widget.mode) {
       case GameMode.grandMaster:
+        // No visual hint in the hardest mode — many flags carry the state name.
         return Container(color: _palette[widget.sequenceIndex % 6]);
       case GameMode.statesMaster:
         return Center(
@@ -249,23 +251,29 @@ class StateTrayState extends State<StateTray>
         );
       case GameMode.learn:
       case GameMode.geographicalMaster:
-        final sd = widget.stateData;
-        if (sd != null) {
-          return CustomPaint(
-            painter: _StateShapePainter(
-              paths: sd.paths,
-              bbox: sd.boundingBox,
-            ),
-          );
-        }
-        // Fallback when stateData not yet available.
-        return Center(
-          child: Text(
-            widget.postal,
-            style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w700),
-          ),
-        );
+        return _buildFlagCard();
     }
+  }
+
+  /// Loads the real state flag SVG. Shows the state silhouette while the SVG
+  /// is being decoded; falls back to the abbreviation if stateData is absent.
+  Widget _buildFlagCard() {
+    final sd = widget.stateData;
+    final placeholder = sd != null
+        ? CustomPaint(
+            painter: _StateShapePainter(paths: sd.paths, bbox: sd.boundingBox),
+          )
+        : Center(
+            child: Text(widget.postal,
+                style:
+                    const TextStyle(fontSize: 28, fontWeight: FontWeight.w700)),
+          );
+
+    return SvgPicture.asset(
+      'assets/flags/${widget.postal.toLowerCase()}.svg',
+      fit: BoxFit.contain,
+      placeholderBuilder: (_) => placeholder,
+    );
   }
 }
 
