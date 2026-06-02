@@ -217,6 +217,11 @@ Plans:
 
 - [ ] 06-03-PLAN.md — Integration: CompletionScreen speedTyping case + displayName, session_restore_card + map_screen compile fixes, HomeScreen Mode 5 card + session restore routing, app.dart /type route
 
+**Cross-cutting constraints:**
+- `GameMode.speedTyping` exhaustiveness: all 4 switch sites (`high_score_repository._key()`, `completion_screen._modeColor()`, `session_restore_card._modeLabel()`, `map_screen switch`) must compile before Phase 6 can pass — covered across Plans 01 and 03
+- COPPA walled-garden: `GameSessionNotifier.submitTyping()` must have zero ad imports — enforced as acceptance criterion in Plan 01
+- Teal accent `Color(0xFF00695C)` is canonical for Speed Typing — used in AppBar (Plan 02), Mode 5 card + `_modeColor()` (Plan 03), and `displayName` extension (Plan 01)
+
 **UI hint**: yes
 
 ### Phase 7: Gated Sharing Completion
