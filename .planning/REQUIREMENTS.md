@@ -88,7 +88,7 @@ Golf-style scoring (lowest wins). Canonical entity set = **50 states** (no D.C.)
 
 ### Speed Typing Mode (TYPING)
 
-- [ ] **TYPING-01**: Mode 5 (Speed Typing) appears on the home screen as a selectable card displaying the player's best score (or blank state if never played).
+- [x] **TYPING-01**: Mode 5 (Speed Typing) appears on the home screen as a selectable card displaying the player's best score (or blank state if never played).
 - [x] **TYPING-02**: Tapping the Mode 5 card navigates to `SpeedTypingScreen`.
 - [x] **TYPING-03**: `SpeedTypingScreen` has a text field that auto-capitalizes input to UPPERCASE.
 - [x] **TYPING-04**: On entering a valid, previously unseen state name or its 2-letter postal code and pressing Enter, the game plays a success SFX, adds a green checkmark chip to the found-states grid, and clears the field.
@@ -180,7 +180,7 @@ Golf-style scoring (lowest wins). Canonical entity set = **50 states** (no D.C.)
 | HOME-03 | Phase 5 | Complete |
 | A11Y-01 | Phase 5 | Pending |
 | A11Y-02 | Phase 5 | Pending |
-| TYPING-01 | Phase 6 (v2) | Pending |
+| TYPING-01 | Phase 6 (v2) | Complete |
 | TYPING-02 | Phase 6 (v2) | Complete |
 | TYPING-03 | Phase 6 (v2) | Complete |
 | TYPING-04 | Phase 6 (v2) | Complete |

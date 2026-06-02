@@ -20,7 +20,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Map Render + Coordinate Transform Spike** - CustomPainter map + mandatory toScene() spike gate (completed 2026-05-31)
 - [x] **Phase 4: Full Play Loop** - Four game modes end-to-end: tray, drag-drop, HUD, completion, home screen (completed 2026-06-01)
 - [ ] **Phase 5: Polish, Welcome & Accessibility** - Welcome screen, anthem, hints, tutorial, session restore, a11y audit
-- [ ] **Phase 6: Speed Typing Mode** - Mode 5 end-to-end: SpeedTypingScreen, UPPERCASE input, found-states grid, golf scoring, local best score
+- [x] **Phase 6: Speed Typing Mode** - Mode 5 end-to-end: SpeedTypingScreen, UPPERCASE input, found-states grid, golf scoring, local best score (completed 2026-06-02)
 - [ ] **Phase 7: Gated Sharing Completion** - PB-only Share button, screenshot capture, multiplication math gate
 - [ ] **Phase 8: Full AdMob Layer** - Banner/interstitial/rewarded/App Open + mediation COPPA init + rewarded hint refill
 
@@ -215,7 +215,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 06-03-PLAN.md — Integration: CompletionScreen speedTyping case + displayName, session_restore_card + map_screen compile fixes, HomeScreen Mode 5 card + session restore routing, app.dart /type route
+- [x] 06-03-PLAN.md — Integration: CompletionScreen speedTyping case + displayName, session_restore_card + map_screen compile fixes, HomeScreen Mode 5 card + session restore routing, app.dart /type route
 
 **Cross-cutting constraints:**
 - `GameMode.speedTyping` exhaustiveness: all 4 switch sites (`high_score_repository._key()`, `completion_screen._modeColor()`, `session_restore_card._modeLabel()`, `map_screen switch`) must compile before Phase 6 can pass — covered across Plans 01 and 03
@@ -266,6 +266,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 3. Map Render + Coordinate Transform Spike | 5/5 | Complete   | 2026-05-31 |
 | 4. Full Play Loop | 6/6 | Complete   | 2026-06-01 |
 | 5. Polish, Welcome & Accessibility | 6/7 | In Progress|  |
-| 6. Speed Typing Mode | 3/4 | In Progress|  |
+| 6. Speed Typing Mode | 4/4 | Complete   | 2026-06-02 |
 | 7. Gated Sharing Completion | 0/? | Not started | - |
 | 8. Full AdMob Layer | 0/? | Not started | - |
