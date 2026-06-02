@@ -1,11 +1,12 @@
 ---
 phase: 6
 slug: speed-typing-mode
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-06-02
 revised: 2026-06-02
+reviewed_at: 2026-06-02
 ---
 
 # Phase 6 — UI Design Contract: Speed Typing Mode
