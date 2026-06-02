@@ -4,13 +4,13 @@ milestone: v2.0
 milestone_name: Monetization & Speed Mode
 status: executing
 stopped_at: Completed 06-speed-typing-mode 06-00-PLAN.md
-last_updated: "2026-06-02T17:44:48.352Z"
+last_updated: "2026-06-02T17:52:36.042Z"
 last_activity: 2026-06-02
 progress:
   total_phases: 8
   completed_phases: 4
   total_plans: 30
-  completed_plans: 26
+  completed_plans: 27
   percent: 50
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-06-02)
 ## Current Position
 
 Phase: 6 (Speed Typing Mode) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-06-02
 
-Progress: [█████████░] 87%
+Progress: [█████████░] 90%
 
 ## Performance Metrics
 
@@ -69,6 +69,7 @@ Progress: [█████████░] 87%
 | Phase 05-polish-welcome-accessibility P04 | 7min | 1 tasks | 2 files |
 | Phase 05-polish-welcome-accessibility P06 | 3min | 2 tasks | 3 files |
 | Phase 06-speed-typing-mode P00 | 2min | - tasks | - files |
+| Phase 06-speed-typing-mode P01 | 5min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -117,6 +118,7 @@ Recent decisions affecting current work:
 - Roadmap v2: GameSessionNotifier walled-garden rule preserved throughout Phase 8 — zero ad imports
 - [Phase ?]: 06-00: Wave 0 stub test imports flutter_test only — speed_typing_screen.dart does not exist in Wave 0; import deferred to Wave 2 via TODO comment
 - [Phase ?]: 06-00: stateFixture() uses pathStrings/paths as empty const lists — avoids parseSvgPathData() for unit tests that only need postal/name/isPlaceable/insetGroup
+- [Phase ?]: 06-01-SUMMARY.md
 
 ### Pending Todos
 
@@ -140,6 +142,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-02T17:44:48.343Z
+Last session: 2026-06-02T17:52:36.032Z
 Stopped at: Completed 06-speed-typing-mode 06-00-PLAN.md
 Resume file: None

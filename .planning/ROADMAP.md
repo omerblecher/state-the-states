@@ -207,7 +207,7 @@ Plans:
 
 **Wave 1** *(parallel with Wave 0)*
 
-- [ ] 06-01-PLAN.md — Core game logic: GameMode.speedTyping + displayName extension, submitTyping() action + skipCountdown, HighScoreRepository key
+- [x] 06-01-PLAN.md — Core game logic: GameMode.speedTyping + displayName extension, submitTyping() action + skipCountdown, HighScoreRepository key
 
 **Wave 2** *(blocked on Wave 0 + Wave 1 completion)*
 
@@ -266,6 +266,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 3. Map Render + Coordinate Transform Spike | 5/5 | Complete   | 2026-05-31 |
 | 4. Full Play Loop | 6/6 | Complete   | 2026-06-01 |
 | 5. Polish, Welcome & Accessibility | 6/7 | In Progress|  |
-| 6. Speed Typing Mode | 1/4 | In Progress|  |
+| 6. Speed Typing Mode | 2/4 | In Progress|  |
 | 7. Gated Sharing Completion | 0/? | Not started | - |
 | 8. Full AdMob Layer | 0/? | Not started | - |
