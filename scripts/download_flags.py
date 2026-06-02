@@ -5,8 +5,11 @@ Usage (from repo root):
     python scripts/download_flags.py
 
 Re-run safely — already-downloaded files are skipped.
+After downloading, CSS class-based styles are automatically inlined so that
+flutter_svg (which ignores <style> block class selectors) renders correctly.
 """
 import os
+import re
 import time
 import urllib.parse
 import urllib.request
@@ -74,6 +77,37 @@ HEADERS = {
 }
 
 
+def inline_css_classes(content: str) -> tuple[str, int]:
+    """Convert <style> CSS class rules to inline style attributes.
+
+    flutter_svg ignores class selectors inside <style> blocks — elements that
+    rely on them render black.  This replaces every class="X" attribute with
+    style="<CSS properties from .X rule>" and removes the now-redundant
+    <style> block.
+
+    Returns (patched_content, number_of_rules_inlined).
+    """
+    style_m = re.search(r'<style[^>]*>(.*?)</style>', content, re.DOTALL)
+    if not style_m:
+        return content, 0
+
+    css: dict[str, str] = {}
+    for m in re.finditer(r'\.([\w-]+)\s*\{([^}]*)\}', style_m.group(1)):
+        css[m.group(1)] = m.group(2).strip().rstrip(';')
+
+    if not css:
+        return content, 0
+
+    def replace_class(m: re.Match) -> str:
+        parts = [css[cls] for cls in m.group(1).split() if cls in css]
+        return f'style="{";".join(parts)}"' if parts else ''
+
+    patched = re.sub(r'class="([^"]+)"', replace_class, content)
+    patched = re.sub(r'<style[^>]*>.*?</style>', '', patched, flags=re.DOTALL)
+    patched = re.sub(r'<defs>\s*</defs>', '', patched)
+    return patched, len(css)
+
+
 def download_flags() -> None:
     os.makedirs(OUT_DIR, exist_ok=True)
     failed: list[str] = []
@@ -94,9 +128,13 @@ def download_flags() -> None:
                 print(f'  [WARN] {postal}: response may not be SVG '
                       f'({len(data):,} bytes) — check {out_path}')
 
-            with open(out_path, 'wb') as f:
-                f.write(data)
-            print(f'  [ ok] {postal}: {len(data):,} bytes')
+            text = data.decode('utf-8', errors='replace')
+            patched, n_rules = inline_css_classes(text)
+            fix_note = f', inlined {n_rules} CSS rules' if n_rules else ''
+
+            with open(out_path, 'w', encoding='utf-8') as f:
+                f.write(patched)
+            print(f'  [ ok] {postal}: {len(data):,} bytes{fix_note}')
 
         except Exception as exc:  # noqa: BLE001
             print(f'  [FAIL] {postal}: {exc}')
