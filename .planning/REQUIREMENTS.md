@@ -1,8 +1,11 @@
 # Requirements — State States
 
-**Milestone:** v1 — Playable Core
-**Defined:** 2026-05-30
+**Current Milestone:** v2.0 — Monetization & Speed Mode
+**v2 Defined:** 2026-06-02
 **Scope source:** PROJECT.md + `.planning/research/` (SUMMARY, FEATURES, ARCHITECTURE, PITFALLS)
+
+**v1 Milestone:** Playable Core (Phases 1–5)
+**v1 Defined:** 2026-05-30
 
 Golf-style scoring (lowest wins). Canonical entity set = **50 states** (no D.C.). Fully offline. COPPA / Families compliant from day one. Architecture baselined on *Flags Around the World*.
 
@@ -81,12 +84,41 @@ Golf-style scoring (lowest wins). Canonical entity set = **50 states** (no D.C.)
 
 ---
 
-## v2 Requirements (Deferred)
+## v2 Requirements
 
-- [ ] **Mode 5 — Speed Typing Challenge**: no map viewport; top text field forcing UPPERCASE; scrolling grid of found states; on valid+new match → success SFX, green "V" checkmark flash (1–2s), clear field, append to grid; ends when all 50 states typed.
-- [ ] **Gated social sharing**: beating a best score unlocks a `share_plus` share of a watermarked screenshot ("New lowest score in [Level Name] level!"), gated behind a randomized 2-digit × 1-digit math parental challenge.
-- [ ] **Full AdMob + mediation**: Banner, Interstitial, Rewarded Interstitial (hint refills), and App Open placements with Unity/AppLovin/ironSource/InMobi mediation, all with `tagForChildDirectedTreatment(true)` per SDK and G/PG content limits.
-- [ ] **Rewarded-ad hint refill**: wire `refillHints()` to the rewarded ad callback.
+### Speed Typing Mode (TYPING)
+
+- [ ] **TYPING-01**: Mode 5 (Speed Typing) appears on the home screen as a selectable card displaying the player's best score (or blank state if never played).
+- [ ] **TYPING-02**: Tapping the Mode 5 card navigates to `SpeedTypingScreen`.
+- [ ] **TYPING-03**: `SpeedTypingScreen` has a text field that auto-capitalizes input to UPPERCASE.
+- [ ] **TYPING-04**: On entering a valid, previously unseen state name or its 2-letter postal code and pressing Enter, the game plays a success SFX, adds a green checkmark chip to the found-states grid, and clears the field.
+- [ ] **TYPING-05**: On entering a non-matching string and pressing Enter, +5 points are added to the golf score.
+- [ ] **TYPING-06**: The found-states grid scrolls and shows all matched states as chips.
+- [ ] **TYPING-07**: The game ends when all 50 states have been found.
+- [ ] **TYPING-08**: Golf scoring applies: +1 per 10 seconds elapsed + +5 per wrong submission; timer auto-pauses when the app is backgrounded.
+- [ ] **TYPING-09**: Best (lowest) score for Speed Typing mode is stored locally via `SharedPreferences`.
+
+### Gated Sharing Completion (SHARE)
+
+- [ ] **SHARE-01**: The Share button on `CompletionScreen` is only visible when the player has beaten their personal best (`_isNewPb == true`).
+- [ ] **SHARE-02**: Pressing Share captures the score card via `RenderRepaintBoundary.toImage()` and attaches the PNG as an `XFile` to the share sheet.
+- [ ] **SHARE-03**: The share message reads "New lowest score in [Mode Name]! Score: [N] — State the States 🇺🇸" with the screenshot attached.
+- [ ] **SHARE-04**: The parental math gate is upgraded from single-digit addition to 2-digit × 1-digit multiplication.
+
+### AdMob + Mediation (AD)
+
+- [ ] **AD-01**: `RequestConfiguration` with `tagForChildDirectedTreatment: yes` and `maxAdContentRating: g` is set before `MobileAds.instance.initialize()`.
+- [ ] **AD-02**: Unity, ironSource, and InMobi mediation adapters are initialized with their own per-SDK COPPA/child-directed flags in `ads_initializer.dart`. AppLovin remains disabled (`kAppLovinEnabled = false`).
+- [ ] **AD-03**: A banner ad is shown at the bottom of `HomeScreen`.
+- [ ] **AD-04**: An interstitial ad is triggered once on `CompletionScreen.initState()` (post-game, not mid-round or on pause).
+- [ ] **AD-05**: An App Open ad is shown on cold app launch; it is suppressed when an active game session exists.
+- [ ] **AD-06**: The `AD_ID` permission remains blocked in the merged manifest after all mediation adapter AARs are included; verified via `aapt dump badging`.
+
+### Rewarded Hint Refill (HINT)
+
+- [ ] **HINT-03**: When `hintsRemaining == 0` and the player taps the hint button, a "Watch an ad for 2 more hints?" prompt is shown.
+- [ ] **HINT-04**: If the player watches the rewarded ad to completion, `refillHints()` resets `hintsRemaining` to 2 and the hint is immediately used.
+- [ ] **HINT-05**: The reward is granted in `onUserEarnedReward` only — never in `onAdDismissedFullScreenContent`.
 
 ---
 
@@ -97,6 +129,8 @@ Golf-style scoring (lowest wins). Canonical entity set = **50 states** (no D.C.)
 - **Online accounts, cloud sync, leaderboards, multiplayer** — app is offline by design; accounts imply persistent identifiers.
 - **In-app purchases / premium unlock** — Families Policy restricts IAP UX for child-directed apps.
 - **State trivia / capitals / flags quiz modes** — different product surface; dilutes the map-placement focus.
+- **AppLovin MAX mediation** — SDK 13.0+ explicitly refuses to initialize in child-directed apps; `kAppLovinEnabled = false` guard must not be reversed until AppLovin re-enters the Families Self-Certified Ads SDK Program.
+- **Designed for Families program enrollment** — app is general audience + `tagForChildDirectedTreatment(true)`; not enrolled in the Families program (App Open ads require this distinction).
 
 ---
 
@@ -146,3 +180,25 @@ Golf-style scoring (lowest wins). Canonical entity set = **50 states** (no D.C.)
 | HOME-03 | Phase 5 | Complete |
 | A11Y-01 | Phase 5 | Pending |
 | A11Y-02 | Phase 5 | Pending |
+| TYPING-01 | Phase 6 (v2) | Pending |
+| TYPING-02 | Phase 6 (v2) | Pending |
+| TYPING-03 | Phase 6 (v2) | Pending |
+| TYPING-04 | Phase 6 (v2) | Pending |
+| TYPING-05 | Phase 6 (v2) | Pending |
+| TYPING-06 | Phase 6 (v2) | Pending |
+| TYPING-07 | Phase 6 (v2) | Pending |
+| TYPING-08 | Phase 6 (v2) | Pending |
+| TYPING-09 | Phase 6 (v2) | Pending |
+| SHARE-01 | Phase 7 (v2) | Pending |
+| SHARE-02 | Phase 7 (v2) | Pending |
+| SHARE-03 | Phase 7 (v2) | Pending |
+| SHARE-04 | Phase 7 (v2) | Pending |
+| AD-01 | Phase 8 (v2) | Pending |
+| AD-02 | Phase 8 (v2) | Pending |
+| AD-03 | Phase 8 (v2) | Pending |
+| AD-04 | Phase 8 (v2) | Pending |
+| AD-05 | Phase 8 (v2) | Pending |
+| AD-06 | Phase 8 (v2) | Pending |
+| HINT-03 | Phase 8 (v2) | Pending |
+| HINT-04 | Phase 8 (v2) | Pending |
+| HINT-05 | Phase 8 (v2) | Pending |
