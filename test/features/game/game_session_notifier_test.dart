@@ -1,8 +1,11 @@
+import 'dart:ui' show Offset, Path;
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:state_states/core/data/game_state_repository.dart';
 import 'package:state_states/core/data/high_score_repository.dart';
+import 'package:state_states/core/models/state_data.dart';
 import 'package:state_states/core/ticker.dart';
 import 'package:state_states/features/game/game_mode.dart';
 import 'package:state_states/features/game/game_phase.dart';
@@ -12,6 +15,62 @@ import 'package:state_states/features/game/game_session_notifier.dart';
 class MockGameStateRepository extends Mock implements GameStateRepository {}
 
 class MockHighScoreRepository extends Mock implements HighScoreRepository {}
+
+/// Returns a minimal list of [StateData] entries for use in submitTyping() unit
+/// tests. Includes a single-word state (Georgia), a multi-word state (New York),
+/// and an inset state (Alaska) to exercise D-02 and inset-group logic.
+List<StateData> stateFixture() => [
+      const StateData(
+        postal: 'GA',
+        name: 'Georgia',
+        pathStrings: [],
+        paths: [],
+        boundingBox: BoundingBox(x: 0, y: 0, w: 100, h: 100),
+        centroid: Offset(50, 50),
+        isPlaceable: true,
+        insetGroup: null,
+      ),
+      const StateData(
+        postal: 'CA',
+        name: 'California',
+        pathStrings: [],
+        paths: [],
+        boundingBox: BoundingBox(x: 0, y: 0, w: 100, h: 100),
+        centroid: Offset(50, 50),
+        isPlaceable: true,
+        insetGroup: null,
+      ),
+      const StateData(
+        postal: 'NY',
+        name: 'New York',
+        pathStrings: [],
+        paths: [],
+        boundingBox: BoundingBox(x: 0, y: 0, w: 100, h: 100),
+        centroid: Offset(50, 50),
+        isPlaceable: true,
+        insetGroup: null,
+      ),
+      const StateData(
+        postal: 'TX',
+        name: 'Texas',
+        pathStrings: [],
+        paths: [],
+        boundingBox: BoundingBox(x: 0, y: 0, w: 100, h: 100),
+        centroid: Offset(50, 50),
+        isPlaceable: true,
+        insetGroup: null,
+      ),
+      const StateData(
+        postal: 'AK',
+        name: 'Alaska',
+        pathStrings: [],
+        paths: [],
+        boundingBox: BoundingBox(x: 0, y: 0, w: 100, h: 100),
+        centroid: Offset(50, 50),
+        isPlaceable: true,
+        insetGroup: InsetGroup.alaska,
+      ),
+    ];
 
 void main() {
   setUpAll(() {
