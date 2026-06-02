@@ -192,9 +192,9 @@ class GameSessionNotifier extends AsyncNotifier<GameSession> {
   ///  - Duplicate (already in matchedPostals) → treated as miss
   ///  - Phase not playing → no-op
   ///
-  /// Triggers [completeGame()] fire-and-forget when all placeable states are found
-  /// (matchedPostals.length == states.length). Uses an explicit for-loop to
-  /// avoid package:collection dependency.
+  /// Transitions to [GamePhase.completed] when all placeable states are found
+  /// (matchedPostals.length == placeable count of [states]). Uses an explicit
+  /// for-loop to avoid package:collection dependency.
   ///
   /// WALLED-GARDEN RULE: Zero ad imports. No import from the ads module.
   bool submitTyping(String input, List<StateData> states) {
@@ -247,10 +247,16 @@ class GameSessionNotifier extends AsyncNotifier<GameSession> {
     state = AsyncData(updated);
     _gameStateRepository?.saveSession(updated, hintPenalty: _hintPenalty);
 
-    // Game-end condition: all placeable states found.
-    // In production, states.length == 50. In tests, states.length is the fixture size.
-    if (updated.matchedPostals.length == states.length) {
-      completeGame(); // async — fire-and-forget (same pattern as MapScreen)
+    // CR-01 fix: count only placeable states (DC is isPlaceable:false, making
+    // states.length == 51; the condition `50 == 51` would never fire).
+    // CR-02 fix: do NOT call completeGame() here — SpeedTypingScreen handles the
+    // full end sequence (fetch previousBest → completeGame → navigate) to ensure
+    // previousBest is read before the new score is saved.
+    final placeableCount = states.where((s) => s.isPlaceable).length;
+    if (updated.matchedPostals.length == placeableCount) {
+      _stopwatch.stop();
+      _ticker.stop();
+      state = AsyncData(updated.copyWith(phase: GamePhase.completed));
     }
 
     return true;
