@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Monetization & Speed Mode
-status: planning
-stopped_at: Phase 6 planned — 4 plans ready
-last_updated: "2026-06-02T18:00:00.000Z"
-last_activity: 2026-06-02 — Phase 6 Speed Typing Mode planned (4 plans, 3 waves)
+status: executing
+stopped_at: Completed 06-speed-typing-mode 06-00-PLAN.md
+last_updated: "2026-06-02T17:44:48.352Z"
+last_activity: 2026-06-02
 progress:
   total_phases: 8
   completed_phases: 4
   total_plans: 30
-  completed_plans: 25
+  completed_plans: 26
   percent: 50
 ---
 
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-02)
 
 **Core value:** A child can drag a state onto its correct place on the U.S. map and immediately feel they got it right — the interactive map placement loop must be smooth, forgiving, and rewarding above everything else.
-**Current focus:** v2.0 — Monetization & Speed Mode (Phases 6–8)
+**Current focus:** Phase 6 — Speed Typing Mode
 
 ## Current Position
 
-Phase: Phase 6 (Speed Typing Mode) — planned, ready to execute
-Plan: 4 plans (06-00 through 06-03) in 3 waves
-Status: Ready to execute Phase 6
-Last activity: 2026-06-02 — Phase 6 Speed Typing Mode planned (4 plans, 3 waves)
+Phase: 6 (Speed Typing Mode) — EXECUTING
+Plan: 2 of 4
+Status: Ready to execute
+Last activity: 2026-06-02
 
-Progress: [          ] 0%
+Progress: [█████████░] 87%
 
 ## Performance Metrics
 
@@ -68,6 +68,7 @@ Progress: [          ] 0%
 | Phase 05-polish-welcome-accessibility P05 | 10min | 2 tasks | 3 files |
 | Phase 05-polish-welcome-accessibility P04 | 7min | 1 tasks | 2 files |
 | Phase 05-polish-welcome-accessibility P06 | 3min | 2 tasks | 3 files |
+| Phase 06-speed-typing-mode P00 | 2min | - tasks | - files |
 
 ## Accumulated Context
 
@@ -114,6 +115,8 @@ Recent decisions affecting current work:
 - Roadmap v2: Rewarded hint refill must call refillHints() inside onUserEarnedReward only — never onAdDismissedFullScreenContent
 - Roadmap v2: path_provider ^2.1.5 added in Phase 7 for screenshot-to-XFile pipeline (temp file write)
 - Roadmap v2: GameSessionNotifier walled-garden rule preserved throughout Phase 8 — zero ad imports
+- [Phase ?]: 06-00: Wave 0 stub test imports flutter_test only — speed_typing_screen.dart does not exist in Wave 0; import deferred to Wave 2 via TODO comment
+- [Phase ?]: 06-00: stateFixture() uses pathStrings/paths as empty const lists — avoids parseSvgPathData() for unit tests that only need postal/name/isPlaceable/insetGroup
 
 ### Pending Todos
 
@@ -137,6 +140,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-02T17:22:30.557Z
-Stopped at: Phase 6 UI-SPEC approved
-Resume file: .planning/phases/06-speed-typing-mode/06-UI-SPEC.md
+Last session: 2026-06-02T17:44:48.343Z
+Stopped at: Completed 06-speed-typing-mode 06-00-PLAN.md
+Resume file: None

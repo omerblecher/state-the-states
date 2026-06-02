@@ -203,7 +203,7 @@ Plans:
 Plans:
 **Wave 0** *(parallel with Wave 1)*
 
-- [ ] 06-00-PLAN.md — Test stubs: speed_typing_screen_test.dart stub + stateFixture() helper in game_session_notifier_test.dart
+- [x] 06-00-PLAN.md — Test stubs: speed_typing_screen_test.dart stub + stateFixture() helper in game_session_notifier_test.dart
 
 **Wave 1** *(parallel with Wave 0)*
 
@@ -266,6 +266,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 3. Map Render + Coordinate Transform Spike | 5/5 | Complete   | 2026-05-31 |
 | 4. Full Play Loop | 6/6 | Complete   | 2026-06-01 |
 | 5. Polish, Welcome & Accessibility | 6/7 | In Progress|  |
-| 6. Speed Typing Mode | 0/4 | Not started | - |
+| 6. Speed Typing Mode | 1/4 | In Progress|  |
 | 7. Gated Sharing Completion | 0/? | Not started | - |
 | 8. Full AdMob Layer | 0/? | Not started | - |

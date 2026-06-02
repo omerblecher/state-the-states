@@ -90,10 +90,10 @@ Golf-style scoring (lowest wins). Canonical entity set = **50 states** (no D.C.)
 
 - [ ] **TYPING-01**: Mode 5 (Speed Typing) appears on the home screen as a selectable card displaying the player's best score (or blank state if never played).
 - [ ] **TYPING-02**: Tapping the Mode 5 card navigates to `SpeedTypingScreen`.
-- [ ] **TYPING-03**: `SpeedTypingScreen` has a text field that auto-capitalizes input to UPPERCASE.
+- [x] **TYPING-03**: `SpeedTypingScreen` has a text field that auto-capitalizes input to UPPERCASE.
 - [ ] **TYPING-04**: On entering a valid, previously unseen state name or its 2-letter postal code and pressing Enter, the game plays a success SFX, adds a green checkmark chip to the found-states grid, and clears the field.
 - [ ] **TYPING-05**: On entering a non-matching string and pressing Enter, +5 points are added to the golf score.
-- [ ] **TYPING-06**: The found-states grid scrolls and shows all matched states as chips.
+- [x] **TYPING-06**: The found-states grid scrolls and shows all matched states as chips.
 - [ ] **TYPING-07**: The game ends when all 50 states have been found.
 - [ ] **TYPING-08**: Golf scoring applies: +1 per 10 seconds elapsed + +5 per wrong submission; timer auto-pauses when the app is backgrounded.
 - [ ] **TYPING-09**: Best (lowest) score for Speed Typing mode is stored locally via `SharedPreferences`.
@@ -182,10 +182,10 @@ Golf-style scoring (lowest wins). Canonical entity set = **50 states** (no D.C.)
 | A11Y-02 | Phase 5 | Pending |
 | TYPING-01 | Phase 6 (v2) | Pending |
 | TYPING-02 | Phase 6 (v2) | Pending |
-| TYPING-03 | Phase 6 (v2) | Pending |
+| TYPING-03 | Phase 6 (v2) | Complete |
 | TYPING-04 | Phase 6 (v2) | Pending |
 | TYPING-05 | Phase 6 (v2) | Pending |
-| TYPING-06 | Phase 6 (v2) | Pending |
+| TYPING-06 | Phase 6 (v2) | Complete |
 | TYPING-07 | Phase 6 (v2) | Pending |
 | TYPING-08 | Phase 6 (v2) | Pending |
 | TYPING-09 | Phase 6 (v2) | Pending |
