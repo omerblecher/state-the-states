@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:state_states/core/data/game_state_repository.dart';
 import 'package:state_states/core/data/high_score_repository.dart';
@@ -11,6 +12,7 @@ import 'package:state_states/features/game/game_phase.dart';
 import 'package:state_states/features/game/game_session.dart';
 import 'package:state_states/features/home/home_screen.dart';
 import 'package:state_states/features/home/session_restore_card.dart';
+import 'package:state_states/features/typing/speed_typing_screen.dart';
 
 class MockHighScoreRepository extends Mock implements HighScoreRepository {}
 
@@ -50,7 +52,7 @@ void main() {
   });
 
   group('HomeScreen mode cards', () {
-    testWidgets('shows 4 mode cards with correct names', (tester) async {
+    testWidgets('shows 5 mode cards with correct names', (tester) async {
       final mockRepo = MockHighScoreRepository();
       when(() => mockRepo.getBestScore(any())).thenAnswer((_) async => null);
 
@@ -62,6 +64,48 @@ void main() {
       expect(find.text('States Master'), findsAtLeastNWidgets(1));
       expect(find.text('Geographical Master'), findsAtLeastNWidgets(1));
       expect(find.text('Grand Master'), findsAtLeastNWidgets(1));
+      expect(find.text('Speed Typing'), findsOneWidget);
+    });
+
+    testWidgets('Speed Typing card navigates to /type', (tester) async {
+      final mockRepo = MockHighScoreRepository();
+      when(() => mockRepo.getBestScore(any())).thenAnswer((_) async => null);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            highScoreRepositoryProvider.overrideWith((_) async => mockRepo),
+          ],
+          child: MaterialApp.router(
+            routerConfig: GoRouter(
+              initialLocation: '/',
+              routes: [
+                GoRoute(
+                  path: '/',
+                  builder: (context, state) => const HomeScreen(),
+                ),
+                GoRoute(
+                  path: '/type',
+                  builder: (context, state) => const SpeedTypingScreen(),
+                ),
+                GoRoute(
+                  path: '/play',
+                  builder: (context, state) => const Scaffold(),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+
+      // Tap the Speed Typing mode card
+      await tester.tap(find.bySemanticsLabel('Speed Typing mode'));
+      await tester.pumpAndSettle();
+
+      // SpeedTypingScreen should now be in the tree
+      expect(find.byType(SpeedTypingScreen), findsOneWidget);
     });
 
     testWidgets('shows Not played when no score stored', (tester) async {
