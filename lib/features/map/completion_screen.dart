@@ -106,6 +106,7 @@ class _CompletionScreenState extends ConsumerState<CompletionScreen>
         GameMode.statesMaster => const Color(0xFF1565C0),
         GameMode.geographicalMaster => const Color(0xFFBF360C),
         GameMode.grandMaster => const Color(0xFF4A148C),
+        GameMode.speedTyping => const Color(0xFF00695C),
       };
 
   String _formatTime(Duration elapsed) {

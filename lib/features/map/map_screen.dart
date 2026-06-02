@@ -663,6 +663,11 @@ class _MapScreenState extends ConsumerState<MapScreen>
       case GameMode.grandMaster:
         showLabels = false;
         showName = false;
+      case GameMode.speedTyping:
+        // speedTyping mode never reaches MapScreen in production;
+        // uses Grand Master settings (no labels, no name) for compilability.
+        showLabels = false;
+        showName = false;
     }
 
     return ColoredBox(

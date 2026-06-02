@@ -73,6 +73,28 @@ List<StateData> stateFixture() => [
     ];
 
 void main() {
+  // ── GameModeDisplay extension ─────────────────────────────────────────────
+  group('GameModeDisplay.displayName', () {
+    test('learn → Learn', () {
+      expect(GameMode.learn.displayName, 'Learn');
+    });
+    test('statesMaster → States Master', () {
+      expect(GameMode.statesMaster.displayName, 'States Master');
+    });
+    test('geographicalMaster → Geographical Master', () {
+      expect(GameMode.geographicalMaster.displayName, 'Geographical Master');
+    });
+    test('grandMaster → Grand Master', () {
+      expect(GameMode.grandMaster.displayName, 'Grand Master');
+    });
+    test('speedTyping → Speed Typing', () {
+      expect(GameMode.speedTyping.displayName, 'Speed Typing');
+    });
+    test('GameMode.values contains speedTyping', () {
+      expect(GameMode.values, contains(GameMode.speedTyping));
+    });
+  });
+
   setUpAll(() {
     // mocktail requires fallback values for any() matchers on non-nullable types.
     registerFallbackValue(const GameSession(

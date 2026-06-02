@@ -17,6 +17,7 @@ class SharedPreferencesHighScoreRepository implements HighScoreRepository {
         GameMode.statesMaster        => 'high_score_states_master',
         GameMode.geographicalMaster  => 'high_score_geographical_master',
         GameMode.grandMaster         => 'high_score_grand_master',
+        GameMode.speedTyping         => 'high_score_speed_typing',
       };
 
   @override
