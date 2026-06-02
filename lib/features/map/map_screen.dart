@@ -617,7 +617,7 @@ class _MapScreenState extends ConsumerState<MapScreen>
           error: (e, _) => Center(child: Text('Could not load map: $e')),
           data: (mapData) {
             final mapWidget =
-                _buildMapStack(mapData.states, mapData.insetFrameRects, session);
+                _buildMapStack(mapData.states, session);
             return Stack(
               children: [
                 mapWidget,
@@ -640,7 +640,6 @@ class _MapScreenState extends ConsumerState<MapScreen>
 
   Widget _buildMapStack(
     List<StateData> states,
-    List<Rect> insetFrameRects,
     GameSession? session,
   ) {
     // Store states for _handleDrop; call _startSequence once, then try startGame.
@@ -704,7 +703,6 @@ class _MapScreenState extends ConsumerState<MapScreen>
                             painter: UsaMapPainter(
                               states: states,
                               matchedPostals: _matchedPostals,
-                              insetFrameRects: insetFrameRects,
                               showLabels: showLabels,
                               mode: widget.mode,
                               viewScale: _controller.value.getMaxScaleOnAxis(),

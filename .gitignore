@@ -56,3 +56,7 @@ app.*.map.json
 # Python pipeline caches (scripts/)
 scripts/__pycache__/
 .pytest_cache/
+
+# Anthem build artifacts (large binaries; rendered output lives in assets/audio/)
+scripts/anthem/*.sf2
+scripts/anthem/*.wav

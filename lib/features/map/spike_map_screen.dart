@@ -225,7 +225,6 @@ class _SpikeMapScreenState extends ConsumerState<SpikeMapScreen> {
                                 painter: UsaMapPainter(
                                   states: mapData.states,
                                   matchedPostals: const {},
-                                  insetFrameRects: mapData.insetFrameRects,
                                   viewScale: _controller.value.getMaxScaleOnAxis(),
                                 ),
                               ),

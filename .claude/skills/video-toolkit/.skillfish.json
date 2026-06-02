@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "video-toolkit",
+  "owner": "emdashcodes",
+  "repo": "claude-code-plugins",
+  "path": "plugins/video-toolkit/skills/video-toolkit",
+  "branch": "trunk",
+  "sha": "6637ce2680143130407ea4989a1fd4a2503ed6d2",
+  "source": "manual"
+}

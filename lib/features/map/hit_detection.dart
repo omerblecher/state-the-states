@@ -14,6 +14,13 @@ const double _kMinScreenDiagonal = 40.0;
 // Value: 48 × 48 = 2304 logical pixels².
 const double _kMinScreenArea = 2304.0;
 
+// Per-island touch radius for Hawaii (dp). Applied independently to every island
+// polygon rather than to the state centroid, because the island chain spans
+// ~130 scene units — a single-centroid circle misses Oahu and Maui entirely.
+// 24dp is half the 48dp minimum touch target, giving a 48dp-diameter hit zone
+// centered on each island's bounding-box centre.
+const double _kHiIslandTouchRadiusDp = 24.0;
+
 /// Returns the postal code of the state that the [scenePoint] falls in,
 /// or `null` if no state matches.
 ///
@@ -40,10 +47,18 @@ String? stateHitTest(Offset scenePoint, List<StateData> states,
   // 2. Bbox-expansion candidates: only consulted when no exact hit exists.
   //    Ensures small states (RI, DC) remain hittable at low zoom and catches
   //    drops that land just outside a coastline polygon.
+  //    Hawaii uses per-island radial expansion instead of the state centroid,
+  //    because the island chain spans ~130 scene units and a single-centroid
+  //    circle misses Oahu / Maui when the Big Island is the representative point.
   final pool = exactHits.isNotEmpty
       ? exactHits
       : states
-          .where((s) => _expandedBbox(s, minSceneDiag, scale: scale).contains(scenePoint))
+          .where((s) {
+            if (s.insetGroup == InsetGroup.hawaii) {
+              return _hawaiiRadialHit(s, scenePoint, scale);
+            }
+            return _expandedBbox(s, minSceneDiag, scale: scale).contains(scenePoint);
+          })
           .toList();
 
   if (pool.isEmpty) return null;
@@ -60,6 +75,26 @@ String? stateHitTest(Offset scenePoint, List<StateData> states,
   });
 
   return pool.first.postal;
+}
+
+/// Returns true if [point] lands within [_kHiIslandTouchRadiusDp] dp of the
+/// bounding-box centre of **any** individual island polygon in [state].
+///
+/// Used exclusively for Hawaii (insetGroup == InsetGroup.hawaii).  The standard
+/// [_expandedBbox] collapses the whole island chain to one centroid (the Big
+/// Island) — this function checks each island independently so that drops near
+/// Oahu or Maui also resolve to HI.
+bool _hawaiiRadialHit(StateData state, Offset point, double scale) {
+  final radiusScene = _kHiIslandTouchRadiusDp / scale;
+  final rr = radiusScene * radiusScene;
+  for (final path in state.paths) {
+    final bounds = path.getBounds();
+    if (bounds.isEmpty) continue;
+    final dx = point.dx - bounds.center.dx;
+    final dy = point.dy - bounds.center.dy;
+    if (dx * dx + dy * dy <= rr) return true;
+  }
+  return false;
 }
 
 /// For states that have an exact path containing [point], returns the

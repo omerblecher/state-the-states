@@ -18,7 +18,8 @@ const _oceanColor = Color(0xFFA8D5E8); // light blue background
 const _borderColor = Color(0xFF555555); // dark state borders
 
 /// Renders all 51 U.S. state records (50 placeable + DC) as filled polygons
-/// with scale-adaptive borders, plus the AK/HI inset frame rectangles.
+/// with scale-adaptive borders. AK and HI are drawn in the same loop as
+/// continental states — no separate frame rectangles or clipping regions.
 ///
 /// Ported from Flags' [WorldMapPainter]:
 /// - `isoCode` → `postal`
@@ -27,13 +28,13 @@ const _borderColor = Color(0xFF555555); // dark state borders
 /// - `isDegenerate` branch removed (US states are never degenerate)
 /// - `countryNames` map removed (state names are bundled in `StateData.name`)
 /// - `showLabels` and `mode` declared for Phase 4; draw nothing in Phase 3
+/// - `insetFrameRects` removed: AK/HI blend into the ocean canvas seamlessly
 ///
 /// Phase 4 will add label rendering via the `showLabels` / `mode` parameters.
 class UsaMapPainter extends CustomPainter {
   const UsaMapPainter({
     required this.states,
     required this.matchedPostals,
-    required this.insetFrameRects,
     this.showLabels = false,
     this.mode,
     this.viewScale = 1.0,
@@ -42,10 +43,6 @@ class UsaMapPainter extends CustomPainter {
 
   final List<StateData> states;
   final Set<String> matchedPostals;
-
-  /// Index 0 = Alaska frame, index 1 = Hawaii frame — supplied from
-  /// [MapData.insetFrameRects] (sourced from the JSON `insetFrames` key).
-  final List<Rect> insetFrameRects;
 
   /// Declared for Phase 4 (label pass); has no effect in Phase 3.
   final bool showLabels;
@@ -98,17 +95,7 @@ class UsaMapPainter extends CustomPainter {
       }
     }
 
-    // Step 3: Inset frame rectangles (D-04). One thin border rect around the
-    // AK inset region and one around the HI inset region.
-    final framePaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..color = _borderColor
-      ..strokeWidth = (1.0 / viewScale).clamp(0.15, 1.2);
-    for (final frameRect in insetFrameRects) {
-      canvas.drawRect(frameRect, framePaint);
-    }
-
-    // Step 4: Label pass — postal abbreviations at state centroids.
+    // Step 3: Label pass — postal abbreviations at unmatched state centroids.
     if (showLabels) {
       final fontSize = (11.0 / viewScale).clamp(7.0, 14.0);
       for (final state in states) {
@@ -130,7 +117,7 @@ class UsaMapPainter extends CustomPainter {
       }
     }
 
-    // Step 5: Hint glow (Phase 5 — direct port of HighlightPainter._drawHintHighlight())
+    // Step 4: Hint glow (Phase 5 — direct port of HighlightPainter._drawHintHighlight())
     // Source: FlagsRoundTheWorld/lib/features/map/highlight_painter.dart lines 140-151
     // Drawn AFTER labels so the glow appears on top of everything.
     if (hintPostal != null) {
