@@ -5,6 +5,7 @@ status: draft
 shadcn_initialized: false
 preset: none
 created: 2026-06-02
+revised: 2026-06-02
 ---
 
 # Phase 6 — UI Design Contract: Speed Typing Mode
@@ -35,12 +36,12 @@ Declared values (multiples of 4dp — matches Flutter Material 8-point grid):
 | Token | Value | Usage |
 |-------|-------|-------|
 | xs | 4dp | Icon gap in HUD row; star icon horizontal padding |
-| sm | 8dp | Between chip grid items (`Wrap.spacing`); HUD inner padding |
-| md | 12dp | Chip grid run spacing (`Wrap.runSpacing`); card list gap; input field bottom padding |
-| lg | 16dp | Card inner padding; `ListView` horizontal padding; input field side padding |
-| xl | 20dp | HomeScreen header left padding (established pattern) |
+| sm | 8dp | Between chip grid items (`Wrap.spacing`); chip grid run spacing (`Wrap.runSpacing`); HUD inner padding; card list gap; input field bottom padding |
+| lg | 16dp | Card inner padding; `ListView` horizontal padding; input field side padding; HomeScreen header left padding |
 | 2xl | 24dp | CompletionScreen horizontal padding; score card inner padding |
 | 3xl | 32dp | CompletionScreen vertical padding; major section spacing |
+
+**Note on 20dp:** The HomeScreen header left padding is an inherited codebase pattern from prior phases. It is not introduced in Phase 6 and is not declared as part of this phase's spacing scale. Phase 6 uses 16dp for all new horizontal padding.
 
 Exceptions:
 - HUD bar height: 48dp (fixed — COPPA/A11Y touch-target floor, matches `GameHud` pattern)
@@ -57,19 +58,18 @@ Exceptions:
 
 Flutter `TextStyle` declarations. All sizes in logical pixels.
 
+Maximum 4 declared sizes. Maximum 2 declared weights. AppBar title (20dp w500 system default) is system-inherited and excluded from the declared scale.
+
 | Role | Size | Weight | Line Height | Usage |
 |------|------|--------|-------------|-------|
-| Body | 12dp | w400 (`FontWeight.normal`) | 1.4 (default) | HUD score/timer labels; card description text; chip grid overflow ellipsis |
-| Label | 14dp | w400 | 1.5 | Score card `_StatRow` values; "Choose a mode" subtitle; `_ModeCard` "Not played" |
-| Card Name | 17dp | w700 (`FontWeight.bold`) | 1.2 | `_ModeCard` mode name; chip label text (`w600`) |
-| Heading | 22dp | w800 | 1.2 | HomeScreen "State the States" title |
+| Label | 14dp | w400 (`FontWeight.normal`) | 1.5 | HUD score/timer labels; found counter (`$matchedCount / 50`); card description text; chip grid overflow ellipsis; `_ModeCard` "Not played"; input field hint text; `_StatRow` values; "Choose a mode" subtitle |
+| Input / Chip | 16dp | w400 | 1.5 | Input field entered text (`TextField` style); chip label text |
+| Heading | 22dp | w700 (`FontWeight.bold`) | 1.2 | HomeScreen "State the States" title |
 | Display | 28dp | w700 | 1.2 | CompletionScreen "Well done!" title; star formula header |
 
-**Speed Typing specific additions:**
-- HUD found-counter (`23 / 50`): 12dp w400 — matches `GameHud` score/timer style
-- Input field hint text: 14dp w400 — `TextField` default via `InputDecoration`
-- Input field entered text: 16dp w400 — `TextField` default style (or explicit `style: TextStyle(fontSize: 16)`)
-- AppBar title ("Speed Typing"): system AppBar default (20dp w500, white) — matches all existing screens
+**Chip label weight note:** Chip labels use `w700` (not `w600`). All bold/emphasis elements use `w700` exclusively — `w600` is not in the declared weight set.
+
+**Weight consolidation:** Two weights only — `w400` (body/label/input) and `w700` (all bold/emphasis). Former `w800` and `w600` usages are both expressed as `w700`.
 
 **Source:** measured from `home_screen.dart`, `completion_screen.dart`, `game_hud.dart`, `welcome_screen.dart`.
 
@@ -82,7 +82,7 @@ All colors are exact hex values extracted from the codebase or locked in CONTEXT
 | Role | Value | Usage |
 |------|-------|-------|
 | Dominant (60%) | `#F0F4F8` (`Color(0xFFF0F4F8)`) | `HomeScreen` background; general scaffold background |
-| Secondary (30%) | `#FFFFFF` (`Colors.white`) | Score cards; chip chip background text; modal dialog backgrounds |
+| Secondary (30%) | `#FFFFFF` (`Colors.white`) | Score cards; chip background text; modal dialog backgrounds |
 | Accent — Speed Typing (10%) | `#00695C` (`Color(0xFF00695C)`) | SpeedTypingScreen AppBar; Mode 5 `_ModeCard` gradient; `_modeColor()` return for speedTyping in CompletionScreen; Play Again button border/text on CompletionScreen when mode == speedTyping |
 | HUD surface | `#424242` (`Colors.grey.shade800`) | GameHud-style compact row bar at top of SpeedTypingScreen |
 | Found chip | `Colors.green.shade700` (`#388E3C`) | Background of each found-state `Chip` widget |
@@ -106,6 +106,8 @@ All colors are exact hex values extracted from the codebase or locked in CONTEXT
 
 #### SpeedTypingScreen (`lib/features/typing/speed_typing_screen.dart`)
 
+**Focal point declaration:** Primary focal point is the TextField input row (bottom-anchored, keyboard-docked) — this is where the player's attention and interaction is concentrated. Secondary anchor is the chip grid (shows cumulative progress toward 50/50). The HUD bar is a status indicator, not a focal point; it should not compete visually with the input row or chip grid.
+
 ```
 Scaffold (resizeToAvoidBottomInset: true)
 ├── AppBar
@@ -118,24 +120,24 @@ Scaffold (resizeToAvoidBottomInset: true)
     ├── [HUD row — 48dp fixed height]
     │   Container(height: 48, color: Colors.grey.shade800)
     │   └── Row(padding: EdgeInsets.symmetric(horizontal: 8))
-    │       ├── Text("Score: $score", 12dp w700 white)
+    │       ├── Text("Score: $score", 14dp w700 white)
     │       ├── SizedBox(width: 8)
-    │       ├── Text("$matchedCount / 50", 12dp w400 white)
+    │       ├── Text("$matchedCount / 50", 14dp w400 white)
     │       ├── Spacer
-    │       ├── Text("MM:SS", 12dp tabularFigures white)
+    │       ├── Text("MM:SS", 14dp tabularFigures white)
     │       ├── [mute toggle 48×48dp]
     │       └── [pause button 48×48dp]
     │
     ├── [Chip grid — Expanded, scrollable]
     │   Expanded
-    │   └── SingleChildScrollView(padding: EdgeInsets.all(12))
+    │   └── SingleChildScrollView(padding: EdgeInsets.all(8))
     │       └── Wrap(spacing: 8, runSpacing: 8)
     │           └── Chip × matchedPostals.length
-    │               ├── label: Text(stateName, 14dp w600 white)
+    │               ├── label: Text(stateName, 16dp w700 white)
     │               └── backgroundColor: Colors.green.shade700
     │
     └── [Input row — pinned above keyboard]
-        Padding(EdgeInsets.fromLTRB(12, 0, 12, 12))
+        Padding(EdgeInsets.fromLTRB(16, 0, 16, 8))
         └── TextField
             ├── textCapitalization: TextCapitalization.characters
             ├── textInputAction: TextInputAction.done
@@ -234,7 +236,7 @@ _ModeCard(
 | 1–49 chips | Chips fill left-to-right, new chip appended at end |
 | 50 chips | Grid shows all 50 before navigation fires; scroll available if chips overflow |
 | Chip content | Full uppercase state name (`CALIFORNIA`, `NEW YORK`) per D-06 |
-| Chip color | `Colors.green.shade700` background, white text, w600 |
+| Chip color | `Colors.green.shade700` background, white text, w700 |
 
 ### Touch Targets (A11Y-01 compliance)
 
