@@ -1,9 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:state_states/core/ads/ad_service.dart';
+import 'package:state_states/core/ads/ad_service_provider.dart';
 import 'package:state_states/features/game/game_mode.dart';
 import 'package:state_states/features/game/game_phase.dart';
 import 'package:state_states/features/game/game_session.dart';
 import 'package:state_states/features/map/completion_screen.dart';
+
+/// Spy ad service that records calls — for AD-04 test.
+class _SpyAdService implements AdService {
+  int interstitialCallCount = 0;
+
+  @override
+  Widget getBannerWidget() => const SizedBox.shrink();
+
+  @override
+  Future<void> showInterstitialAd() async {
+    interstitialCallCount++;
+  }
+
+  @override
+  Future<bool> showRewardedAd() async => false;
+
+  @override
+  Future<void> showAppOpenAd() async {}
+}
 
 GameSession makeSession({int score = 100, GameMode mode = GameMode.learn}) {
   return GameSession(
@@ -17,10 +40,20 @@ GameSession makeSession({int score = 100, GameMode mode = GameMode.learn}) {
   );
 }
 
-Widget buildScreen(GameSession session, {int? previousBest}) {
-  return MaterialApp(
+Widget buildScreen(GameSession session, {int? previousBest, AdService? adService}) {
+  final widget = MaterialApp(
     home: CompletionScreen(session: session, previousBest: previousBest),
   );
+  if (adService != null) {
+    return ProviderScope(
+      overrides: [
+        adServiceProvider.overrideWithValue(adService),
+      ],
+      child: widget,
+    );
+  }
+  // No ProviderScope — existing tests don't use ref yet.
+  return widget;
 }
 
 void main() {
@@ -107,6 +140,25 @@ void main() {
       await tester.pump();
 
       expect(find.text('Play Again'), findsOneWidget);
+    });
+
+    // AD-04: CompletionScreen fires showInterstitialAd() after 1-second delay.
+    testWidgets(
+        'AD-04: showInterstitialAd called once after 1-second delay on mount',
+        (tester) async {
+      final spy = _SpyAdService();
+      final session = makeSession();
+      await tester.pumpWidget(buildScreen(session, previousBest: null, adService: spy));
+      await tester.pump(); // initState fires; Future.delayed starts
+
+      // No call before 1 second elapses.
+      expect(spy.interstitialCallCount, equals(0));
+
+      // Advance time by 1.1 seconds — Future.delayed fires.
+      await tester.pump(const Duration(milliseconds: 1100));
+
+      expect(spy.interstitialCallCount, equals(1),
+          reason: 'AD-04: showInterstitialAd must be called once after 1s delay');
     });
   });
 
