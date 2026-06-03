@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/ads/ad_service_provider.dart';
 import '../../core/audio/audio_service_provider.dart';
 import '../../core/data/high_score_repository.dart';
 import '../../core/data/state_data_service.dart';
@@ -185,10 +186,16 @@ class _MapScreenState extends ConsumerState<MapScreen>
 
   /// Called when the hint button is tapped.
   ///
-  /// 1. Calls useHint() on the notifier (penalty + decrement).
-  /// 2. If consumed: sets _hintPostal for glow, animates zoom to centroid.
-  /// 3. Starts a 3-second Timer that clears _hintPostal (D-H2: stays zoomed after glow).
+  /// Forks on hintsRemaining:
+  /// - > 0: uses hint immediately (existing glow animation path).
+  /// - == 0: shows rewarded-ad dialog (_showRewardedHintDialog).
   void _onHintPressed() {
+    final session = ref.read(gameSessionProvider).value;
+    if (session?.hintsRemaining == 0) {
+      _showRewardedHintDialog();
+      return;
+    }
+
     final consumed = ref.read(gameSessionProvider.notifier).useHint();
     if (!consumed) return;
     final target = _stateIndex[_currentPostal];
@@ -212,6 +219,42 @@ class _MapScreenState extends ConsumerState<MapScreen>
     _hintGlowTimer = Timer(const Duration(seconds: 3), () {
       if (mounted) setState(() => _hintPostal = null);
     });
+  }
+
+  /// Shows an AlertDialog prompting the user to watch a rewarded ad for 2 more hints.
+  ///
+  /// T-08-04-01: refillHints/useHint are only called on earned == true.
+  /// D-09: Snackbar copy is "No ad available right now — try again later."
+  Future<void> _showRewardedHintDialog() async {
+    final watch = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Watch an ad for 2 more hints?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Watch Ad'),
+          ),
+        ],
+      ),
+    );
+    if (watch != true) return;
+    final earned = await ref.read(adServiceProvider).showRewardedAd();
+    if (!mounted) return;
+    if (earned) {
+      ref.read(gameSessionProvider.notifier).refillHints();
+      ref.read(gameSessionProvider.notifier).useHint();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No ad available right now — try again later.'),
+        ),
+      );
+    }
   }
 
   /// Fits the 1000×628 viewBox into the available screen area.

@@ -133,7 +133,7 @@ class StateTrayState extends State<StateTray>
   }
 
   Widget _buildHintButton(BuildContext context) {
-    final enabled = widget.onHintPressed != null && widget.hintsRemaining > 0;
+    final enabled = widget.onHintPressed != null;
     return Semantics(
       label: 'Hint button, ${widget.hintsRemaining} hints remaining',
       button: true,
