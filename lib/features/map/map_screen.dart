@@ -452,7 +452,7 @@ class _MapScreenState extends ConsumerState<MapScreen>
       _animateCorrectDrop(_currentPostal);
     } else {
       ref.read(gameSessionProvider.notifier).recordDrop(
-          hitPostal ?? _currentPostal, isCorrect: false);
+          _currentPostal, isCorrect: false);
       HapticFeedback.mediumImpact();
       ref.read(audioServiceProvider).playError();
       ScaffoldMessenger.of(context)
