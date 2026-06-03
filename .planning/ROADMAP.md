@@ -22,7 +22,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 5: Polish, Welcome & Accessibility** - Welcome screen, anthem, hints, tutorial, session restore, a11y audit
 - [x] **Phase 6: Speed Typing Mode** - Mode 5 end-to-end: SpeedTypingScreen, UPPERCASE input, found-states grid, golf scoring, local best score
  (completed 2026-06-02)
-- [x] **Phase 7: Gated Sharing Completion** - PB-only Share button, screenshot capture, multiplication math gate (completed 2026-06-03)
+- [x] **Phase 7: Gated Sharing Completion** - PB-only Share button, screenshot capture, multiplication math gate
+ (completed 2026-06-03)
 - [ ] **Phase 8: Full AdMob Layer** - Banner/interstitial/rewarded/App Open + mediation COPPA init + rewarded hint refill
 
 ## Phase Details
@@ -263,7 +264,29 @@ Plans:
   4. `GameSessionNotifier` has zero imports from the ads module (walled-garden rule preserved); all ad calls originate from the widget layer (`CompletionScreen`, `MapScreen`/`SpeedTypingScreen`, `app.dart`).
   5. `aapt dump badging app-release.apk` confirms the `AD_ID` permission is absent after all three mediation adapter AARs are included in the merged manifest.
 
-**Plans**: TBD
+**Plans**: 6 plans
+Plans:
+
+**Wave 0** *(human checkpoint + test stubs — no Flutter deps)*
+
+- [ ] 08-00-PLAN.md — Production AdMob ID collection (human checkpoint) + RED test stubs: ads_initializer_test.dart, real_ad_service_test.dart, game_session_notifier_test.dart refillHints()
+
+**Wave 1** *(blocked on Wave 0 completion)*
+
+- [ ] 08-01-PLAN.md — pubspec mediation packages + ads_initializer COPPA flags + ad_constants prod IDs + AndroidManifest App ID + GameSessionNotifier.refillHints()
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 08-02-PLAN.md — real_ad_service.dart (port from Flags AdMobAdService) + app_state_observer.dart + adServiceProvider switch to RealAdService
+
+**Wave 3** *(blocked on Wave 2 completion — 08-03 and 08-04 are parallel)*
+
+- [ ] 08-03-PLAN.md — app.dart → ConsumerStatefulWidget + AppStateEventNotifier + App Open lifecycle
+- [ ] 08-04-PLAN.md — StateTray hint guard + MapScreen rewarded dialog + HomeScreen banner + CompletionScreen interstitial
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 08-05-PLAN.md — Release build + aapt dump badging AD_ID verification
 
 ## Progress
 
@@ -279,4 +302,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 5. Polish, Welcome & Accessibility | 6/7 | In Progress|  |
 | 6. Speed Typing Mode | 4/4 | Complete   | 2026-06-02 |
 | 7. Gated Sharing Completion | 2/2 | Complete   | 2026-06-03 |
-| 8. Full AdMob Layer | 0/? | Not started | - |
+| 8. Full AdMob Layer | 0/6 | Not started | - |
