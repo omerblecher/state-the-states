@@ -313,6 +313,19 @@ class GameSessionNotifier extends AsyncNotifier<GameSession> {
     return true;
   }
 
+  /// Resets hintsRemaining to exactly 2 (not additive).
+  ///
+  /// Called from the widget layer inside [onUserEarnedReward] only.
+  /// WALLED-GARDEN RULE: Zero ad imports — this method has no knowledge of
+  /// ads. The caller (widget layer) is responsible for reward verification.
+  /// (COMP-03)
+  void refillHints() {
+    final current = state.value;
+    if (current == null || current.phase != GamePhase.playing) return;
+    state = AsyncData(current.copyWith(hintsRemaining: 2));
+    _gameStateRepository?.saveSession(state.value!, hintPenalty: _hintPenalty);
+  }
+
   Future<void> completeGame() async {
     _stopwatch.stop(); // Stopwatch has no more work to do.
     _ticker.stop();
