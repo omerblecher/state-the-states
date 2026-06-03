@@ -20,7 +20,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Map Render + Coordinate Transform Spike** - CustomPainter map + mandatory toScene() spike gate (completed 2026-05-31)
 - [x] **Phase 4: Full Play Loop** - Four game modes end-to-end: tray, drag-drop, HUD, completion, home screen (completed 2026-06-01)
 - [ ] **Phase 5: Polish, Welcome & Accessibility** - Welcome screen, anthem, hints, tutorial, session restore, a11y audit
-- [x] **Phase 6: Speed Typing Mode** - Mode 5 end-to-end: SpeedTypingScreen, UPPERCASE input, found-states grid, golf scoring, local best score (completed 2026-06-02)
+- [x] **Phase 6: Speed Typing Mode** - Mode 5 end-to-end: SpeedTypingScreen, UPPERCASE input, found-states grid, golf scoring, local best score
+ (completed 2026-06-02)
 - [ ] **Phase 7: Gated Sharing Completion** - PB-only Share button, screenshot capture, multiplication math gate
 - [ ] **Phase 8: Full AdMob Layer** - Banner/interstitial/rewarded/App Open + mediation COPPA init + rewarded hint refill
 
@@ -236,7 +237,17 @@ Plans:
   3. After passing the math gate, the app captures the score card widget as a PNG via `RenderRepaintBoundary.toImage()`, writes it to a temp file, and attaches it as an `XFile` to the native share sheet.
   4. The share message reads "New lowest score in [Mode Name]! Score: [N] — State the States 🇺🇸" with the screenshot attached; the temp file is deleted in a `finally` block after the share sheet returns.
 
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+
+**Wave 0** *(parallel with Wave 1)*
+
+- [ ] 07-01-PLAN.md — Test stubs: Wave 0 widget test cases for SHARE-01 (PB-gate visibility) and SHARE-04 (multiplication dialog correct/wrong/cancel)
+
+**Wave 1** *(blocked on Wave 0 test stubs)*
+
+- [ ] 07-02-PLAN.md — Implementation: PB-gate Share button, upgrade math gate to multiplication, add _captureAndShare + _showParentalGate, refactor _onSharePressed
+
 **UI hint**: yes
 
 ### Phase 8: Full AdMob Layer
@@ -267,5 +278,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 4. Full Play Loop | 6/6 | Complete   | 2026-06-01 |
 | 5. Polish, Welcome & Accessibility | 6/7 | In Progress|  |
 | 6. Speed Typing Mode | 4/4 | Complete   | 2026-06-02 |
-| 7. Gated Sharing Completion | 0/? | Not started | - |
+| 7. Gated Sharing Completion | 0/2 | Not started | - |
 | 8. Full AdMob Layer | 0/? | Not started | - |
