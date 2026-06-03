@@ -714,14 +714,14 @@ void initState() {
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Production AdMob IDs**
+1. **Production AdMob IDs** — RESOLVED: 08-00 T1 creates a Wave 0 human-checkpoint task for the developer to supply the production App ID and four unit IDs before Wave 1 runs.
    - What we know: D-01 says production IDs will be hard-coded. The `ad_constants.dart` currently has empty strings.
    - What's unclear: The actual production unit IDs are not in any planning file — they must be provided by the developer before implementation.
    - Recommendation: Planner creates a task stub "insert production IDs" as Wave 0 (human provides values). All other tasks can proceed with test IDs during development; the final ID swap is the last task before release verification.
 
-2. **`HomeScreen` access to `RealAdService` for `loadBannerForWidth`**
+2. **`HomeScreen` access to `RealAdService` for `loadBannerForWidth`** — RESOLVED: 08-04 T2 uses the cast approach `(ref.read(adServiceProvider) as RealAdService).loadBannerForWidth(widthDp)`, matching the Flags baseline.
    - What we know: The `AdService` interface only exposes `getBannerWidget()`. `loadBannerForWidth(int)` is a `RealAdService`-specific method.
    - What's unclear: Whether to expose `loadBannerForWidth` on the interface, or cast in `HomeScreen`, or make `RealAdService` load automatically.
    - Recommendation: Keep the interface clean. In `HomeScreen`, either (a) access via `ref.read(adServiceProvider) as RealAdService` (works but casts), or (b) add `loadBannerForWidth` to the `AdService` interface with a no-op in `StubAdService`. The Flags project uses approach (a). Either is fine.
