@@ -20,41 +20,40 @@ files_reviewed_list:
   - test/features/map/completion_screen_test.dart
   - test/features/map/state_tray_test.dart
 findings:
-  critical: 4
-  warning: 5
-  info: 2
-  total: 11
+  critical: 5
+  warning: 8
+  info: 4
+  total: 17
 status: issues_found
 ---
 
 # Phase 08: Code Review Report
 
-**Reviewed:** 2026-06-03
+**Reviewed:** 2026-06-03T00:00:00Z
 **Depth:** standard
 **Files Reviewed:** 15
 **Status:** issues_found
 
 ## Summary
 
-Phase 8 introduces the full AdMob layer: `RealAdService` (banner, interstitial,
-rewarded, App Open), `ads_initializer.dart` (COPPA-safe init sequence), and
-wiring in `HomeScreen`, `CompletionScreen`, `MapScreen`, and `app.dart`. The
-COPPA/Families compliance setup in `ads_initializer.dart` and the `AndroidManifest`
-AD_ID stripping are structurally correct.
+This phase wires the full AdMob ad layer — banner, interstitial, rewarded, and App Open — into the
+production app. COPPA compliance in the manifest is solid: AD_ID and AdServices permissions are
+correctly stripped with `tools:node="remove"`, and `tagForChildDirectedTreatment(true)` is set
+before `MobileAds.instance.initialize()`. The mediation SDK child-directed calls (IronSource,
+Unity) are correctly ordered. `AndroidManifest.xml` is clean.
 
-Four blockers are present: the banner ad will never be displayed because
-`adServiceProvider` is a plain `Provider` that never emits change notifications;
-a hard downcast in `HomeScreen` will crash at runtime under any test or future
-override that uses a non-`RealAdService`; the session-restore `FutureBuilder`
-recreates its future on every rebuild causing flickering; and `submitTyping`
-in the typing mode is case-sensitive in the wrong direction — only ALL-CAPS input
-is accepted.
+Five blockers are present. The banner ad will never render because `adServiceProvider` is a plain
+`Provider` that emits no change notifications when the async load callback fires. A hard downcast
+`as RealAdService` in `HomeScreen` will crash under any test override. The typing mode silently
+rejects mixed-case input — only ALL-CAPS is accepted. The `FutureBuilder` for session restore
+recreates its `Future` on every rebuild, causing flicker and a race against dismiss. And
+`MathChallengeDialog` mutates `_a`/`_b` outside `setState`, violating Flutter state rules.
 
-Five warnings cover: the rewarded-hint flow not triggering the visual zoom
-animation, incorrect postal passed to `recordDrop` on wrong drops, synchronous
-file deletion on the UI thread during sharing, duplicated star-count logic that
-will diverge, and a misleading code comment about `ref.watch` triggering banner
-reloads.
+Eight warnings cover: the App Open suppression race, a missing hint animation in the rewarded
+flow, the wrong postal passed on incorrect drops, synchronous file deletion on the UI thread,
+duplicated star-count logic, a misleading comment, `ad.show()` exceptions leaving ad objects
+leaked, and the `_buildMapStack` side-effect pattern inside `build()`. Four info items cover
+code quality concerns.
 
 ---
 
@@ -64,43 +63,33 @@ reloads.
 
 **File:** `lib/features/home/home_screen.dart:179` and `lib/core/ads/ad_service_provider.dart:10`
 
-**Issue:** `adServiceProvider` is declared as `Provider<AdService>`. A plain
-`Provider` returns the same value for the lifetime of the `ProviderScope` and
-never notifies listeners. The comment on line 178 of `home_screen.dart` says
-"ref.watch rebuilds this widget when the banner loads" — this is incorrect.
-`_bannerAd` is set inside `RealAdService.loadBannerForWidth` as a side-effect
-after an async callback, but no Riverpod state invalidation is triggered. The
-`ref.watch(adServiceProvider).getBannerWidget()` call will therefore always
-return `SizedBox.shrink()` unless an unrelated rebuild happens to occur after
-the ad loads. In practice the banner slot is always blank.
+**Issue:** `adServiceProvider` is declared as `Provider<AdService>`. A plain `Provider` returns
+the same object instance for the lifetime of the `ProviderScope` and never notifies listeners.
+The comment on line 178 of `home_screen.dart` states "ref.watch rebuilds this widget when the
+banner loads" — this is factually incorrect. `_bannerAd` is populated inside `RealAdService`
+asynchronously via `onAdLoaded`, but no Riverpod invalidation is triggered. The
+`ref.watch(adServiceProvider).getBannerWidget()` call on line 179 will always return
+`SizedBox.shrink()` unless an unrelated rebuild coincidentally fires after the ad loads.
+On typical devices, the banner slot remains permanently blank.
 
-**Fix:** Either convert `adServiceProvider` to a `StateProvider` or
-`NotifierProvider` and emit a state change when `_bannerAd` is set, or expose
-a `ValueNotifier<Widget>` from `RealAdService` and use `ValueListenableBuilder`
-in `HomeScreen`. The simplest surgical fix is to add a `StateProvider<int>` as
-a banner-ready signal:
+**Fix:** `RealAdService` must extend `ChangeNotifier` and call `notifyListeners()` inside
+`onAdLoaded`, and `adServiceProvider` must become a `ChangeNotifierProvider`. Or, at minimum,
+add a separate `bannerReadyProvider` that `RealAdService` invalidates when the banner is ready:
 
 ```dart
-// In RealAdService, inject a Ref and invalidate a generation counter.
-onAdLoaded: (ad) {
-  _bannerAd = ad as BannerAd;
-  _bannerState = const AdLoaded();
-  _ref.invalidate(bannerReadyProvider); // triggers HomeScreen rebuild
-},
+// In RealAdService — inject Ref, call inside onAdLoaded:
+_bannerAd = ad as BannerAd;
+_bannerState = const AdLoaded();
+_ref.invalidate(bannerReadyProvider); // triggers HomeScreen rebuild
 
-// Provider:
-final bannerReadyProvider = StateProvider<int>((_) => 0);
-```
-
-Then in `HomeScreen.build`:
-```dart
-ref.watch(bannerReadyProvider); // subscribe to banner-ready signal
-ref.read(adServiceProvider).getBannerWidget(), // safe to call now
+// In home_screen.dart — subscribe:
+ref.watch(bannerReadyProvider); // causes rebuild when banner loads
+ref.read(adServiceProvider).getBannerWidget(),
 ```
 
 ---
 
-### CR-02: Hard downcast `as RealAdService` crashes under test overrides
+### CR-02: Hard downcast `as RealAdService` crashes under any non-production ad service
 
 **File:** `lib/features/home/home_screen.dart:32`
 
@@ -108,68 +97,60 @@ ref.read(adServiceProvider).getBannerWidget(), // safe to call now
 ```dart
 (ref.read(adServiceProvider) as RealAdService).loadBannerForWidth(widthDp);
 ```
-`adServiceProvider` is typed `Provider<AdService>`. In tests (including
-`completion_screen_test.dart`) `adServiceProvider` is overridden with
-`StubAdService`. Any test that navigates to `HomeScreen` or any future code
-that overrides the provider will throw `_CastError: type 'StubAdService'
-is not a subtype of 'RealAdService'` at runtime.
+`adServiceProvider` is typed `Provider<AdService>`. Every test that overrides `adServiceProvider`
+with `StubAdService` (or any other implementation) will trigger a `_CastError: type 'StubAdService'
+is not a subtype of 'RealAdService'` at runtime — specifically in `initState` (via the
+`addPostFrameCallback`). The `completion_screen_test.dart` already overrides `adServiceProvider`
+with `StubAdService`. If any test pumps `HomeScreen`, it crashes.
 
-`loadBannerForWidth` is not on the `AdService` interface, so the cast is
-forced by design — but this breaks interface segregation and the
-test/production substitution contract.
+This also breaks interface segregation: `loadBannerForWidth` is a `RealAdService`-specific
+method absent from the `AdService` interface, forcing the hard cast.
 
-**Fix:** Add `loadBannerForWidth` to the `AdService` interface with a no-op
-default in `StubAdService`, then remove the cast:
+**Fix:** Add `loadBannerForWidth` to the `AdService` interface with a no-op in `StubAdService`:
 
 ```dart
-// In AdService interface:
+// AdService interface:
 Future<void> loadBannerForWidth(int screenWidthDp);
 
-// In StubAdService:
+// StubAdService:
 @override
-Future<void> loadBannerForWidth(int screenWidthDp) async {} // no-op
+Future<void> loadBannerForWidth(int screenWidthDp) async {}
 
-// In HomeScreen:
-ref.read(adServiceProvider).loadBannerForWidth(widthDp); // no cast
+// HomeScreen — remove cast:
+ref.read(adServiceProvider).loadBannerForWidth(widthDp);
 ```
 
 ---
 
 ### CR-03: `submitTyping` case-sensitivity — only ALL-CAPS input accepted
 
-**File:** `lib/features/game/game_session_notifier.dart:214`
+**File:** `lib/features/game/game_session_notifier.dart:207-214`
 
 **Issue:**
 ```dart
+final normalized = input.trim();
+// ...
 if (s.name.toUpperCase() == normalized || s.postal == normalized) {
 ```
-`normalized` is `input.trim()` — it is NOT uppercased. The comparison
-`s.name.toUpperCase() == normalized` will only match if the player types the
-state name in ALL CAPITALS (e.g., "CALIFORNIA"). Typing "California" or
-"california" produces a miss and increments `errorCount`. Similarly,
-`s.postal == normalized` requires uppercase postal code (e.g., "CA"), so
-typing "ca" is a miss.
-
-The docstring on line 188–189 says:
-```
-///  - Full name match: `s.name.toUpperCase() == normalized`
-///  - Postal code match: `s.postal == normalized`
-```
-This documents the broken contract — both sides of the comparison should be
-normalised to the same case.
+`normalized` is `input.trim()` with no case normalization. The left side is uppercased
+(`s.name.toUpperCase()`), but the right side is the raw input. A player typing "California"
+will produce `normalized = "California"` compared against `"CALIFORNIA"` — no match, error
+incremented. Only typing "CALIFORNIA" (all caps) succeeds. Similarly, `s.postal == normalized`
+requires uppercase "CA"; typing "ca" is a miss. The docstring on lines 188-189 documents this
+broken contract without flagging it as wrong.
 
 **Fix:**
 ```dart
 final normalized = input.trim().toUpperCase();
-// s.name.toUpperCase() == normalized  ← both uppercase, always works
-// s.postal == normalized              ← postal codes are already uppercase
+// s.name.toUpperCase() == normalized  (both uppercase — correct)
+// s.postal == normalized              (postal codes are already uppercase — correct)
 ```
 
 ---
 
-### CR-04: `FutureBuilder` future recreated on every rebuild — session-restore card flickers
+### CR-04: `FutureBuilder` future re-created on every rebuild — session-restore card flickers and races against dismiss
 
-**File:** `lib/features/home/home_screen.dart:56–59`
+**File:** `lib/features/home/home_screen.dart:56-59`
 
 **Issue:**
 ```dart
@@ -177,19 +158,17 @@ FutureBuilder<({GameSession session, int hintPenalty})?>(
   future: ref
       .read(gameStateRepositoryProvider.future)
       .then((r) => r.loadSession()),
-  ...
-)
 ```
-`_buildBody` is called from `build()` inside `repoAsync.when(data: ...)`. A new
-`Future` object is created on every call to `_buildBody`. `FutureBuilder`
-detects future changes by reference equality — a new `Future` object causes
-`FutureBuilder` to reset to `ConnectionState.waiting`, returning
-`SizedBox.shrink()` (empty). This means every rebuild (provider watch, scroll,
-orientation change) briefly removes the session-restore card, causing a visible
-flicker. If the rebuild happens between the user reading the card and tapping
-"Continue", the card may also disappear before the tap registers.
+`_buildBody` is called from `build()`. A new `Future` object is constructed inline on every
+rebuild. `FutureBuilder` detects future changes by object identity — receiving a new `Future`
+resets to `ConnectionState.waiting`, causing `SizedBox.shrink()` to be returned momentarily.
+Every rebuild (high-score provider resolving, session state change, etc.) causes the restore
+card to briefly vanish and reappear (flicker). More critically, when `onDismiss` calls
+`setState(() {})` (line 79) to trigger a rebuild after `endGame()`, the new `Future` is
+issued before `clearSession()` has flushed to disk, so `loadSession()` may return the
+just-dismissed session again, re-showing the card.
 
-**Fix:** Cache the future in a field initialised once in `initState`:
+**Fix:** Cache the future exactly once in `initState`:
 
 ```dart
 Future<({GameSession session, int hintPenalty})?>? _savedSessionFuture;
@@ -197,145 +176,194 @@ Future<({GameSession session, int hintPenalty})?>? _savedSessionFuture;
 @override
 void initState() {
   super.initState();
-  // ...existing banner load...
   WidgetsBinding.instance.addPostFrameCallback((_) async {
     final repo = await ref.read(gameStateRepositoryProvider.future);
-    if (mounted) {
-      setState(() {
-        _savedSessionFuture = repo.loadSession();
-      });
-    }
+    if (mounted) setState(() => _savedSessionFuture = repo.loadSession());
   });
+  // ...existing banner load...
 }
+// In build: FutureBuilder(future: _savedSessionFuture, ...)
+```
 
-// In build:
-FutureBuilder(future: _savedSessionFuture, ...)
+---
+
+### CR-05: `MathChallengeDialog._onConfirm` mutates `_a`/`_b` outside `setState`
+
+**File:** `lib/features/map/completion_screen.dart:417-426`
+
+**Issue:**
+```dart
+void _onConfirm() {
+  final entered = int.tryParse(_controller.text.trim());
+  if (entered == _a * _b) {
+    Navigator.of(context).pop(true);
+  } else {
+    _controller.clear();
+    final rng = math.Random();
+    _a = 10 + rng.nextInt(90);   // mutated OUTSIDE setState
+    _b = 2 + rng.nextInt(8);     // mutated OUTSIDE setState
+    setState(() => _error = 'Incorrect — try again');
+  }
+}
+```
+`_a` and `_b` are widget state fields displayed in `build()` via `'What is $_a × $_b?'`. They
+are mutated synchronously before `setState`, which in practice works in Dart's single-threaded
+model because `setState` follows immediately. However, this violates Flutter's rule that all
+mutations to fields affecting `build()` must occur inside `setState()`. A future refactor that
+moves any of these fields to a separate mechanism (e.g., making them late-init or nullable) will
+introduce a subtle bug where the displayed question diverges from the stored operands.
+
+**Fix:**
+```dart
+void _onConfirm() {
+  final entered = int.tryParse(_controller.text.trim());
+  if (entered == _a * _b) {
+    Navigator.of(context).pop(true);
+  } else {
+    _controller.clear();
+    setState(() {
+      final rng = math.Random();
+      _a = 10 + rng.nextInt(90);
+      _b = 2 + rng.nextInt(8);
+      _error = 'Incorrect — try again';
+    });
+  }
+}
 ```
 
 ---
 
 ## Warnings
 
-### WR-01: Rewarded-hint flow skips visual zoom animation
+### WR-01: App Open suppression race — null session treated as "not playing" even during async load
 
-**File:** `lib/features/map/map_screen.dart:248–250`
+**File:** `lib/app.dart:90-95` and `lib/core/ads/real_ad_service.dart:162-167`
+
+**Issue:** Both `_onAppResumed()` in `app.dart` and `showAppOpenAd()` in `real_ad_service.dart`
+suppress the App Open ad by reading `gameSessionProvider` and checking the phase. Both use
+`ref.read(gameSessionProvider).value?.phase` — on first foreground, if the provider is still
+`AsyncLoading`, `.value` returns `null`, the null-safe phase comparison (`phase == GamePhase.playing`)
+evaluates to false (null equals neither), and the suppression does not fire. The App Open ad
+proceeds immediately even though the session state is unknown. This creates a brief window on cold
+start where an App Open ad could be shown while the game is nominally launching.
+
+**Fix:** Add an `isLoading` guard in both suppression checks:
+```dart
+void _onAppResumed() {
+  final sessionAsync = ref.read(gameSessionProvider);
+  if (sessionAsync.isLoading) return; // unknown state — skip
+  final phase = sessionAsync.value?.phase;
+  if (phase == GamePhase.playing || phase == GamePhase.paused) return;
+  ref.read(adServiceProvider).showAppOpenAd();
+}
+```
+
+---
+
+### WR-02: Rewarded-hint flow calls `useHint()` without triggering the zoom animation
+
+**File:** `lib/features/map/map_screen.dart:248-250`
 
 **Issue:**
 ```dart
 if (earned) {
   ref.read(gameSessionProvider.notifier).refillHints();
-  ref.read(gameSessionProvider.notifier).useHint(); // decrements counter
+  ref.read(gameSessionProvider.notifier).useHint();
 }
 ```
-When a user watches an ad and earns hints, `refillHints()` is called followed
-by `useHint()`. This decrements `hintsRemaining` from 2 to 1, which is
-correct. However, the visual hint behaviour — the zoom-to-state animation
-(`_hintZoomController.forward()`), the 3-second glow (`_hintPostal`), and
-the hint glow timer — is only triggered inside `_onHintPressed()`. The
-rewarded-hint code path calls `useHint()` directly without any animation. The
-player watches an ad, gets hints refilled, consumes one, but the map does not
-zoom to the target state. This defeats the purpose of the hint.
+When the user earns hints from the rewarded ad and `useHint()` is called here, the visual hint
+behaviour — zoom-to-target animation (`_hintZoomController.forward()`), 3-second glow
+(`_hintPostal`), and `_hintGlowTimer` — is never triggered. This is because those effects live
+inside `_onHintPressed()`, which is not called in the rewarded path. A player watching an ad
+to earn hints gets the hint count decremented but no map zoom assistance — defeating the
+point of the hint.
 
-**Fix:** Extract the animation logic from `_onHintPressed` into a shared
-helper `_applyHintAnimation()` and call it from both paths:
+**Fix:** Extract the animation logic from `_onHintPressed` into a shared helper, then call it
+from both code paths after a successful `useHint()`:
 
 ```dart
 void _applyHintAnimation() {
   final target = _stateIndex[_currentPostal];
   if (target == null) return;
   setState(() => _hintPostal = _currentPostal);
-  final startMatrix = _controller.value.clone();
   final endMatrix = _computeHintMatrix(target.centroid, target);
-  _hintZoomAnimation = Matrix4Tween(begin: startMatrix, end: endMatrix)
-      .animate(CurvedAnimation(parent: _hintZoomController, curve: Curves.easeInOut));
+  _hintZoomAnimation = Matrix4Tween(
+    begin: _controller.value.clone(), end: endMatrix,
+  ).animate(CurvedAnimation(parent: _hintZoomController, curve: Curves.easeInOut));
   _hintZoomController..reset()..forward();
   _hintGlowTimer?.cancel();
   _hintGlowTimer = Timer(const Duration(seconds: 3), () {
     if (mounted) setState(() => _hintPostal = null);
   });
 }
-
-// In rewarded path after useHint() succeeds:
-if (earned) {
-  ref.read(gameSessionProvider.notifier).refillHints();
-  final consumed = ref.read(gameSessionProvider.notifier).useHint();
-  if (consumed) _applyHintAnimation();
-}
+// In rewarded earned path: if (consumed) _applyHintAnimation();
 ```
 
 ---
 
-### WR-02: Wrong postal passed to `recordDrop` on incorrect drop
+### WR-03: Wrong postal passed to `recordDrop` on incorrect drop
 
-**File:** `lib/features/map/map_screen.dart:454–455`
+**File:** `lib/features/map/map_screen.dart:454-456`
 
 **Issue:**
 ```dart
 ref.read(gameSessionProvider.notifier).recordDrop(
     hitPostal ?? _currentPostal, isCorrect: false);
 ```
-When the player drops on the wrong state, `hitPostal` is the postal code of
-the state the player actually dropped on (not the target). Passing `hitPostal`
-to `recordDrop` with `isCorrect: false` records the error against the wrong
-state. This matters if `recordDrop` ever uses the postal argument for incorrect
-drops (e.g., logging, analytics, or future per-state error counts). The target
-being placed is `_currentPostal`; the error should be attributed there.
+When the player drops onto a valid but wrong state polygon, `hitPostal` is that wrong state's
+postal code. Passing `hitPostal` to `recordDrop` records the error against the wrong state.
+The target the player is attempting to place is `_currentPostal`. Any future per-state error
+tracking, analytics, or diagnostics will attribute the miss to the wrong state.
 
 **Fix:**
 ```dart
-ref.read(gameSessionProvider.notifier).recordDrop(
-    _currentPostal, isCorrect: false);
+ref.read(gameSessionProvider.notifier).recordDrop(_currentPostal, isCorrect: false);
 ```
 
 ---
 
-### WR-03: Synchronous file deletion on UI thread in `_captureAndShare`
+### WR-04: Synchronous file deletion on UI thread in `_captureAndShare`
 
 **File:** `lib/features/map/completion_screen.dart:139`
 
 **Issue:**
 ```dart
 } finally {
-  file?.deleteSync();  // ← synchronous I/O on UI thread
+  file?.deleteSync(); // synchronous I/O on UI thread
   if (mounted) setState(() => _isSharing = false);
 }
 ```
-`deleteSync()` blocks the UI thread. On a slow device or when the temp
-directory is on an encrypted partition under load, this can cause a visible
-jank or ANR. All file I/O should be async.
+`deleteSync()` blocks the calling isolate. On a slow device, an encrypted partition, or an
+overloaded storage stack, this can freeze the UI thread long enough to trigger a jank frame or
+an ANR. The method is already `async` — `await file?.delete()` is a direct replacement.
 
 **Fix:**
 ```dart
 } finally {
-  await file?.delete(); // async — does not block UI thread
+  await file?.delete();
   if (mounted) setState(() => _isSharing = false);
 }
 ```
-Note: because this is in a `finally` block inside `_captureAndShare` (an
-`async` method), `await file?.delete()` is safe to use here.
 
 ---
 
-### WR-04: Star-count logic duplicated between `initState` and `computeStarCount`
+### WR-05: Star-count logic duplicated between `initState` and `computeStarCount`
 
-**File:** `lib/features/map/completion_screen.dart:62–74`
+**File:** `lib/features/map/completion_screen.dart:60-74`
 
-**Issue:** The `_CompletionScreenState.initState` block manually replicates the
-`computeStarCount` + PB logic instead of calling `computeStarCount`. If the
-formula changes in one place it will silently diverge from the other:
+**Issue:** `_CompletionScreenState.initState` manually replicates the exact same conditional
+logic already present in the top-level `computeStarCount` function, then adds a separate
+`_isNewPb` flag computed inline. If the scoring formula changes (e.g., the 20% threshold moves
+to 15%), one branch will diverge silently:
 
 ```dart
-// initState computes _starCount manually:
+// initState (duplicated):
 if (prev == null) { _isNewPb = false; _starCount = 3; }
 else if (score < prev) { _isNewPb = true; _starCount = 3; }
-...
-
-// computeStarCount is a free function that does the same thing:
-int computeStarCount(int score, int? previousBest) { ... }
+else if (score <= (prev * 1.20).ceil()) { _isNewPb = false; _starCount = 2; }
 ```
 
-**Fix:** Use `computeStarCount` in `initState`:
-
+**Fix:**
 ```dart
 _starCount = computeStarCount(score, prev);
 _isNewPb = (prev != null && score < prev);
@@ -343,9 +371,9 @@ _isNewPb = (prev != null && score < prev);
 
 ---
 
-### WR-05: Misleading comment claims `ref.watch` triggers banner rebuild
+### WR-06: Misleading comment claims `ref.watch` triggers banner rebuild
 
-**File:** `lib/features/home/home_screen.dart:177–179`
+**File:** `lib/features/home/home_screen.dart:177-179`
 
 **Issue:**
 ```dart
@@ -353,23 +381,72 @@ _isNewPb = (prev != null && score < prev);
 // ref.watch rebuilds this widget when the banner loads.
 ref.watch(adServiceProvider).getBannerWidget(),
 ```
-This comment is factually wrong. `adServiceProvider` is a `Provider<AdService>`
-— it holds a static value and never emits change notifications. The banner
-state is mutated inside `RealAdService` via an async callback without
-invalidating any provider, so `ref.watch` will not rebuild `HomeScreen` when
-the banner loads. This comment will mislead future maintainers into thinking
-the banner display mechanism is working when it is not (see CR-01).
+`adServiceProvider` is `Provider<AdService>` — a static provider that never emits change
+notifications. `ref.watch` on it will not rebuild `HomeScreen` when `_bannerAd` is
+asynchronously populated. The comment will mislead future maintainers into believing the
+mechanism is working correctly when it is not (see CR-01).
 
-**Fix:** Correct the comment after implementing CR-01's fix, then update the
-comment to accurately describe the mechanism used.
+**Fix:** Correct the comment after implementing CR-01's fix to reflect the actual notification
+mechanism used.
+
+---
+
+### WR-07: `ad.show()` exceptions leave ad objects un-disposed
+
+**File:** `lib/core/ads/real_ad_service.dart:87`, `lib/core/ads/real_ad_service.dart:124-129`, `lib/core/ads/real_ad_service.dart:186`
+
+**Issue:** In `showInterstitialAd`, `showRewardedAd`, and `showAppOpenAd`, the pattern is:
+```dart
+final ad = _interstitialAd;
+_interstitialAd = null; // null before show
+await ad.show();        // if this throws synchronously…
+```
+If `ad.show()` throws a Dart exception (not an ad SDK failure callback), the
+`FullScreenContentCallback` callbacks never fire, so `ad.dispose()` is never called. The
+exception propagates out of the method as an unhandled Future error, and `ad` leaks. This can
+happen on Android if the Activity is finishing at the moment `show()` is called.
+
+**Fix:** Wrap each `ad.show()` call in a try/catch with explicit disposal on error:
+```dart
+try {
+  await ad.show();
+} catch (e) {
+  ad.dispose();
+  debugPrint('interstitial show threw: $e');
+}
+```
+
+---
+
+### WR-08: `_buildMapStack` assigns `_states` and calls `_startSequence`/`_maybeStartGame` from inside `build()`
+
+**File:** `lib/features/map/map_screen.dart:689-691`
+
+**Issue:**
+```dart
+Widget _buildMapStack(List<StateData> states, GameSession? session) {
+  _states = states;           // mutable field assignment inside build
+  _startSequence(states);     // side effect inside build (guarded, but still)
+  _maybeStartGame(session);   // side effect inside build
+```
+Flutter may call `build()` more than once in a frame (e.g., during `setState` within a frame).
+Assigning to `_states` (a field used by `_handleDrop` via the closure) inside `build()` is
+an anti-pattern — it creates a window where `_handleDrop` could be called with a stale
+`_states` while `build()` has not yet run after a data update. `_startSequence` is safely
+guarded by `_sequenceInitialized`, but the pattern is fragile and will confuse any reviewer
+looking at this code.
+
+**Fix:** Move `_states` assignment and `_startSequence` call into `didChangeDependencies` or
+a `ref.listen` on `stateDataProvider`. `_maybeStartGame` should become a
+`ref.listen(gameSessionProvider, ...)` side effect, not a build-time call.
 
 ---
 
 ## Info
 
-### IN-01: Dead code in `ads_initializer.dart` — `kAppLovinEnabled` block
+### IN-01: Dead code — `kAppLovinEnabled` `if` block with empty body
 
-**File:** `lib/core/ads/ads_initializer.dart:45–47`
+**File:** `lib/core/ads/ads_initializer.dart:45-47`
 
 **Issue:**
 ```dart
@@ -377,15 +454,12 @@ if (kAppLovinEnabled) {
   // No-op: AppLovin SDK 13.0+ refuses child-directed init.
 }
 ```
-`kAppLovinEnabled` is a compile-time constant `false` in `ad_constants.dart`.
-The `if` block is dead code — the body is a comment with no statements. The
-block contributes no value and will not be reached even if a future developer
-sets `kAppLovinEnabled = true` (since the body is empty). The intent (blocking
-AppLovin until preconditions are met) would be better served by either a
-`throw` inside the block or removing the block entirely with a clear comment
-explaining the v2 work item.
+`kAppLovinEnabled` is `const false`. This `if` block is permanently dead code — the body is a
+comment with zero statements. The intent (blocking AppLovin until v2 preconditions are met) is
+not enforced by anything executable.
 
-**Fix:** Remove the block or replace it with an assertion:
+**Fix:** Remove the block and replace with a commented work item, or add an assertion that
+will fire if the flag is accidentally enabled before the preconditions are met:
 ```dart
 assert(!kAppLovinEnabled,
     'AppLovin activation requires: (1) account approval, '
@@ -394,32 +468,64 @@ assert(!kAppLovinEnabled,
 
 ---
 
-### IN-02: `state_tray_test.dart` tests assert on SVG placeholder text, not actual card face
+### IN-02: Production ad unit IDs committed to source control
 
-**File:** `test/features/map/state_tray_test.dart:26–29`
+**File:** `lib/core/ads/ad_constants.dart:5-8`
 
-**Issue:**
-```dart
-testWidgets('Learn mode shows abbreviation on face and state name below', ...
-  expect(find.text('CA'), findsAtLeastNWidgets(1));
-```
-`_buildFlagCard()` renders `SvgPicture.asset('assets/flags/ca.svg', ...)` as
-the card face, with the postal abbreviation only shown as a `placeholderBuilder`
-fallback when `stateData == null`. In the test, `stateData` is not passed
-(defaults to `null`), so the test finds "CA" in the fallback `Text` widget, not
-the production flag SVG. The test passes for the wrong reason — it does not
-exercise the real card face, and would continue passing even if the SVG path
-were broken or the mode-driven logic were completely removed.
+**Issue:** All four production ad unit IDs (`ca-app-pub-4227443066128564/...`) are hardcoded
+constants committed to the git repository. While client-side ad IDs are not secrets in the
+same category as API keys, they expose the AdMob publisher account structure in git history.
+For a currently private repo this is acceptable but should be noted for any future open-source
+transition.
 
-This does not block shipping but creates false confidence in the Learn mode card
-face rendering path.
-
-**Fix:** Either inject a real `StateData` instance in the test (so the SVG
-codepath is exercised) and assert on the SVG asset being present, or add a
-comment acknowledging this limitation explicitly.
+**Fix:** For private repo: acceptable as-is. If the repo ever goes public, move IDs to
+`--dart-define` build arguments or a non-committed configuration file.
 
 ---
 
-_Reviewed: 2026-06-03_
+### IN-03: `state_tray_test.dart` tests find text via SVG placeholder path, not production card face
+
+**File:** `test/features/map/state_tray_test.dart:26-29`
+
+**Issue:** The "Learn mode shows abbreviation on face" test asserts `find.text('CA')`. The
+production card face is `SvgPicture.asset('assets/flags/ca.svg')` — not a `Text` widget. The
+test finds "CA" only because `stateData` is not passed, causing the fallback `Text(widget.postal)`
+in `placeholderBuilder` to render. The test passes for the wrong reason and would not catch a
+regression in the SVG-primary rendering path. The "States Master mode shows state name on face"
+test description is also incorrect — no mode puts the full state name on the card face; the
+card always shows the flag SVG (or postal abbreviation as fallback).
+
+**Fix:** Add a comment documenting the SVG-fallback dependency. For a more robust test, mock
+the asset bundle to provide a trivial SVG and assert the SVG widget exists.
+
+---
+
+### IN-04: `_captureAndShare` uses a fixed temp filename — concurrent share attempts collide
+
+**File:** `lib/features/map/completion_screen.dart:126`
+
+**Issue:**
+```dart
+file = File('${Directory.systemTemp.path}/score_card.png');
+```
+The filename is static. If the user double-taps the share button quickly (the `_isSharing`
+guard is set after the file is created, not before), two concurrent `_captureAndShare`
+invocations could write to and delete the same file path simultaneously, corrupting the share
+payload. The `_isSharing` boolean is set to `true` only at line 132, after `file.writeAsBytes`
+has already been called — there is a window between the method entry and line 132 where a
+second invocation is not blocked.
+
+**Fix:** Use a unique filename suffix and set `_isSharing = true` as the very first action:
+```dart
+if (_isSharing) return; // guard at entry
+setState(() => _isSharing = true);
+// ...
+final tmpName = 'score_card_${DateTime.now().millisecondsSinceEpoch}.png';
+file = File('${Directory.systemTemp.path}/$tmpName');
+```
+
+---
+
+_Reviewed: 2026-06-03T00:00:00Z_
 _Reviewer: Claude (gsd-code-reviewer)_
 _Depth: standard_
