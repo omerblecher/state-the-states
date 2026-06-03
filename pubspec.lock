@@ -343,6 +343,30 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.3"
+  gma_mediation_inmobi:
+    dependency: "direct main"
+    description:
+      name: gma_mediation_inmobi
+      sha256: "1393431fa5f90dfe3d62a0597f3e67e22825fa63ac4071d87b16fc9f87d6e2f3"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.1.0"
+  gma_mediation_ironsource:
+    dependency: "direct main"
+    description:
+      name: gma_mediation_ironsource
+      sha256: d4b5ce0a302cf4dfe4c49cbd25678d676e12f05512941533ac69af85ae7b8782
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.4.1"
+  gma_mediation_unity:
+    dependency: "direct main"
+    description:
+      name: gma_mediation_unity
+      sha256: f2326489fa598d4ff0744509df303664f87a6f5f46ab8dfbed81b4c823100df2
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.8.0"
   go_router:
     dependency: "direct main"
     description:
