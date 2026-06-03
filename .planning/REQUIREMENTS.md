@@ -116,7 +116,7 @@ Golf-style scoring (lowest wins). Canonical entity set = **50 states** (no D.C.)
 
 ### Rewarded Hint Refill (HINT)
 
-- [ ] **HINT-03**: When `hintsRemaining == 0` and the player taps the hint button, a "Watch an ad for 2 more hints?" prompt is shown.
+- [x] **HINT-03**: When `hintsRemaining == 0` and the player taps the hint button, a "Watch an ad for 2 more hints?" prompt is shown.
 - [x] **HINT-04**: If the player watches the rewarded ad to completion, `refillHints()` resets `hintsRemaining` to 2 and the hint is immediately used.
 - [x] **HINT-05**: The reward is granted in `onUserEarnedReward` only — never in `onAdDismissedFullScreenContent`.
 
@@ -199,6 +199,6 @@ Golf-style scoring (lowest wins). Canonical entity set = **50 states** (no D.C.)
 | AD-04 | Phase 8 (v2) | Complete |
 | AD-05 | Phase 8 (v2) | Complete |
 | AD-06 | Phase 8 (v2) | Pending |
-| HINT-03 | Phase 8 (v2) | Pending |
+| HINT-03 | Phase 8 (v2) | Complete |
 | HINT-04 | Phase 8 (v2) | Complete |
 | HINT-05 | Phase 8 (v2) | Complete |
