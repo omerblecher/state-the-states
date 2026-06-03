@@ -184,6 +184,35 @@ class _MapScreenState extends ConsumerState<MapScreen>
       ..setEntry(1, 3, ty);
   }
 
+  /// Triggers the zoom-to-target animation and 3-second glow for the current postal.
+  ///
+  /// Shared by both the direct hint path (_onHintPressed) and the rewarded-ad path
+  /// (_showRewardedHintDialog) so that earning hints via ad also zooms to the target.
+  void _applyHintAnimation() {
+    final target = _stateIndex[_currentPostal];
+    if (target == null) return;
+
+    setState(() => _hintPostal = _currentPostal);
+
+    final endMatrix = _computeHintMatrix(target.centroid, target);
+    _hintZoomAnimation = Matrix4Tween(
+      begin: _controller.value.clone(),
+      end: endMatrix,
+    ).animate(CurvedAnimation(
+      parent: _hintZoomController,
+      curve: Curves.easeInOut, // Claude's discretion (RESEARCH.md §Pattern 4)
+    ));
+    _hintZoomController
+      ..reset()
+      ..forward();
+
+    // 3-second glow window — clear hintPostal after glow (D-H2: viewport stays zoomed)
+    _hintGlowTimer?.cancel();
+    _hintGlowTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted) setState(() => _hintPostal = null);
+    });
+  }
+
   /// Called when the hint button is tapped.
   ///
   /// Forks on hintsRemaining:
@@ -198,27 +227,7 @@ class _MapScreenState extends ConsumerState<MapScreen>
 
     final consumed = ref.read(gameSessionProvider.notifier).useHint();
     if (!consumed) return;
-    final target = _stateIndex[_currentPostal];
-    if (target == null) return;
-
-    setState(() => _hintPostal = _currentPostal);
-
-    final startMatrix = _controller.value.clone();
-    final endMatrix = _computeHintMatrix(target.centroid, target);
-    _hintZoomAnimation = Matrix4Tween(begin: startMatrix, end: endMatrix)
-        .animate(CurvedAnimation(
-      parent: _hintZoomController,
-      curve: Curves.easeInOut, // Claude's discretion (RESEARCH.md §Pattern 4)
-    ));
-    _hintZoomController
-      ..reset()
-      ..forward();
-
-    // 3-second glow window — clear hintPostal after glow (D-H2: viewport stays zoomed)
-    _hintGlowTimer?.cancel();
-    _hintGlowTimer = Timer(const Duration(seconds: 3), () {
-      if (mounted) setState(() => _hintPostal = null);
-    });
+    _applyHintAnimation();
   }
 
   /// Shows an AlertDialog prompting the user to watch a rewarded ad for 2 more hints.
@@ -247,7 +256,8 @@ class _MapScreenState extends ConsumerState<MapScreen>
     if (!mounted) return;
     if (earned) {
       ref.read(gameSessionProvider.notifier).refillHints();
-      ref.read(gameSessionProvider.notifier).useHint();
+      final consumed = ref.read(gameSessionProvider.notifier).useHint();
+      if (consumed) _applyHintAnimation();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
