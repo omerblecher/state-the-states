@@ -89,7 +89,9 @@ class _AppState extends ConsumerState<App> {
 
   void _onAppResumed() {
     // AD-05: suppress App Open during active gameplay or pause.
-    final phase = ref.read(gameSessionProvider).value?.phase;
+    final sessionAsync = ref.read(gameSessionProvider);
+    if (sessionAsync.isLoading) return; // unknown state — skip
+    final phase = sessionAsync.value?.phase;
     if (phase == GamePhase.playing || phase == GamePhase.paused) return;
     ref.read(adServiceProvider).showAppOpenAd();
   }
