@@ -59,19 +59,8 @@ class _CompletionScreenState extends ConsumerState<CompletionScreen>
     super.initState();
     final prev = widget.previousBest;
     final score = widget.session.score;
-    if (prev == null) {
-      _isNewPb = false;
-      _starCount = 3;
-    } else if (score < prev) {
-      _isNewPb = true;
-      _starCount = 3;
-    } else if (score <= (prev * 1.20).ceil()) {
-      _isNewPb = false;
-      _starCount = 2;
-    } else {
-      _isNewPb = false;
-      _starCount = 1;
-    }
+    _starCount = computeStarCount(score, prev);
+    _isNewPb = (prev != null && score < prev);
 
     _pbController = AnimationController(
       vsync: this,
@@ -136,7 +125,7 @@ class _CompletionScreenState extends ConsumerState<CompletionScreen>
         files: [XFile(file.path)],
       ));
     } finally {
-      file?.deleteSync();
+      await file?.delete();
       if (mounted) setState(() => _isSharing = false);
     }
   }
@@ -420,10 +409,12 @@ class _MathChallengeDialogState extends State<MathChallengeDialog> {
       Navigator.of(context).pop(true);
     } else {
       _controller.clear();
-      final rng = math.Random();
-      _a = 10 + rng.nextInt(90);
-      _b = 2 + rng.nextInt(8);
-      setState(() => _error = 'Incorrect — try again');
+      setState(() {
+        final rng = math.Random();
+        _a = 10 + rng.nextInt(90);
+        _b = 2 + rng.nextInt(8);
+        _error = 'Incorrect — try again';
+      });
     }
   }
 
