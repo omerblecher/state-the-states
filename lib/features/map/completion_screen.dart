@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 
+import 'package:state_states/core/ads/ad_service_provider.dart';
 import 'package:state_states/features/game/game_mode.dart';
 import 'package:state_states/features/game/game_session.dart';
 import 'dart:io';
@@ -82,7 +83,10 @@ class _CompletionScreenState extends ConsumerState<CompletionScreen>
         if (mounted) setState(() => _showPbOverlay = false);
       });
     }
-    // NOTE: NO ad call here (D-13 — v2 only)
+    // AD-04: Interstitial once per completion, 1-second delay (all modes).
+    Future.delayed(const Duration(seconds: 1), () {
+      if (mounted) ref.read(adServiceProvider).showInterstitialAd();
+    });
   }
 
   @override

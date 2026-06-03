@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:state_states/core/ads/ad_service.dart';
 import 'package:state_states/core/ads/ad_service_provider.dart';
+import 'package:state_states/core/ads/stub_ad_service.dart';
 import 'package:state_states/features/game/game_mode.dart';
 import 'package:state_states/features/game/game_phase.dart';
 import 'package:state_states/features/game/game_session.dart';
@@ -40,20 +41,19 @@ GameSession makeSession({int score = 100, GameMode mode = GameMode.learn}) {
   );
 }
 
+/// Builds a CompletionScreen wrapped in ProviderScope.
+/// Always uses StubAdService (no-op) unless a custom [adService] is provided.
+/// Callers must pump 1100ms after pumpWidget to drain the Future.delayed timer.
 Widget buildScreen(GameSession session, {int? previousBest, AdService? adService}) {
-  final widget = MaterialApp(
-    home: CompletionScreen(session: session, previousBest: previousBest),
+  final effectiveService = adService ?? const StubAdService();
+  return ProviderScope(
+    overrides: [
+      adServiceProvider.overrideWithValue(effectiveService),
+    ],
+    child: MaterialApp(
+      home: CompletionScreen(session: session, previousBest: previousBest),
+    ),
   );
-  if (adService != null) {
-    return ProviderScope(
-      overrides: [
-        adServiceProvider.overrideWithValue(adService),
-      ],
-      child: widget,
-    );
-  }
-  // No ProviderScope — existing tests don't use ref yet.
-  return widget;
 }
 
 void main() {
@@ -85,6 +85,9 @@ void main() {
       expect(find.byIcon(Icons.star_rounded), findsNWidgets(3));
       // No PB badge
       expect(find.text('New Personal Best!'), findsNothing);
+
+      // Drain Future.delayed(1s) timer to prevent "timer still pending" assertion.
+      await tester.pump(const Duration(milliseconds: 1100));
     });
 
     testWidgets('personal best shows 3 filled stars and PB badge',
@@ -97,6 +100,8 @@ void main() {
       expect(find.byIcon(Icons.star_rounded), findsNWidgets(3));
       // PB badge visible
       expect(find.text('New Personal Best!'), findsOneWidget);
+
+      await tester.pump(const Duration(milliseconds: 1100));
     });
 
     testWidgets('2 stars when within 20% of best', (tester) async {
@@ -107,6 +112,8 @@ void main() {
       expect(find.byIcon(Icons.star_rounded), findsNWidgets(2));
       expect(find.byIcon(Icons.star_outline_rounded), findsNWidgets(1));
       expect(find.text('New Personal Best!'), findsNothing);
+
+      await tester.pump(const Duration(milliseconds: 1100));
     });
 
     testWidgets('1 star when beyond 20% of best', (tester) async {
@@ -116,6 +123,8 @@ void main() {
 
       expect(find.byIcon(Icons.star_rounded), findsNWidgets(1));
       expect(find.byIcon(Icons.star_outline_rounded), findsNWidgets(2));
+
+      await tester.pump(const Duration(milliseconds: 1100));
     });
 
     testWidgets('shows score in score card', (tester) async {
@@ -124,6 +133,8 @@ void main() {
       await tester.pump();
 
       expect(find.text('42'), findsAtLeastNWidgets(1));
+
+      await tester.pump(const Duration(milliseconds: 1100));
     });
 
     testWidgets('Back to Menu button present', (tester) async {
@@ -132,6 +143,8 @@ void main() {
       await tester.pump();
 
       expect(find.text('Back to Menu'), findsOneWidget);
+
+      await tester.pump(const Duration(milliseconds: 1100));
     });
 
     testWidgets('Play Again button present', (tester) async {
@@ -140,6 +153,8 @@ void main() {
       await tester.pump();
 
       expect(find.text('Play Again'), findsOneWidget);
+
+      await tester.pump(const Duration(milliseconds: 1100));
     });
 
     // AD-04: CompletionScreen fires showInterstitialAd() after 1-second delay.
@@ -182,6 +197,8 @@ void main() {
       await tester.pump();
 
       expect(find.text('Share result'), findsNothing);
+
+      await tester.pump(const Duration(milliseconds: 1100));
     });
 
     // Wave 0 status: PASSES — current code shows Share button unconditionally
@@ -195,6 +212,8 @@ void main() {
       await tester.pump();
 
       expect(find.text('Share result'), findsOneWidget);
+
+      await tester.pump(const Duration(milliseconds: 1100));
     });
 
     // Wave 0 status: FAILS — current code shows Share button unconditionally
@@ -207,6 +226,8 @@ void main() {
       await tester.pump();
 
       expect(find.text('Share result'), findsNothing);
+
+      await tester.pump(const Duration(milliseconds: 1100));
     });
 
     // -----------------------------------------------------------------------
@@ -279,6 +300,7 @@ void main() {
         // Dialog should be dismissed after correct answer.
         expect(find.byType(AlertDialog), findsNothing);
       }
+      await tester.pump(const Duration(milliseconds: 1100));
     });
 
     // Wave 0 status: depends on current dialog state; may pass or fail.
@@ -313,6 +335,8 @@ void main() {
       // Error message should be visible; dialog must still be present.
       expect(find.text('Incorrect — try again'), findsOneWidget);
       expect(find.byType(AlertDialog), findsOneWidget);
+
+      await tester.pump(const Duration(milliseconds: 1100));
     });
 
     // Wave 0 status: depends on current dialog state; may pass or fail.
@@ -339,6 +363,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(AlertDialog), findsNothing);
+
+      await tester.pump(const Duration(milliseconds: 1100));
     });
   });
 }

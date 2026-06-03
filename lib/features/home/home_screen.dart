@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'package:state_states/core/ads/ad_service_provider.dart';
+import 'package:state_states/core/ads/real_ad_service.dart';
 import 'package:state_states/core/data/game_state_repository.dart';
 import 'package:state_states/core/data/high_score_repository.dart';
 import 'package:state_states/features/game/game_mode.dart';
@@ -19,6 +21,18 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // AD-03: Load banner once from initState via addPostFrameCallback.
+    // Never from build() — see RESEARCH.md Pitfall 4 / T-08-04-03.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final widthDp = MediaQuery.of(context).size.width.toInt();
+      (ref.read(adServiceProvider) as RealAdService).loadBannerForWidth(widthDp);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final repoAsync = ref.watch(highScoreRepositoryProvider);
@@ -160,6 +174,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ],
           ),
         ),
+        // AD-03: Banner ad slot — below mode cards, above privacy footer.
+        // ref.watch rebuilds this widget when the banner loads.
+        ref.watch(adServiceProvider).getBannerWidget(),
         // Privacy footer
         Padding(
           padding: const EdgeInsets.only(bottom: 8),
