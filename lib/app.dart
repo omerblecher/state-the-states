@@ -1,9 +1,16 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'core/ads/ad_service_provider.dart';
+import 'core/ads/app_state_observer.dart';
 import 'features/game/game_mode.dart';
+import 'features/game/game_phase.dart';
 import 'features/game/game_session.dart';
+import 'features/game/game_session_notifier.dart';
 import 'features/home/home_screen.dart';
 import 'features/map/completion_screen.dart';
 import 'features/map/map_screen.dart';
@@ -59,8 +66,39 @@ final _router = GoRouter(
   ],
 );
 
-class App extends StatelessWidget {
+class App extends ConsumerStatefulWidget {
   const App({super.key});
+
+  @override
+  ConsumerState<App> createState() => _AppState();
+}
+
+class _AppState extends ConsumerState<App> {
+  StreamSubscription<AppState>? _appStateSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    AppStateEventNotifier.startListening();
+    _appStateSubscription = AppStateEventNotifier.appStateStream.listen(
+      (appState) {
+        if (appState == AppState.foreground) _onAppResumed();
+      },
+    );
+  }
+
+  void _onAppResumed() {
+    // AD-05: suppress App Open during active gameplay or pause.
+    final phase = ref.read(gameSessionProvider).value?.phase;
+    if (phase == GamePhase.playing || phase == GamePhase.paused) return;
+    ref.read(adServiceProvider).showAppOpenAd();
+  }
+
+  @override
+  void dispose() {
+    _appStateSubscription?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
