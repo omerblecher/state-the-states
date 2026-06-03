@@ -87,7 +87,12 @@ class RealAdService implements AdService {
       },
     );
     _interstitialAd = null; // null BEFORE show to prevent double-show (T-08-02-03)
-    await ad.show();
+    try {
+      await ad.show();
+    } catch (e) {
+      ad.dispose();
+      debugPrint('interstitial show threw: $e');
+    }
   }
 
   // ── Rewarded ─────────────────────────────────────────────────────────────
@@ -124,12 +129,18 @@ class RealAdService implements AdService {
       },
     );
     _rewardedAd = null; // null BEFORE show (T-08-02-03)
-    await ad.show(
-      onUserEarnedReward: (_, reward) {
-        // HINT-05: complete(true) ONLY here — never in dismiss callback (T-08-02-01)
-        if (!completer.isCompleted) completer.complete(true);
-      },
-    );
+    try {
+      await ad.show(
+        onUserEarnedReward: (_, reward) {
+          // HINT-05: complete(true) ONLY here — never in dismiss callback (T-08-02-01)
+          if (!completer.isCompleted) completer.complete(true);
+        },
+      );
+    } catch (e) {
+      ad.dispose();
+      debugPrint('rewarded show threw: $e');
+      if (!completer.isCompleted) completer.complete(false);
+    }
     return completer.future;
   }
 
@@ -186,7 +197,12 @@ class RealAdService implements AdService {
       },
     );
     _appOpenAd = null; // null BEFORE show (T-08-02-03)
-    await ad.show();
+    try {
+      await ad.show();
+    } catch (e) {
+      ad.dispose();
+      debugPrint('app open show threw: $e');
+    }
   }
 
   // ── Startup preload ───────────────────────────────────────────────────────
