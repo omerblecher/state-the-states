@@ -100,10 +100,10 @@ Golf-style scoring (lowest wins). Canonical entity set = **50 states** (no D.C.)
 
 ### Gated Sharing Completion (SHARE)
 
-- [ ] **SHARE-01**: The Share button on `CompletionScreen` is only visible when the player has beaten their personal best (`_isNewPb == true`).
+- [x] **SHARE-01**: The Share button on `CompletionScreen` is only visible when the player has beaten their personal best (`_isNewPb == true`).
 - [ ] **SHARE-02**: Pressing Share captures the score card via `RenderRepaintBoundary.toImage()` and attaches the PNG as an `XFile` to the share sheet.
 - [ ] **SHARE-03**: The share message reads "New lowest score in [Mode Name]! Score: [N] — State the States 🇺🇸" with the screenshot attached.
-- [ ] **SHARE-04**: The parental math gate is upgraded from single-digit addition to 2-digit × 1-digit multiplication.
+- [x] **SHARE-04**: The parental math gate is upgraded from single-digit addition to 2-digit × 1-digit multiplication.
 
 ### AdMob + Mediation (AD)
 
@@ -189,10 +189,10 @@ Golf-style scoring (lowest wins). Canonical entity set = **50 states** (no D.C.)
 | TYPING-07 | Phase 6 (v2) | Complete |
 | TYPING-08 | Phase 6 (v2) | Complete |
 | TYPING-09 | Phase 6 (v2) | Complete |
-| SHARE-01 | Phase 7 (v2) | Pending |
+| SHARE-01 | Phase 7 (v2) | Complete |
 | SHARE-02 | Phase 7 (v2) | Pending |
 | SHARE-03 | Phase 7 (v2) | Pending |
-| SHARE-04 | Phase 7 (v2) | Pending |
+| SHARE-04 | Phase 7 (v2) | Complete |
 | AD-01 | Phase 8 (v2) | Pending |
 | AD-02 | Phase 8 (v2) | Pending |
 | AD-03 | Phase 8 (v2) | Pending |

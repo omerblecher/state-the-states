@@ -242,7 +242,7 @@ Plans:
 
 **Wave 0** *(parallel with Wave 1)*
 
-- [ ] 07-01-PLAN.md — Test stubs: Wave 0 widget test cases for SHARE-01 (PB-gate visibility) and SHARE-04 (multiplication dialog correct/wrong/cancel)
+- [x] 07-01-PLAN.md — Test stubs: Wave 0 widget test cases for SHARE-01 (PB-gate visibility) and SHARE-04 (multiplication dialog correct/wrong/cancel)
 
 **Wave 1** *(blocked on Wave 0 test stubs)*
 
@@ -278,5 +278,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 4. Full Play Loop | 6/6 | Complete   | 2026-06-01 |
 | 5. Polish, Welcome & Accessibility | 6/7 | In Progress|  |
 | 6. Speed Typing Mode | 4/4 | Complete   | 2026-06-02 |
-| 7. Gated Sharing Completion | 0/2 | Planned     | - |
+| 7. Gated Sharing Completion | 1/2 | In Progress|  |
 | 8. Full AdMob Layer | 0/? | Not started | - |
