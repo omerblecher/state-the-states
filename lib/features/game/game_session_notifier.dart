@@ -14,6 +14,7 @@ import 'package:state_states/core/ticker.dart';
 import 'package:state_states/features/game/game_mode.dart';
 import 'package:state_states/features/game/game_phase.dart';
 import 'package:state_states/features/game/game_session.dart';
+import 'package:state_states/features/game/typing_result.dart';
 
 final gameSessionProvider =
     AsyncNotifierProvider<GameSessionNotifier, GameSession>(
@@ -187,22 +188,24 @@ class GameSessionNotifier extends AsyncNotifier<GameSession> {
   ///  - Full name match: `s.name.toUpperCase() == normalized`
   ///  - Postal code match: `s.postal == normalized`
   ///
-  /// Returns `true` on a new hit (correct, unseen state). Returns `false` on:
-  ///  - No match (miss) → errorCount+1, score recalculated
-  ///  - Duplicate (already in matchedPostals) → treated as miss
-  ///  - Phase not playing → no-op
+  /// Returns [TypingResult.hit] on a new correct state. Returns:
+  ///  - [TypingResult.invalid] — no match (miss) → errorCount+1, score recalculated
+  ///  - [TypingResult.duplicate] — already in matchedPostals → errorCount+1, score recalculated
+  ///  - [TypingResult.invalid] — phase not playing or empty input → no-op
   ///
   /// Transitions to [GamePhase.completed] when all placeable states are found
   /// (matchedPostals.length == placeable count of [states]). Uses an explicit
   /// for-loop to avoid package:collection dependency.
   ///
   /// WALLED-GARDEN RULE: Zero ad imports. No import from the ads module.
-  bool submitTyping(String input, List<StateData> states) {
+  TypingResult submitTyping(String input, List<StateData> states) {
     final current = state.value;
-    if (current == null || current.phase != GamePhase.playing) return false;
+    if (current == null || current.phase != GamePhase.playing) {
+      return TypingResult.invalid;
+    }
 
     final normalized = input.trim();
-    if (normalized.isEmpty) return false;
+    if (normalized.isEmpty) return TypingResult.invalid;
 
     // Explicit for-loop — no package:collection firstWhereOrNull needed.
     StateData? match;
@@ -224,7 +227,7 @@ class GameSessionNotifier extends AsyncNotifier<GameSession> {
         errorCount: newErrorCount,
         score: newScore,
       ));
-      return false;
+      return TypingResult.invalid;
     }
 
     // Duplicate: already in matchedPostals — treat as miss (D-04: duplicate penalty)
@@ -237,7 +240,7 @@ class GameSessionNotifier extends AsyncNotifier<GameSession> {
         errorCount: newErrorCount,
         score: newScore,
       ));
-      return false;
+      return TypingResult.duplicate;
     }
 
     // Hit: new state matched
@@ -259,7 +262,7 @@ class GameSessionNotifier extends AsyncNotifier<GameSession> {
       state = AsyncData(updated.copyWith(phase: GamePhase.completed));
     }
 
-    return true;
+    return TypingResult.hit;
   }
 
   void recordDrop(String postal, {required bool isCorrect}) {

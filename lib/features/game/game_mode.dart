@@ -9,6 +9,6 @@ extension GameModeDisplay on GameMode {
         GameMode.statesMaster => 'States Master',
         GameMode.geographicalMaster => 'Geographical Master',
         GameMode.grandMaster => 'Grand Master',
-        GameMode.speedTyping => 'Speed Typing',
+        GameMode.speedTyping => 'Name all the states',
       };
 }

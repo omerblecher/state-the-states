@@ -10,6 +10,7 @@ import '../../features/game/game_mode.dart';
 import '../../features/game/game_phase.dart';
 import '../../features/game/game_session.dart';
 import '../../features/game/game_session_notifier.dart';
+import '../../features/game/typing_result.dart';
 
 /// Speed Typing Mode screen (Mode 5) — ConsumerStatefulWidget.
 ///
@@ -20,10 +21,10 @@ import '../../features/game/game_session_notifier.dart';
 ///   - previousBest fetched BEFORE completeGame() (Pitfall 8 / MapScreen pattern)
 ///
 /// UI-SPEC (approved):
-///   AppBar: Color(0xFF00695C), white, title 'Speed Typing'
-///   HUD: grey.shade800, 48dp
+///   AppBar: Color(0xFF00695C), white, title 'Name all the states'
+///   HUD: grey.shade800, two-row (stats + progress bar)
 ///   Chip: Colors.green.shade700, white label, FontWeight.w700, fontSize 16
-///   TextField: TextCapitalization.characters, enabled when stateDataProvider has value
+///   TextField: TextCapitalization.characters, autofocus, positioned ABOVE chip grid
 class SpeedTypingScreen extends ConsumerStatefulWidget {
   const SpeedTypingScreen({super.key});
 
@@ -96,7 +97,7 @@ class _SpeedTypingScreenState extends ConsumerState<SpeedTypingScreen> {
   /// Called when the user submits text (Enter / Done on the keyboard).
   ///
   /// D-03: Clear _controller immediately (before guard returns) so the field
-  /// is always empty after submission regardless of hit/miss.
+  /// is always empty after submission regardless of hit/miss/duplicate.
   void _onSubmit(String value) {
     _controller.clear();
 
@@ -106,14 +107,45 @@ class _SpeedTypingScreenState extends ConsumerState<SpeedTypingScreen> {
     final mapData = ref.read(stateDataProvider).value;
     if (mapData == null) return;
 
-    final hit = ref
+    final result = ref
         .read(gameSessionProvider.notifier)
         .submitTyping(trimmed, mapData.states);
 
-    if (hit) {
-      ref.read(audioServiceProvider).playCorrect();
-    } else {
-      ref.read(audioServiceProvider).playError();
+    switch (result) {
+      case TypingResult.hit:
+        ref.read(audioServiceProvider).playCorrect();
+      case TypingResult.invalid:
+        ref.read(audioServiceProvider).playError();
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.red.shade700,
+            duration: const Duration(milliseconds: 1500),
+            content: const Row(children: [
+              Icon(Icons.cancel_outlined, color: Colors.white, size: 16),
+              SizedBox(width: 8),
+              Text('Invalid state — +5 penalty',
+                  style: TextStyle(color: Colors.white)),
+            ]),
+          ),
+        );
+      case TypingResult.duplicate:
+        ref.read(audioServiceProvider).playError();
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: const Color(0xFFB8860B),
+            duration: const Duration(milliseconds: 1200),
+            content: const Row(children: [
+              Icon(Icons.info_outline, color: Colors.white, size: 16),
+              SizedBox(width: 8),
+              Text('Already found! — +5 penalty',
+                  style: TextStyle(color: Colors.white)),
+            ]),
+          ),
+        );
     }
   }
 
@@ -306,16 +338,10 @@ class _SpeedTypingScreenState extends ConsumerState<SpeedTypingScreen> {
               }
             }
           }
-          chips.add(Chip(
-            backgroundColor: Colors.green.shade700,
-            label: Text(
-              stateName,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-                fontSize: 16,
-              ),
-            ),
+          chips.add(_AnimatedChip(
+            key: ValueKey(postal),
+            postal: postal,
+            stateName: stateName,
           ));
         }
 
@@ -325,7 +351,7 @@ class _SpeedTypingScreenState extends ConsumerState<SpeedTypingScreen> {
           appBar: AppBar(
             backgroundColor: const Color(0xFF00695C),
             foregroundColor: Colors.white,
-            title: const Text('Speed Typing'),
+            title: const Text('Name all the states'),
             leading: IconButton(
               icon: const Icon(Icons.home),
               tooltip: 'Back to menu',
@@ -334,36 +360,60 @@ class _SpeedTypingScreenState extends ConsumerState<SpeedTypingScreen> {
           ),
           body: Column(
             children: [
-              // HUD bar
+              // HUD bar — two rows: stats row + progress bar
               Container(
-                height: 48,
                 color: Colors.grey.shade800,
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: Row(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: Column(
                   children: [
-                    Text(
-                      'Score: ${session.score}',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
+                    Row(
+                      children: [
+                        _StatColumn(
+                          label: 'SCORE',
+                          value: '${session.score}',
+                        ),
+                        const SizedBox(width: 16),
+                        _StatColumn(
+                          label: 'FOUND',
+                          value: '${session.matchedPostals.length}/50',
+                        ),
+                        const Spacer(),
+                        _buildTimerText(session.elapsed),
+                        const SizedBox(width: 4),
+                        _buildMuteButton(),
+                        _buildPauseButton(),
+                      ],
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4, bottom: 4),
+                      child: LinearProgressIndicator(
+                        value: session.matchedPostals.length / 50.0,
+                        backgroundColor: Colors.white24,
+                        valueColor: const AlwaysStoppedAnimation<Color>(
+                            Colors.greenAccent),
+                        minHeight: 6,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      '${session.matchedPostals.length} / 50',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const Spacer(),
-                    _buildTimerText(session.elapsed),
-                    const SizedBox(width: 4),
-                    _buildMuteButton(),
-                    _buildPauseButton(),
                   ],
+                ),
+              ),
+              // Text input — positioned ABOVE chip grid so keyboard does not
+              // compress the matched-state chips.
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                child: TextField(
+                  controller: _controller,
+                  autofocus: true,
+                  textCapitalization: TextCapitalization.characters,
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: _onSubmit,
+                  style: const TextStyle(fontSize: 16),
+                  enabled: mapDataAsync.hasValue,
+                  decoration: const InputDecoration(
+                    hintText: 'Type a state name or code...',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
               ),
               // Chip grid
@@ -374,22 +424,6 @@ class _SpeedTypingScreenState extends ConsumerState<SpeedTypingScreen> {
                     spacing: 8,
                     runSpacing: 8,
                     children: chips,
-                  ),
-                ),
-              ),
-              // Text input
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                child: TextField(
-                  controller: _controller,
-                  textCapitalization: TextCapitalization.characters,
-                  textInputAction: TextInputAction.done,
-                  onSubmitted: _onSubmit,
-                  style: const TextStyle(fontSize: 16),
-                  enabled: mapDataAsync.hasValue,
-                  decoration: const InputDecoration(
-                    hintText: 'Type a state name or code...',
-                    border: OutlineInputBorder(),
                   ),
                 ),
               ),
@@ -408,6 +442,104 @@ class _SpeedTypingScreenState extends ConsumerState<SpeedTypingScreen> {
 
         return scaffold;
       },
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Private helper widgets
+// ---------------------------------------------------------------------------
+
+/// Renders a labelled stat column (label above value).
+class _StatColumn extends StatelessWidget {
+  const _StatColumn({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 10,
+            color: Colors.white70,
+          ),
+        ),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Chip that animates in with elasticOut scale + easeIn fade over 350ms.
+class _AnimatedChip extends StatefulWidget {
+  const _AnimatedChip({
+    super.key,
+    required this.postal,
+    required this.stateName,
+  });
+
+  final String postal;
+  final String stateName;
+
+  @override
+  State<_AnimatedChip> createState() => _AnimatedChipState();
+}
+
+class _AnimatedChipState extends State<_AnimatedChip>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _scale;
+  late final Animation<double> _opacity;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 350),
+    );
+    _scale = CurvedAnimation(parent: _ctrl, curve: Curves.elasticOut);
+    _opacity = CurvedAnimation(parent: _ctrl, curve: Curves.easeIn);
+    _ctrl.forward();
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _opacity,
+      child: ScaleTransition(
+        scale: _scale,
+        child: Chip(
+          backgroundColor: Colors.green.shade700,
+          label: Text(
+            widget.stateName,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+              fontSize: 16,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

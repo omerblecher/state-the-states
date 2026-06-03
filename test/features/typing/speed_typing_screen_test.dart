@@ -173,7 +173,7 @@ void main() {
   });
 
   group('SpeedTypingScreen', () {
-    testWidgets('renders AppBar with title Speed Typing', (tester) async {
+    testWidgets('renders AppBar with title Name all the states', (tester) async {
       final session = GameSession(
         phase: GamePhase.playing,
         mode: GameMode.speedTyping,
@@ -187,7 +187,7 @@ void main() {
       await tester.pumpWidget(_buildTypingScreen(session));
       await tester.pump(); // let FutureProvider emit
 
-      expect(find.text('Speed Typing'), findsAtLeastNWidgets(1));
+      expect(find.text('Name all the states'), findsAtLeastNWidgets(1));
     });
 
     testWidgets(
