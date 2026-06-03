@@ -39,7 +39,7 @@ class SessionRestoreCard extends StatelessWidget {
       case GameMode.grandMaster:
         return 'Grand Master';
       case GameMode.speedTyping:
-        return 'Speed Typing';
+        return 'Name all the states';
     }
   }
 

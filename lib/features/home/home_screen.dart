@@ -148,7 +148,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               const SizedBox(height: 12),
               _ModeCard(
                 mode: GameMode.speedTyping,
-                name: 'Speed Typing',
+                name: 'Name all the states',
                 description: 'Name all 50 states by typing — beat the clock.',
                 icon: Icons.keyboard,
                 cardColor: const Color(0xFF00695C),
