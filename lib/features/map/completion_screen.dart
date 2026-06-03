@@ -29,7 +29,7 @@ int computeStarCount(int score, int? previousBest) {
 ///
 /// Shows a 1–3 star rating (D-11), personal-best badge with confetti overlay,
 /// a score card with stat rows, and Back to Menu / Play Again CTAs.
-/// No share_plus or AdMob calls (D-13 — v2 only).
+/// Share flow is widget-layer only; GameSessionNotifier has zero ad/share imports (COMP-03 walled-garden).
 class CompletionScreen extends ConsumerStatefulWidget {
   const CompletionScreen({
     super.key,
@@ -92,18 +92,49 @@ class _CompletionScreenState extends ConsumerState<CompletionScreen>
   }
 
   Future<void> _onSharePressed() async {
-    final passed = await showDialog<bool>(
+    final passed = await _showParentalGate();
+    if (passed != true || !mounted) return;
+    await _captureAndShare();
+  }
+
+  Future<bool?> _showParentalGate() {
+    return showDialog<bool>(
       context: context,
+      barrierDismissible: false,
       builder: (_) => const MathChallengeDialog(),
     );
-    if (passed != true || !mounted) return;
-    final elapsed = _formatTime(widget.session.elapsed);
-    final modeName = widget.session.mode.name;
-    final score = widget.session.score;
-    await SharePlus.instance.share(ShareParams(
-      text: 'I placed all 50 US states in $elapsed on $modeName mode!'
-          ' Score: $score — State the States 🇺🇸',
-    ));
+  }
+
+  Future<void> _captureAndShare() async {
+    if (!mounted) return;
+    File? file;
+    try {
+      final boundary = _scoreCardKey.currentContext
+          ?.findRenderObject() as RenderRepaintBoundary?;
+      if (boundary == null) return;
+
+      final image = await boundary.toImage(pixelRatio: 3.0);
+      final byteData =
+          await image.toByteData(format: ui.ImageByteFormat.png);
+      if (byteData == null) return;
+
+      final bytes = byteData.buffer.asUint8List();
+      file = File('${Directory.systemTemp.path}/score_card.png');
+      await file.writeAsBytes(bytes);
+
+      final modeName = widget.session.mode.displayName;
+      final score = widget.session.score;
+
+      if (mounted) setState(() => _isSharing = true);
+      await SharePlus.instance.share(ShareParams(
+        text:
+            'New lowest score in $modeName! Score: $score — State the States 🇺🇸',
+        files: [XFile(file.path)],
+      ));
+    } finally {
+      file?.deleteSync();
+      if (mounted) setState(() => _isSharing = false);
+    }
   }
 
   Color _modeColor(GameMode mode) => switch (mode) {
@@ -362,15 +393,15 @@ class MathChallengeDialog extends StatefulWidget {
 class _MathChallengeDialogState extends State<MathChallengeDialog> {
   final _controller = TextEditingController();
   String? _error;
-  late final int _a;
-  late final int _b;
+  late int _a;
+  late int _b;
 
   @override
   void initState() {
     super.initState();
-    final seed = DateTime.now().millisecondsSinceEpoch;
-    _a = 3 + seed % 7; // 3–9
-    _b = 2 + (seed ~/ 13) % 8; // 2–9
+    final rng = math.Random();
+    _a = 10 + rng.nextInt(90);
+    _b = 2 + rng.nextInt(8);
   }
 
   @override
@@ -381,9 +412,13 @@ class _MathChallengeDialogState extends State<MathChallengeDialog> {
 
   void _onConfirm() {
     final entered = int.tryParse(_controller.text.trim());
-    if (entered == _a + _b) {
+    if (entered == _a * _b) {
       Navigator.of(context).pop(true);
     } else {
+      _controller.clear();
+      final rng = math.Random();
+      _a = 10 + rng.nextInt(90);
+      _b = 2 + rng.nextInt(8);
       setState(() => _error = 'Incorrect — try again');
     }
   }
@@ -399,7 +434,7 @@ class _MathChallengeDialogState extends State<MathChallengeDialog> {
           const Text('To share, a grown-up needs to answer:'),
           const SizedBox(height: 16),
           Text(
-            'What is $_a + $_b?',
+            'What is $_a × $_b?',
             style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
