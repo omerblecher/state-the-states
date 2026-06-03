@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
-status: verifying
+status: executing
 stopped_at: Phase 8 context gathered
-last_updated: "2026-06-03T11:21:35.896Z"
+last_updated: "2026-06-03T15:10:46.693Z"
 last_activity: 2026-06-03
 progress:
   total_phases: 8
   completed_phases: 6
-  total_plans: 32
-  completed_plans: 31
+  total_plans: 38
+  completed_plans: 33
   percent: 75
 ---
 
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-02)
 
 **Core value:** A child can drag a state onto its correct place on the U.S. map and immediately feel they got it right — the interactive map placement loop must be smooth, forgiving, and rewarding above everything else.
-**Current focus:** Phase 6 — Speed Typing Mode
+**Current focus:** Phase 08 — full-admob-layer
 
 ## Current Position
 
-Phase: 6 (Speed Typing Mode) — EXECUTING
-Plan: 4 of 4
-Status: Phase complete — ready for verification
+Phase: 08 (full-admob-layer) — EXECUTING
+Plan: 2 of 6
+Status: Ready to execute
 Last activity: 2026-06-03
 
-Progress: [██████████] 97%
+Progress: [█████████░] 87%
 
 ## Performance Metrics
 
@@ -74,6 +74,7 @@ Progress: [██████████] 97%
 | Phase 06-speed-typing-mode P03 | 10min | 2 tasks | 4 files |
 | Phase 07-gated-sharing-completion P01 | 15min | 1 tasks | 1 files |
 | Phase 07-gated-sharing-completion P02 | 16min | 2 tasks | 1 files |
+| Phase 08-full-admob-layer P01 | 15min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -158,6 +159,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-03T11:21:35.877Z
+Last session: 2026-06-03T15:10:46.660Z
 Stopped at: Phase 8 context gathered
-Resume file: .planning/phases/08-full-admob-layer/08-CONTEXT.md
+Resume file: None

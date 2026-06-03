@@ -107,8 +107,8 @@ Golf-style scoring (lowest wins). Canonical entity set = **50 states** (no D.C.)
 
 ### AdMob + Mediation (AD)
 
-- [ ] **AD-01**: `RequestConfiguration` with `tagForChildDirectedTreatment: yes` and `maxAdContentRating: g` is set before `MobileAds.instance.initialize()`.
-- [ ] **AD-02**: Unity, ironSource, and InMobi mediation adapters are initialized with their own per-SDK COPPA/child-directed flags in `ads_initializer.dart`. AppLovin remains disabled (`kAppLovinEnabled = false`).
+- [x] **AD-01**: `RequestConfiguration` with `tagForChildDirectedTreatment: yes` and `maxAdContentRating: g` is set before `MobileAds.instance.initialize()`.
+- [x] **AD-02**: Unity, ironSource, and InMobi mediation adapters are initialized with their own per-SDK COPPA/child-directed flags in `ads_initializer.dart`. AppLovin remains disabled (`kAppLovinEnabled = false`).
 - [ ] **AD-03**: A banner ad is shown at the bottom of `HomeScreen`.
 - [ ] **AD-04**: An interstitial ad is triggered once on `CompletionScreen.initState()` (post-game, not mid-round or on pause).
 - [ ] **AD-05**: An App Open ad is shown on cold app launch; it is suppressed when an active game session exists.
@@ -117,7 +117,7 @@ Golf-style scoring (lowest wins). Canonical entity set = **50 states** (no D.C.)
 ### Rewarded Hint Refill (HINT)
 
 - [ ] **HINT-03**: When `hintsRemaining == 0` and the player taps the hint button, a "Watch an ad for 2 more hints?" prompt is shown.
-- [ ] **HINT-04**: If the player watches the rewarded ad to completion, `refillHints()` resets `hintsRemaining` to 2 and the hint is immediately used.
+- [x] **HINT-04**: If the player watches the rewarded ad to completion, `refillHints()` resets `hintsRemaining` to 2 and the hint is immediately used.
 - [ ] **HINT-05**: The reward is granted in `onUserEarnedReward` only — never in `onAdDismissedFullScreenContent`.
 
 ---
@@ -193,12 +193,12 @@ Golf-style scoring (lowest wins). Canonical entity set = **50 states** (no D.C.)
 | SHARE-02 | Phase 7 (v2) | Complete |
 | SHARE-03 | Phase 7 (v2) | Complete |
 | SHARE-04 | Phase 7 (v2) | Complete |
-| AD-01 | Phase 8 (v2) | Pending |
-| AD-02 | Phase 8 (v2) | Pending |
+| AD-01 | Phase 8 (v2) | Complete |
+| AD-02 | Phase 8 (v2) | Complete |
 | AD-03 | Phase 8 (v2) | Pending |
 | AD-04 | Phase 8 (v2) | Pending |
 | AD-05 | Phase 8 (v2) | Pending |
 | AD-06 | Phase 8 (v2) | Pending |
 | HINT-03 | Phase 8 (v2) | Pending |
-| HINT-04 | Phase 8 (v2) | Pending |
+| HINT-04 | Phase 8 (v2) | Complete |
 | HINT-05 | Phase 8 (v2) | Pending |

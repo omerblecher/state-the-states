@@ -269,11 +269,11 @@ Plans:
 
 **Wave 0** *(human checkpoint + test stubs — no Flutter deps)*
 
-- [ ] 08-00-PLAN.md — Production AdMob ID collection (human checkpoint) + RED test stubs: ads_initializer_test.dart, real_ad_service_test.dart, game_session_notifier_test.dart refillHints()
+- [x] 08-00-PLAN.md — Production AdMob ID collection (human checkpoint) + RED test stubs: ads_initializer_test.dart, real_ad_service_test.dart, game_session_notifier_test.dart refillHints()
 
 **Wave 1** *(blocked on Wave 0 completion)*
 
-- [ ] 08-01-PLAN.md — pubspec mediation packages + ads_initializer COPPA flags + ad_constants prod IDs + AndroidManifest App ID + GameSessionNotifier.refillHints()
+- [x] 08-01-PLAN.md — pubspec mediation packages + ads_initializer COPPA flags + ad_constants prod IDs + AndroidManifest App ID + GameSessionNotifier.refillHints()
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -302,4 +302,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 5. Polish, Welcome & Accessibility | 6/7 | In Progress|  |
 | 6. Speed Typing Mode | 4/4 | Complete   | 2026-06-02 |
 | 7. Gated Sharing Completion | 2/2 | Complete   | 2026-06-03 |
-| 8. Full AdMob Layer | 0/6 | Not started | - |
+| 8. Full AdMob Layer | 2/6 | In Progress|  |
