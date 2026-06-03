@@ -277,7 +277,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 08-02-PLAN.md — real_ad_service.dart (port from Flags AdMobAdService) + app_state_observer.dart + adServiceProvider switch to RealAdService
+- [x] 08-02-PLAN.md — real_ad_service.dart (port from Flags AdMobAdService) + app_state_observer.dart + adServiceProvider switch to RealAdService
 
 **Wave 3** *(blocked on Wave 2 completion — 08-03 and 08-04 are parallel)*
 
@@ -302,4 +302,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 5. Polish, Welcome & Accessibility | 6/7 | In Progress|  |
 | 6. Speed Typing Mode | 4/4 | Complete   | 2026-06-02 |
 | 7. Gated Sharing Completion | 2/2 | Complete   | 2026-06-03 |
-| 8. Full AdMob Layer | 2/6 | In Progress|  |
+| 8. Full AdMob Layer | 3/6 | In Progress|  |

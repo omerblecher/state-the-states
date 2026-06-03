@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 8 context gathered
-last_updated: "2026-06-03T15:10:46.693Z"
+stopped_at: Completed 08-02-PLAN.md
+last_updated: "2026-06-03T15:24:52.339Z"
 last_activity: 2026-06-03
 progress:
   total_phases: 8
   completed_phases: 6
   total_plans: 38
-  completed_plans: 33
+  completed_plans: 34
   percent: 75
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-06-02)
 ## Current Position
 
 Phase: 08 (full-admob-layer) — EXECUTING
-Plan: 2 of 6
+Plan: 3 of 6
 Status: Ready to execute
 Last activity: 2026-06-03
 
-Progress: [█████████░] 87%
+Progress: [█████████░] 89%
 
 ## Performance Metrics
 
@@ -75,6 +75,7 @@ Progress: [█████████░] 87%
 | Phase 07-gated-sharing-completion P01 | 15min | 1 tasks | 1 files |
 | Phase 07-gated-sharing-completion P02 | 16min | 2 tasks | 1 files |
 | Phase 08-full-admob-layer P01 | 15min | 3 tasks | 5 files |
+| Phase 08-full-admob-layer P02 | 9min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -130,6 +131,8 @@ Recent decisions affecting current work:
 - [Phase ?]: 07-01: Test 3 RED because multiplication RegExp (U+00D7) does not match current addition question format
 - [Phase ?]: 07-02: _isSharing moved after toImage to prevent pumpAndSettle timeout from CircularProgressIndicator infinite animation
 - [Phase ?]: 07-02: MathChallengeDialog renamed public with @visibleForTesting; _a/_b changed from late final to late int for operand regeneration
+- [Phase ?]: Ref is sealed in Riverpod 3.x — use ProviderContainer + overrideWith for RealAdService tests (not mocktail mock)
+- [Phase ?]: 08-02: unnecessary_underscores lint: onUserEarnedReward (_, __) must name second param
 
 ### Pending Todos
 
@@ -159,6 +162,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-03T15:10:46.660Z
-Stopped at: Phase 8 context gathered
+Last session: 2026-06-03T15:24:52.302Z
+Stopped at: Completed 08-02-PLAN.md
 Resume file: None
