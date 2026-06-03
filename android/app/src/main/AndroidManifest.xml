@@ -51,10 +51,9 @@
             android:name="flutterEmbedding"
             android:value="2" />
         <!-- AdMob App ID — required to prevent RuntimeException on launch when google_mobile_ads is present -->
-        <!-- Test App ID — replace with production App ID before Play Store submission -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713"/>
+            android:value="ca-app-pub-4227443066128564~7081667253"/>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

@@ -1,17 +1,14 @@
-// AdMob test app ID (matches AndroidManifest meta-data).
-// Replace with the real app ID before Play Store submission (v2).
-const String kAdMobTestAppId = 'ca-app-pub-3940256099942544~3347511713';
+// AdMob production App ID (matches AndroidManifest meta-data).
+const String kAdMobAppId = 'ca-app-pub-4227443066128564~7081667253';
 
-// Ad unit IDs — intentionally EMPTY in v1. No real ads are requested: the only
-// wired AdService is StubAdService (COPPA walled garden). Populate with
-// production IDs in v2 when the real AdMob service is introduced.
-const String kBannerAdUnitId       = '';
-const String kInterstitialAdUnitId = '';
-const String kRewardedAdUnitId     = '';
-const String kAppOpenAdUnitId      = '';
+// Production ad unit IDs — populated for Phase 8 real ad activation.
+const String kBannerAdUnitId       = 'ca-app-pub-4227443066128564/1019125702';
+const String kInterstitialAdUnitId = 'ca-app-pub-4227443066128564/9220059672';
+const String kRewardedAdUnitId     = 'ca-app-pub-4227443066128564/7906978004';
+const String kAppOpenAdUnitId      = 'ca-app-pub-4227443066128564/5312604258';
 
 // AppLovin — disabled. Set to true ONLY when: (1) AppLovin account is approved,
 // (2) AppLovin is back on the Google Play Families Self-Certified Ads SDK
-// Program list. Mediation is v2 scope; no mediation SDKs ship in v1.
+// Program list. Mediation is v2 scope; AppLovin SDK 13.0+ refuses child-directed init.
 const bool   kAppLovinEnabled = false;
 const String kAppLovinSdkKey  = '';
