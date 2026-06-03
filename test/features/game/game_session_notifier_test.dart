@@ -529,6 +529,54 @@ void main() {
     });
   });
 
+  group('refillHints() — HINT-04', () {
+    /// Helper: start a game with skipCountdown:true → immediate playing phase.
+    Future<GameSessionNotifier> startLearnGame() async {
+      final notifier = container.read(gameSessionProvider.notifier);
+      await container.read(gameSessionProvider.future);
+      notifier.startGame(GameMode.learn, skipCountdown: true);
+      return notifier;
+    }
+
+    test(
+        'HINT-04: refillHints() resets hintsRemaining to 2 when in playing phase',
+        () async {
+      final notifier = await startLearnGame();
+      notifier.useHint(); // 2 → 1
+      notifier.useHint(); // 1 → 0
+      final before = container.read(gameSessionProvider).value!;
+      expect(before.hintsRemaining, 0);
+      // RED: refillHints() does not exist yet — NoSuchMethodError on run.
+      (notifier as dynamic).refillHints();
+      final after = container.read(gameSessionProvider).value!;
+      expect(after.hintsRemaining, 2);
+    });
+
+    test('HINT-04: refillHints() is a no-op when game is not in playing phase',
+        () async {
+      final notifier = container.read(gameSessionProvider.notifier);
+      await container.read(gameSessionProvider.future);
+      // Phase is idle — refillHints() must not change hintsRemaining.
+      // RED: refillHints() does not exist yet — NoSuchMethodError on run.
+      (notifier as dynamic).refillHints();
+      final session = container.read(gameSessionProvider).value!;
+      expect(session.hintsRemaining, 2);
+    });
+
+    test('HINT-04: refillHints() does not modify the score or hintPenalty',
+        () async {
+      final notifier = await startLearnGame();
+      notifier.useHint(); // _hintPenalty = 5; score >= 5
+      final before = container.read(gameSessionProvider).value!;
+      final scoreBefore = before.score;
+      expect(scoreBefore, greaterThanOrEqualTo(5));
+      // RED: refillHints() does not exist yet — NoSuchMethodError on run.
+      (notifier as dynamic).refillHints();
+      final after = container.read(gameSessionProvider).value!;
+      expect(after.score, scoreBefore);
+    });
+  });
+
   // ── submitTyping() + skipCountdown ────────────────────────────────────────
   group('submitTyping', () {
     /// Helper: start a game with skipCountdown:true → immediate playing phase.
