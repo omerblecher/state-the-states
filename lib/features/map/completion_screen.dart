@@ -7,6 +7,9 @@ import 'package:share_plus/share_plus.dart';
 
 import 'package:state_states/features/game/game_mode.dart';
 import 'package:state_states/features/game/game_session.dart';
+import 'dart:io';
+import 'dart:ui' as ui;
+import 'package:flutter/rendering.dart';
 
 /// Returns the number of stars (1–3) earned for this game result.
 ///
@@ -47,6 +50,8 @@ class _CompletionScreenState extends ConsumerState<CompletionScreen>
   bool _isNewPb = false;
   bool _showPbOverlay = false;
   late AnimationController _pbController;
+  final GlobalKey _scoreCardKey = GlobalKey();
+  bool _isSharing = false;
 
   @override
   void initState() {
@@ -89,7 +94,7 @@ class _CompletionScreenState extends ConsumerState<CompletionScreen>
   Future<void> _onSharePressed() async {
     final passed = await showDialog<bool>(
       context: context,
-      builder: (_) => const _MathChallengeDialog(),
+      builder: (_) => const MathChallengeDialog(),
     );
     if (passed != true || !mounted) return;
     final elapsed = _formatTime(widget.session.elapsed);
@@ -200,6 +205,7 @@ class _CompletionScreenState extends ConsumerState<CompletionScreen>
           const SizedBox(height: 32),
           // Score card
           RepaintBoundary(
+            key: _scoreCardKey,
             child: Card(
               elevation: 0,
               shape: RoundedRectangleBorder(
@@ -290,23 +296,31 @@ class _CompletionScreenState extends ConsumerState<CompletionScreen>
               label: const Text('Play Again'),
             ),
           ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: OutlinedButton.icon(
-              onPressed: _onSharePressed,
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.grey.shade700,
-                side: BorderSide(color: Colors.grey.shade400),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+          if (_isNewPb) ...[
+            const SizedBox(height: 12),
+            if (_isSharing)
+              const SizedBox(
+                height: 48,
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: OutlinedButton.icon(
+                  onPressed: _onSharePressed,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.grey.shade700,
+                    side: BorderSide(color: Colors.grey.shade400),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  icon: const Icon(Icons.share),
+                  label: const Text('Share result'),
                 ),
               ),
-              icon: const Icon(Icons.share),
-              label: const Text('Share result'),
-            ),
-          ),
+          ],
         ],
       ),
     );
@@ -335,16 +349,17 @@ class _CompletionScreenState extends ConsumerState<CompletionScreen>
 }
 
 /// COPPA-required adult verification before sharing.
-/// Shows a simple addition problem; only a grown-up who can do mental arithmetic
+/// Shows a simple multiplication problem; only a grown-up who can do mental arithmetic
 /// can proceed, preventing a child from accidentally sharing.
-class _MathChallengeDialog extends StatefulWidget {
-  const _MathChallengeDialog();
+@visibleForTesting
+class MathChallengeDialog extends StatefulWidget {
+  const MathChallengeDialog({super.key});
 
   @override
-  State<_MathChallengeDialog> createState() => _MathChallengeDialogState();
+  State<MathChallengeDialog> createState() => _MathChallengeDialogState();
 }
 
-class _MathChallengeDialogState extends State<_MathChallengeDialog> {
+class _MathChallengeDialogState extends State<MathChallengeDialog> {
   final _controller = TextEditingController();
   String? _error;
   late final int _a;
