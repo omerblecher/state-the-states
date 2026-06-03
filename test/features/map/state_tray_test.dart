@@ -79,4 +79,77 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
     await tester.pump(const Duration(milliseconds: 500));
   });
+
+  // -------------------------------------------------------------------------
+  // Phase 8: D-08 — hint button enabled when hintsRemaining == 0
+  // -------------------------------------------------------------------------
+
+  testWidgets(
+      'D-08: hint button enabled when hintsRemaining == 0 and onHintPressed != null',
+      (tester) async {
+    // Before fix: enabled = onHintPressed != null && hintsRemaining > 0
+    // After fix:  enabled = onHintPressed != null
+    // When hintsRemaining == 0 and callback wired, button MUST be enabled.
+    var pressed = false;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: StateTray(
+            postal: 'CA',
+            stateName: 'California',
+            mode: GameMode.learn,
+            sequenceIndex: 0,
+            cardKey: GlobalKey(),
+            hintsRemaining: 0,
+            onHintPressed: () => pressed = true,
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    // Hint ×0 label must be visible (zero depleted).
+    expect(find.text('Hint ×0'), findsOneWidget);
+
+    // The ElevatedButton.icon must be enabled (onPressed != null).
+    final button = tester.widget<ElevatedButton>(
+      find.ancestor(
+        of: find.byIcon(Icons.lightbulb_outline),
+        matching: find.byType(ElevatedButton),
+      ),
+    );
+    expect(button.onPressed, isNotNull,
+        reason: 'D-08: hint button must be enabled at hintsRemaining == 0');
+  });
+
+  testWidgets(
+      'D-08: hint button disabled when onHintPressed == null (countdown phase)',
+      (tester) async {
+    // Button disabled during countdown — no callback wired.
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: StateTray(
+            postal: 'CA',
+            stateName: 'California',
+            mode: GameMode.learn,
+            sequenceIndex: 0,
+            cardKey: GlobalKey(),
+            hintsRemaining: 2,
+            // onHintPressed: null (default)
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final button = tester.widget<ElevatedButton>(
+      find.ancestor(
+        of: find.byIcon(Icons.lightbulb_outline),
+        matching: find.byType(ElevatedButton),
+      ),
+    );
+    expect(button.onPressed, isNull,
+        reason: 'Hint button must be disabled when onHintPressed == null');
+  });
 }
