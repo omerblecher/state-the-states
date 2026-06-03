@@ -281,7 +281,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion — 08-03 and 08-04 are parallel)*
 
-- [ ] 08-03-PLAN.md — app.dart → ConsumerStatefulWidget + AppStateEventNotifier + App Open lifecycle
+- [x] 08-03-PLAN.md — app.dart → ConsumerStatefulWidget + AppStateEventNotifier + App Open lifecycle
 - [ ] 08-04-PLAN.md — StateTray hint guard + MapScreen rewarded dialog + HomeScreen banner + CompletionScreen interstitial
 
 **Wave 4** *(blocked on Wave 3 completion)*
@@ -302,4 +302,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 5. Polish, Welcome & Accessibility | 6/7 | In Progress|  |
 | 6. Speed Typing Mode | 4/4 | Complete   | 2026-06-02 |
 | 7. Gated Sharing Completion | 2/2 | Complete   | 2026-06-03 |
-| 8. Full AdMob Layer | 3/6 | In Progress|  |
+| 8. Full AdMob Layer | 4/6 | In Progress|  |
