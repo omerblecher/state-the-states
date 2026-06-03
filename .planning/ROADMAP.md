@@ -22,7 +22,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 5: Polish, Welcome & Accessibility** - Welcome screen, anthem, hints, tutorial, session restore, a11y audit
 - [x] **Phase 6: Speed Typing Mode** - Mode 5 end-to-end: SpeedTypingScreen, UPPERCASE input, found-states grid, golf scoring, local best score
  (completed 2026-06-02)
-- [ ] **Phase 7: Gated Sharing Completion** - PB-only Share button, screenshot capture, multiplication math gate
+- [x] **Phase 7: Gated Sharing Completion** - PB-only Share button, screenshot capture, multiplication math gate (completed 2026-06-03)
 - [ ] **Phase 8: Full AdMob Layer** - Banner/interstitial/rewarded/App Open + mediation COPPA init + rewarded hint refill
 
 ## Phase Details
@@ -246,7 +246,7 @@ Plans:
 
 **Wave 1** *(blocked on Wave 0 test stubs)*
 
-- [ ] 07-02-PLAN.md — Implementation: PB-gate Share button, upgrade math gate to multiplication, add _captureAndShare + _showParentalGate, refactor _onSharePressed
+- [x] 07-02-PLAN.md — Implementation: PB-gate Share button, upgrade math gate to multiplication, add _captureAndShare + _showParentalGate, refactor _onSharePressed
 
 **UI hint**: yes
 
@@ -278,5 +278,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 4. Full Play Loop | 6/6 | Complete   | 2026-06-01 |
 | 5. Polish, Welcome & Accessibility | 6/7 | In Progress|  |
 | 6. Speed Typing Mode | 4/4 | Complete   | 2026-06-02 |
-| 7. Gated Sharing Completion | 1/2 | In Progress|  |
+| 7. Gated Sharing Completion | 2/2 | Complete   | 2026-06-03 |
 | 8. Full AdMob Layer | 0/? | Not started | - |
