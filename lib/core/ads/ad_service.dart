@@ -6,6 +6,10 @@ abstract interface class AdService {
   /// Callers embed this in their layout — no SDK imports needed in screens.
   Widget getBannerWidget();
 
+  /// Loads an adaptive banner for [screenWidthDp]. Safe to call multiple times
+  /// (loads only once). Call from initState via addPostFrameCallback, never from build().
+  Future<void> loadBannerForWidth(int screenWidthDp);
+
   /// Shows the preloaded interstitial ad if available. Safe to call when no ad
   /// is loaded (silently no-ops). Call once in initState — never in build().
   Future<void> showInterstitialAd();

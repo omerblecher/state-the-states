@@ -7,6 +7,7 @@ import 'package:state_states/features/game/game_phase.dart';
 import 'ad_service.dart';
 import 'ad_load_state.dart';
 import 'ad_constants.dart';
+import 'ad_service_provider.dart';
 
 class RealAdService implements AdService {
   RealAdService(this._ref);
@@ -33,6 +34,8 @@ class RealAdService implements AdService {
         onAdLoaded: (ad) {
           _bannerAd = ad as BannerAd;
           _bannerState = const AdLoaded();
+          // Increment bannerReadyProvider so HomeScreen rebuilds and calls getBannerWidget().
+          _ref.read(bannerReadyProvider.notifier).update((n) => n + 1);
         },
         onAdFailedToLoad: (ad, error) {
           ad.dispose();

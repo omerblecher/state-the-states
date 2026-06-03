@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:state_states/core/ads/ad_service_provider.dart';
-import 'package:state_states/core/ads/real_ad_service.dart';
 import 'package:state_states/core/data/game_state_repository.dart';
 import 'package:state_states/core/data/high_score_repository.dart';
 import 'package:state_states/features/game/game_mode.dart';
@@ -21,20 +20,28 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
+  Future<({GameSession session, int hintPenalty})?>? _savedSessionFuture;
+
   @override
   void initState() {
     super.initState();
-    // AD-03: Load banner once from initState via addPostFrameCallback.
-    // Never from build() — see RESEARCH.md Pitfall 4 / T-08-04-03.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
+      // AD-03: Load banner once; never from build() — see RESEARCH.md Pitfall 4 / T-08-04-03.
       final widthDp = MediaQuery.of(context).size.width.toInt();
-      (ref.read(adServiceProvider) as RealAdService).loadBannerForWidth(widthDp);
+      ref.read(adServiceProvider).loadBannerForWidth(widthDp);
+      // CR-04: Cache the session-restore future once so FutureBuilder does not
+      // re-issue a new Future on every rebuild (which would flicker and race dismiss).
+      final repo = await ref.read(gameStateRepositoryProvider.future);
+      if (mounted) setState(() => _savedSessionFuture = repo.loadSession());
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    // Watch bannerReadyProvider so this widget rebuilds when RealAdService.onAdLoaded
+    // increments the counter, causing getBannerWidget() to return the loaded AdWidget.
+    ref.watch(bannerReadyProvider);
     final repoAsync = ref.watch(highScoreRepositoryProvider);
     return Scaffold(
       backgroundColor: const Color(0xFFF0F4F8),
@@ -53,10 +60,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Session restore card (HOME-03): shown when a saved session exists.
+        // CR-04: _savedSessionFuture is cached in initState — FutureBuilder receives
+        // the same Future object across rebuilds, preventing flicker and dismiss races.
         FutureBuilder<({GameSession session, int hintPenalty})?>(
-          future: ref
-              .read(gameStateRepositoryProvider.future)
-              .then((r) => r.loadSession()),
+          future: _savedSessionFuture,
           builder: (context, snapshot) {
             if (!snapshot.hasData || snapshot.data == null) {
               return const SizedBox.shrink();
@@ -175,8 +182,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ),
         // AD-03: Banner ad slot — below mode cards, above privacy footer.
-        // ref.watch rebuilds this widget when the banner loads.
-        ref.watch(adServiceProvider).getBannerWidget(),
+        // ref.watch(bannerReadyProvider) at the top of build() triggers a rebuild
+        // when RealAdService increments the counter in onAdLoaded; then
+        // getBannerWidget() returns the loaded AdWidget instead of SizedBox.shrink().
+        ref.read(adServiceProvider).getBannerWidget(),
         // Privacy footer
         Padding(
           padding: const EdgeInsets.only(bottom: 8),

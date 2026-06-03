@@ -12,3 +12,8 @@ final adServiceProvider = Provider<AdService>((ref) {
   service.preloadAll();
   return service;
 });
+
+/// Incremented by RealAdService.onAdLoaded to notify HomeScreen to rebuild
+/// and call getBannerWidget(). Watching this provider is the mechanism that
+/// triggers the banner slot to appear after the async ad load completes.
+final bannerReadyProvider = StateProvider<int>((ref) => 0);
