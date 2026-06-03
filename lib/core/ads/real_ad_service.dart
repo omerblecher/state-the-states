@@ -20,6 +20,7 @@ class RealAdService implements AdService {
 
   /// Call once from a screen's [didChangeDependencies] or [initState] with the
   /// device's logical screen width in dp. Safe to call multiple times (loads only once).
+  @override
   Future<void> loadBannerForWidth(int screenWidthDp) async {
     if (_bannerState is AdLoaded) return; // guard against double-load (T-08-02-04)
     final adSize = await AdSize.getLargeAnchoredAdaptiveBannerAdSize(
@@ -35,7 +36,7 @@ class RealAdService implements AdService {
           _bannerAd = ad as BannerAd;
           _bannerState = const AdLoaded();
           // Increment bannerReadyProvider so HomeScreen rebuilds and calls getBannerWidget().
-          _ref.read(bannerReadyProvider.notifier).update((n) => n + 1);
+          _ref.read(bannerReadyProvider.notifier).increment();
         },
         onAdFailedToLoad: (ad, error) {
           ad.dispose();

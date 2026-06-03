@@ -18,6 +18,9 @@ class _SpyAdService implements AdService {
   Widget getBannerWidget() => const SizedBox.shrink();
 
   @override
+  Future<void> loadBannerForWidth(int screenWidthDp) async {}
+
+  @override
   Future<void> showInterstitialAd() async {
     interstitialCallCount++;
   }

@@ -13,7 +13,15 @@ final adServiceProvider = Provider<AdService>((ref) {
   return service;
 });
 
-/// Incremented by RealAdService.onAdLoaded to notify HomeScreen to rebuild
-/// and call getBannerWidget(). Watching this provider is the mechanism that
-/// triggers the banner slot to appear after the async ad load completes.
-final bannerReadyProvider = StateProvider<int>((ref) => 0);
+/// Notifier that tracks banner-load revision. Incremented by RealAdService.onAdLoaded
+/// to notify HomeScreen to rebuild and call getBannerWidget(). Watching this provider
+/// is the mechanism that triggers the banner slot to appear after the async ad load.
+class BannerReadyNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  void increment() => state = state + 1;
+}
+
+final bannerReadyProvider =
+    NotifierProvider<BannerReadyNotifier, int>(BannerReadyNotifier.new);
