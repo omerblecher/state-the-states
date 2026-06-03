@@ -204,7 +204,7 @@ class GameSessionNotifier extends AsyncNotifier<GameSession> {
       return TypingResult.invalid;
     }
 
-    final normalized = input.trim();
+    final normalized = input.trim().toUpperCase();
     if (normalized.isEmpty) return TypingResult.invalid;
 
     // Explicit for-loop — no package:collection firstWhereOrNull needed.
