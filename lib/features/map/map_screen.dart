@@ -326,6 +326,9 @@ class _MapScreenState extends ConsumerState<MapScreen>
   void _startSequence(List<StateData> states) {
     if (_sequenceInitialized) return;
     _sequenceInitialized = true;
+    // WR-08: assign _states here (first time data is available) rather than in
+    // build(), so _handleDrop always has a valid list without a build-time side effect.
+    _states = states;
     // Filter DC (postal == 'DC') — 50 placeable states only (Pitfall 7)
     final playable = states
         .where((s) => s.postal != 'DC')
@@ -695,8 +698,7 @@ class _MapScreenState extends ConsumerState<MapScreen>
     List<StateData> states,
     GameSession? session,
   ) {
-    // Store states for _handleDrop; call _startSequence once, then try startGame.
-    _states = states;
+    // _startSequence assigns _states on first call (WR-08: no build-time side effects).
     _startSequence(states);
     _maybeStartGame(session);
 
