@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:state_states/core/data/game_state_repository.dart';
 import 'package:state_states/core/data/high_score_repository.dart';
@@ -169,7 +170,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: SizedBox(
                 height: 48,
                 child: TextButton(
-                  onPressed: () {},
+                  onPressed: () => launchUrl(
+                    Uri.parse('https://omerblecher.github.io/state-the-states/privacy-policy.html'),
+                    mode: LaunchMode.externalApplication,
+                  ),
                   child: const Text(
                     'Privacy Policy',
                     style: TextStyle(fontSize: 12, color: Colors.grey),

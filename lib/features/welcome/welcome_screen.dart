@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/audio/audio_service_provider.dart';
 import '../../core/data/state_data_service.dart';
@@ -463,9 +464,10 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
                           child: SizedBox(
                             height: 48,
                             child: TextButton(
-                              onPressed: () {
-                                // url_launcher deferred to v2
-                              },
+                              onPressed: () => launchUrl(
+                                Uri.parse('https://omerblecher.github.io/state-the-states/privacy-policy.html'),
+                                mode: LaunchMode.externalApplication,
+                              ),
                               child: Text(
                                 'Privacy Policy',
                                 style: TextStyle(
