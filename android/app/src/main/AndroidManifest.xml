@@ -6,9 +6,10 @@
         android:name="com.google.android.gms.permission.AD_ID"
         tools:node="remove"/>
     <!-- COMP-02: google_mobile_ads 8.x transitively merges the Android Privacy
-         Sandbox AdServices permissions. For a COPPA child-directed, fully-offline
-         app with no real ads (StubAdService walled garden), all three are stripped
-         so the built APK cannot access the advertising ID, attribution, or Topics. -->
+         Sandbox AdServices permissions. For a COPPA child-directed app all three
+         are stripped so the built APK cannot access the advertising ID, attribution,
+         or Topics. Child-directed treatment is enforced via tagForChildDirectedTreatment
+         and the AD_ID removal above. -->
     <uses-permission
         android:name="android.permission.ACCESS_ADSERVICES_AD_ID"
         tools:node="remove"/>
@@ -54,11 +55,6 @@
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-4227443066128564~7081667253"/>
-        <!-- COMP-02: Remove Privacy Sandbox adservices library hint injected by mediation AAR manifests -->
-        <uses-library
-            android:name="android.ext.adservices"
-            android:required="false"
-            tools:node="remove"/>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

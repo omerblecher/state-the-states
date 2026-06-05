@@ -13,11 +13,7 @@ Future<void> main() async {
   final audioSvc = RealAudioService();
   await audioSvc.init();
 
-  try {
-    await initializeAds();
-  } catch (e) {
-    debugPrint('initializeAds failed (non-fatal in v1, no real ads): $e');
-  }
+  await initializeAds();
   runApp(
     ProviderScope(
       overrides: [
