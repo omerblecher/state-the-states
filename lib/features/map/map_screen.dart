@@ -323,21 +323,28 @@ class _MapScreenState extends ConsumerState<MapScreen>
 
   // ---------- Sequence initialization -----------------------------------------
 
-  void _startSequence(List<StateData> states) {
+  void _startSequence(List<StateData> states, GameSession? session) {
     if (_sequenceInitialized) return;
     _sequenceInitialized = true;
     // WR-08: assign _states here (first time data is available) rather than in
     // build(), so _handleDrop always has a valid list without a build-time side effect.
     _states = states;
-    // Filter DC (postal == 'DC') — 50 placeable states only (Pitfall 7)
+    _stateIndex = {for (final s in states) s.postal: s};
+
+    // Seed matched set from a restored session (e.g. GamePhase.paused with
+    // matchedPostals populated). Falls back to empty for a fresh game.
+    final alreadyMatched = Set<String>.from(session?.matchedPostals ?? const []);
+    _matchedPostals = alreadyMatched;
+
+    // Filter DC (postal == 'DC') — 50 placeable states only (Pitfall 7).
+    // Also exclude any already-matched postals so they are never re-prompted.
     final playable = states
-        .where((s) => s.postal != 'DC')
+        .where((s) => s.postal != 'DC' && !alreadyMatched.contains(s.postal))
         .map((s) => s.postal)
         .toList()
       ..shuffle();
     _remainingPostals = playable;
     if (_remainingPostals.isNotEmpty) _currentPostal = _remainingPostals.first;
-    _stateIndex = {for (final s in states) s.postal: s};
     // _fitMapToScreen only; startGame is deferred to _maybeStartGame so that
     // the race between stateDataProvider and gameSessionProvider is safe.
     WidgetsBinding.instance.addPostFrameCallback((_) => _fitMapToScreen());
@@ -420,6 +427,9 @@ class _MapScreenState extends ConsumerState<MapScreen>
       if (!mounted) return;
       final completedSession = ref.read(gameSessionProvider).value;
       if (completedSession == null) return;
+      // Allow success SFX and animations to finish before pushing the victory screen.
+      await Future.delayed(const Duration(milliseconds: 1200));
+      if (!mounted) return;
       context.go('/complete', extra: {
         'session': completedSession,
         'previousBest': previousBest,
@@ -699,7 +709,8 @@ class _MapScreenState extends ConsumerState<MapScreen>
     GameSession? session,
   ) {
     // _startSequence assigns _states on first call (WR-08: no build-time side effects).
-    _startSequence(states);
+    // session is threaded so that a restored paused session seeds _matchedPostals.
+    _startSequence(states, session);
     _maybeStartGame(session);
 
     // Mode → showLabels / showName matrix (per plan spec)
