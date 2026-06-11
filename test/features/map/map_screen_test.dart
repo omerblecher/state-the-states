@@ -6,6 +6,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:state_states/core/data/state_data_service.dart';
 import 'package:state_states/features/game/game_hud.dart';
 import 'package:state_states/features/game/game_mode.dart';
+import 'package:state_states/features/game/game_phase.dart';
+import 'package:state_states/features/game/game_session.dart';
+import 'package:state_states/features/game/game_session_notifier.dart';
 import 'package:state_states/features/map/map_screen.dart';
 import 'package:state_states/features/map/usa_map_painter.dart';
 
@@ -365,6 +368,84 @@ void main() {
       await tester.pump();
 
       expect(find.byType(AnimatedSwitcher), findsAtLeastNWidgets(1));
+    },
+  );
+
+  // ---------------------------------------------------------------------------
+  // Session restore test: _startSequence must seed _matchedPostals from the
+  // restored session's matchedPostals before the first build.
+  // ---------------------------------------------------------------------------
+
+  testWidgets(
+    'MapScreen restores session: HUD shows matchedCount=2 and painter has CA+TX matched',
+    (tester) async {
+      // Step 1: resolve real map data outside FakeAsync.
+      final dataContainer = ProviderContainer();
+      addTearDown(dataContainer.dispose);
+      final mapData = await tester
+          .runAsync(() => dataContainer.read(stateDataProvider.future));
+      expect(mapData, isNotNull);
+
+      // Step 2: create a container pre-seeded with a paused restored session.
+      // Override stateDataProvider so MapScreen gets data immediately and
+      // gameSessionProvider starts in a paused/restored state with CA+TX matched.
+      final restoredSession = const GameSession(
+        phase: GamePhase.paused,
+        mode: GameMode.learn,
+        score: 0,
+        elapsed: Duration.zero,
+        errorCount: 0,
+        hintsRemaining: 2,
+        matchedPostals: ['CA', 'TX'],
+      );
+
+      final gameContainer = ProviderContainer(
+        overrides: [
+          stateDataProvider.overrideWith((ref) async => mapData!),
+        ],
+      );
+      addTearDown(gameContainer.dispose);
+
+      // Wait for gameSessionProvider to resolve (it's an AsyncNotifier).
+      await tester.runAsync(
+          () => gameContainer.read(gameSessionProvider.future));
+
+      // Seed the session before the first build so _startSequence sees it.
+      gameContainer.read(gameSessionProvider.notifier).restoreGame(
+            restoredSession,
+            hintPenalty: 0,
+          );
+
+      // Step 3: pump using UncontrolledProviderScope so the pre-seeded container
+      // is used as-is (no fresh build() call that would reset the session).
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: gameContainer,
+          child: const MaterialApp(home: MapScreen()),
+        ),
+      );
+      // Two pumps: first emits data, second fires postFrameCallback rebuilds.
+      await tester.pump();
+      await tester.pump();
+
+      // Assert 1: GameHud shows matchedCount == 2.
+      final hud = tester.widget<GameHud>(find.byType(GameHud));
+      expect(hud.matchedCount, equals(2),
+          reason: 'HUD should report 2 matched states from restored session');
+
+      // Assert 2: UsaMapPainter received CA and TX as matched.
+      expect(
+        find.byWidgetPredicate(
+          (w) =>
+              w is CustomPaint &&
+              w.painter is UsaMapPainter &&
+              (w.painter! as UsaMapPainter)
+                  .matchedPostals
+                  .containsAll({'CA', 'TX'}),
+        ),
+        findsAtLeastNWidgets(1),
+        reason: 'UsaMapPainter must receive CA and TX as matched postals',
+      );
     },
   );
 }
