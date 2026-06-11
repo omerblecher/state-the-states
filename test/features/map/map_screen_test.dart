@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:state_states/core/data/state_data_service.dart';
+import 'package:state_states/core/ticker.dart';
 import 'package:state_states/features/game/game_hud.dart';
 import 'package:state_states/features/game/game_mode.dart';
 import 'package:state_states/features/game/game_phase.dart';
@@ -11,6 +12,21 @@ import 'package:state_states/features/game/game_session.dart';
 import 'package:state_states/features/game/game_session_notifier.dart';
 import 'package:state_states/features/map/map_screen.dart';
 import 'package:state_states/features/map/usa_map_painter.dart';
+
+// ---------------------------------------------------------------------------
+// Test helper: a GameSessionNotifier subclass that immediately returns a
+// pre-restored session from build(), avoiding SharedPreferences I/O.
+// Uses FakeTicker so no real Timer is created during tests.
+// ---------------------------------------------------------------------------
+class _RestoredSessionNotifier extends GameSessionNotifier {
+  _RestoredSessionNotifier(this._session)
+      : super(ticker: FakeTicker());
+
+  final GameSession _session;
+
+  @override
+  Future<GameSession> build() async => _session;
+}
 
 void main() {
   // rootBundle asset access + compute() require an initialized binding.
@@ -380,16 +396,16 @@ void main() {
     'MapScreen restores session: HUD shows matchedCount=2 and painter has CA+TX matched',
     (tester) async {
       // Step 1: resolve real map data outside FakeAsync.
+      // A separate container is used only for data resolution to avoid waiting
+      // on SharedPreferences repos inside gameSessionProvider.
       final dataContainer = ProviderContainer();
       addTearDown(dataContainer.dispose);
       final mapData = await tester
           .runAsync(() => dataContainer.read(stateDataProvider.future));
       expect(mapData, isNotNull);
 
-      // Step 2: create a container pre-seeded with a paused restored session.
-      // Override stateDataProvider so MapScreen gets data immediately and
-      // gameSessionProvider starts in a paused/restored state with CA+TX matched.
-      final restoredSession = const GameSession(
+      // Step 2: define the pre-restored session (phase=paused, CA+TX matched).
+      const restoredSession = GameSession(
         phase: GamePhase.paused,
         mode: GameMode.learn,
         score: 0,
@@ -399,32 +415,23 @@ void main() {
         matchedPostals: ['CA', 'TX'],
       );
 
-      final gameContainer = ProviderContainer(
-        overrides: [
-          stateDataProvider.overrideWith((ref) async => mapData!),
-        ],
-      );
-      addTearDown(gameContainer.dispose);
-
-      // Wait for gameSessionProvider to resolve (it's an AsyncNotifier).
-      await tester.runAsync(
-          () => gameContainer.read(gameSessionProvider.future));
-
-      // Seed the session before the first build so _startSequence sees it.
-      gameContainer.read(gameSessionProvider.notifier).restoreGame(
-            restoredSession,
-            hintPenalty: 0,
-          );
-
-      // Step 3: pump using UncontrolledProviderScope so the pre-seeded container
-      // is used as-is (no fresh build() call that would reset the session).
+      // Step 3: override gameSessionProvider to return the paused session
+      // immediately — no SharedPreferences I/O needed in the test.
+      // The AsyncNotifier is overridden via overrideWith; the notifier's build()
+      // returns the restored session directly, so MapScreen sees phase=paused
+      // with matchedPostals=['CA','TX'] on its very first build.
       await tester.pumpWidget(
-        UncontrolledProviderScope(
-          container: gameContainer,
+        ProviderScope(
+          overrides: [
+            stateDataProvider.overrideWith((ref) async => mapData!),
+            gameSessionProvider.overrideWith(
+              () => _RestoredSessionNotifier(restoredSession),
+            ),
+          ],
           child: const MaterialApp(home: MapScreen()),
         ),
       );
-      // Two pumps: first emits data, second fires postFrameCallback rebuilds.
+      // Two pumps: first emits async data, second fires postFrameCallback rebuilds.
       await tester.pump();
       await tester.pump();
 
