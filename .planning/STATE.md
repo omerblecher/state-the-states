@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-06-02)
 Phase: 08 (full-admob-layer) — EXECUTING
 Plan: 5 of 6
 Status: Ready to execute
-Last activity: 2026-06-03
+Last activity: 2026-06-11 - Completed quick task 260611-tql: Fix session restore bug in MapScreen
 
 Progress: [██████████] 95%
 
@@ -145,6 +145,7 @@ None yet.
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260603-9px | Refactor SpeedTypingScreen: rename to Name all the states, add TypingResult enum, fix keyboard layout, add progress bar, chip animations, distinct error SnackBars | 2026-06-03 | 0966cb2 | [260603-9px-refactor-speedtypingscreen-rename-to-nam](.planning/quick/260603-9px-refactor-speedtypingscreen-rename-to-nam/) |
+| 260611-tql | Fix session restore bug in MapScreen: _startSequence ignores the restored session's matchedPostals | 2026-06-11 | fb44655 | [260611-tql-fix-session-restore-bug-in-mapscreen-sta](.planning/quick/260611-tql-fix-session-restore-bug-in-mapscreen-sta/) |
 
 ### Blockers/Concerns
 
